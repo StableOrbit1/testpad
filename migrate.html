@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Migration Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .log-container { max-height: 400px; overflow-y: auto; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-6">
+    
+    <div class="bg-white max-w-2xl w-full rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div class="bg-slate-900 p-6 text-white">
+            <h1 class="text-xl font-bold flex items-center gap-2">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="7.5 4.21 12 6.81 16.5 4.21"></polyline><polyline points="7.5 19.79 7.5 14.6 3 12"></polyline><polyline points="21 12 16.5 14.6 16.5 19.79"></polyline><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                Firebase Account Migration
+            </h1>
+            <p class="text-slate-400 text-sm mt-1">Copy profiles, rounds, and active sessions between numbers.</p>
+        </div>
+
+        <div class="p-6 space-y-6">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Source Phone</label>
+                    <input type="text" id="sourcePhone" value="4134533526" class="w-full bg-slate-100 border border-slate-200 rounded-lg p-3 font-mono outline-none focus:border-cyan-500 text-slate-700">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Destination Phone</label>
+                    <input type="text" id="destPhone" value="4164533526" class="w-full bg-slate-100 border border-slate-200 rounded-lg p-3 font-mono outline-none focus:border-cyan-500 text-slate-700">
+                </div>
+            </div>
+
+            <button id="runBtn" class="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-4 rounded-xl transition-colors shadow-md">
+                Run Migration
+            </button>
+
+            <div class="bg-slate-900 rounded-xl border border-slate-800 p-4">
+                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 flex justify-between">
+                    <span>Execution Log</span>
+                    <button id="clearLogBtn" class="text-cyan-400 hover:text-cyan-300">Clear</button>
+                </div>
+                <div id="outputLog" class="font-mono text-xs text-slate-300 log-container space-y-1">
+                    <span class="text-slate-500">Ready. Click 'Run Migration' to begin.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+// Override console to output directly to the UI
+const outputLog = document.getElementById('outputLog');
+function logToUI(message, type = 'info') {
+    if (outputLog.innerHTML.includes("Ready. Click")) outputLog.innerHTML = "";
+    const line = document.createElement('div');
+    line.className = type === 'error' ? 'text-red-400' : type === 'success' ? 'text-green-400' : type === 'warn' ? 'text-yellow-400' : 'text-slate-300';
+    line.innerText = `> ${message}`;
+    outputLog.appendChild(line);
+    outputLog.scrollTop = outputLog.scrollHeight;
+}
+
+document.getElementById('clearLogBtn').onclick = () => outputLog.innerHTML = "";
+
+// Initialize with your exact app config
+const firebaseConfig = {
+  apiKey: "AIzaSyDudUxzIzerhfrxJwE2_2Eeoc4rFtNstp0",
+  authDomain: "thisis50-e2aa3.firebaseapp.com",
+  projectId: "thisis50-e2aa3",
+  storageBucket: "thisis50-e2aa3.firebasestorage.app",
+  messagingSenderId: "125723749679",
+  appId: "1:125723749679:web:749fab5b7c313abfedc5da",
+  measurementId: "G-B6RBG4BKGE"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Matches the appId logic in your main app
+const descentAppId = typeof __app_id !== 'undefined' ? __app_id : 'descent-app-id';
+
+async function migrateEverything(sourcePhone, destPhone) {
+  logToUI(`Starting migration from ${sourcePhone} to ${destPhone}...`, 'info');
+
+  try {
+    // --- 1. COPY PROFILE ---
+    logToUI("Fetching profile data...");
+    const sourceProfileRef = doc(db, 'artifacts', descentAppId, 'public', 'data', 'profiles', sourcePhone);
+    const destProfileRef = doc(db, 'artifacts', descentAppId, 'public', 'data', 'profiles', destPhone);
+
+    const profileSnap = await getDoc(sourceProfileRef);
+
+    if (profileSnap.exists()) {
+      let profileData = profileSnap.data();
+      
+      // CRITICAL: Update the internal phone number so the app doesn't get confused
+      profileData.phone = destPhone;
+      
+      await setDoc(destProfileRef, profileData);
+      logToUI("✅ Profile data copied and phone number updated!", 'success');
+    } else {
+      logToUI("⚠️ Source profile not found. Are you sure the number is correct?", 'warn');
+      return; // Stop if there's no profile to copy
+    }
+
+    // --- 2. COPY ROUNDS HISTORY ---
+    logToUI("Fetching historical rounds...");
+    const sourceRoundsCol = collection(db, 'artifacts', descentAppId, 'public', 'data', `rounds_${sourcePhone}`);
+    const destRoundsCol = collection(db, 'artifacts', descentAppId, 'public', 'data', `rounds_${destPhone}`);
+
+    const roundsSnap = await getDocs(sourceRoundsCol);
+    
+    if (!roundsSnap.empty) {
+      let roundsCopied = 0;
+      
+      // Use a for...of loop to handle async addDoc properly
+      for (const roundDoc of roundsSnap.docs) {
+        await addDoc(destRoundsCol, roundDoc.data());
+        roundsCopied++;
+      }
+      
+      logToUI(`✅ Successfully copied ${roundsCopied} rounds to the new account!`, 'success');
+    } else {
+      logToUI("ℹ️ No rounds found to copy (user hasn't played yet).", 'warn');
+    }
+
+    // --- 3. COPY ACTIVE ROUND (If they were mid-round) ---
+    logToUI("Checking for active mid-round sessions...");
+    const sourceActiveRef = doc(db, 'artifacts', descentAppId, 'public', 'data', 'active_rounds', sourcePhone);
+    const destActiveRef = doc(db, 'artifacts', descentAppId, 'public', 'data', 'active_rounds', destPhone);
+    
+    const activeSnap = await getDoc(sourceActiveRef);
+    if (activeSnap.exists()) {
+      await setDoc(destActiveRef, activeSnap.data());
+      logToUI("✅ Active mid-round session copied!", 'success');
+    } else {
+      logToUI("ℹ️ No active sessions found.", 'info');
+    }
+
+    logToUI("🎉 Migration Complete! You can now log in with the new number.", 'success');
+
+  } catch (error) {
+    logToUI(`❌ Migration failed: ${error.message}`, 'error');
+    console.error(error);
+  }
+}
+
+document.getElementById('runBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('runBtn');
+    const source = document.getElementById('sourcePhone').value.trim();
+    const dest = document.getElementById('destPhone').value.trim();
+
+    if (!source || !dest) {
+        logToUI("Error: Both source and destination numbers are required.", "error");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.classList.add('opacity-50', 'cursor-not-allowed');
+    btn.innerText = "Migrating...";
+    outputLog.innerHTML = ""; // Clear log on new run
+
+    await migrateEverything(source, dest);
+
+    btn.disabled = false;
+    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+    btn.innerText = "Run Migration";
+});
+
+</script>
+</body>
+</html>
