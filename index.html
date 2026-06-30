@@ -1,689 +1,803 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photo Map Explorer</title>
-    
-    <!-- Tailwind CSS for styling -->
+    <title>Quantum Wealth | Portfolio Analytics</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Leaflet CSS and JS for Mapping -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    
-    <!-- Exifr for parsing EXIF data locally -->
-    <script src="https://cdn.jsdelivr.net/npm/exifr/dist/full.umd.js"></script>
-
-    <!-- heic2any for converting HEIC to displayable format in browser -->
-    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
-
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
     <style>
-        /* Custom scrollbar for gallery */
-        ::-webkit-scrollbar {
-            width: 8px;
+        :root {
+            --bg-dark: #0f172a;
+            --panel-dark: #1e293b;
+            --accent: #3b82f6;
         }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1; 
+        body {
+            background-color: var(--bg-dark);
+            color: #f8fafc;
+            font-family: 'Inter', system-ui, sans-serif;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1; 
-            border-radius: 4px;
+        .tab-active {
+            border-bottom: 2px solid var(--accent);
+            color: var(--accent);
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8; 
-        }
-
-        /* Leaflet popup customization */
-        .leaflet-popup-content-wrapper {
-            border-radius: 0.5rem;
-            padding: 0;
-            overflow: hidden;
-        }
-        .leaflet-popup-content {
-            margin: 0;
-            width: 250px !important;
-        }
-        .popup-image {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            display: block;
-        }
-        .popup-details {
-            padding: 12px;
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
         
-        /* Map custom marker */
-        .custom-marker {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: none;
-            border: none;
+        .loader {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top: 3px solid var(--accent);
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
         }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .markdown-body h3 { font-size: 1.1rem; font-weight: 600; margin-top: 1rem; color: #94a3b8; }
+        .markdown-body p { margin-bottom: 0.75rem; line-height: 1.6; }
+        .markdown-body ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
+        .markdown-body strong { color: #f1f5f9; }
     </style>
 </head>
-<body class="bg-gray-50 h-screen w-full overflow-hidden flex flex-col md:flex-row text-slate-800">
+<body class="min-h-screen flex flex-col">
 
-    <!-- Sidebar / Control Panel -->
-    <aside class="w-full md:w-[400px] h-1/3 md:h-full bg-white shadow-xl z-10 flex flex-col relative">
-        <!-- Header -->
-        <div class="p-6 border-b border-gray-100 shrink-0">
-            <h1 class="text-2xl font-bold flex items-center gap-2 text-indigo-600">
-                <i data-lucide="map-pin"></i>
-                PhotoMap
-            </h1>
-            <p class="text-sm text-slate-500 mt-2">Upload photos to plot them based on their GPS metadata. Processed 100% in your browser.</p>
-        </div>
-
-        <!-- Dropzone -->
-        <div class="p-6 shrink-0">
-            <div id="dropzone" class="border-2 border-dashed border-indigo-200 rounded-xl p-8 text-center bg-indigo-50/50 hover:bg-indigo-50 transition-colors cursor-pointer group flex flex-col items-center justify-center relative">
-                <input type="file" id="file-input" multiple accept="image/jpeg, image/png, image/webp, image/heic, image/heif, .heic, .heif" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                <i data-lucide="image-plus" class="w-10 h-10 text-indigo-400 group-hover:text-indigo-600 transition-colors mb-3"></i>
-                <p class="font-medium text-indigo-800">Click or drag photos here</p>
-                <p class="text-xs text-indigo-500/80 mt-1">JPEG, PNG, WEBP, HEIC supported</p>
+    <!-- LOGIN SCREEN -->
+    <div id="login-container" class="fixed inset-0 bg-[#0f172a] z-50 flex items-center justify-center p-4">
+        <div class="bg-[#1e293b] rounded-2xl p-8 max-w-md w-full border border-slate-700 shadow-2xl text-center relative overflow-hidden">
+            <div class="mb-8">
+                <i class="fa-solid fa-chart-line text-blue-500 text-5xl mb-4"></i>
+                <h1 class="text-3xl font-bold tracking-wide mb-2">Quantum<span class="text-blue-500">Wealth</span></h1>
+                <p class="text-slate-400 text-sm">Advanced portfolio tracking & AI market analysis.</p>
             </div>
             
-            <!-- Status Messages -->
-            <div id="status-container" class="mt-4 hidden">
-                <div class="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 p-3 rounded-lg border border-amber-100">
-                    <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
-                    <span id="status-message"></span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Gallery -->
-        <div class="flex-1 overflow-y-auto p-6 pt-0">
-            <!-- Filter Section -->
-            <div class="mb-5 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                <div class="font-semibold text-slate-700 text-sm mb-3 flex items-center justify-between">
-                    <span>Evaluation Filters</span>
-                    <i data-lucide="filter" class="w-4 h-4 text-slate-400"></i>
+            <div class="space-y-4 relative z-10">
+                <button onclick="signInWithGoogle()" class="w-full bg-white hover:bg-slate-100 text-slate-800 font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-3 transition duration-200">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo" class="w-5 h-5">
+                    Sign in with Google
+                </button>
+                
+                <div class="relative flex py-2 items-center">
+                    <div class="flex-grow border-t border-slate-600"></div>
+                    <span class="flex-shrink-0 mx-4 text-slate-500 text-xs uppercase tracking-wider">or</span>
+                    <div class="flex-grow border-t border-slate-600"></div>
                 </div>
                 
-                <div class="space-y-3">
-                    <!-- Revenue Filters -->
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <span class="text-slate-500 text-xs font-medium uppercase tracking-wider w-20">Revenue</span>
-                        <div class="flex gap-3 text-sm">
-                            <label class="flex items-center gap-1 cursor-pointer hover:text-indigo-600 transition-colors"><input type="checkbox" checked value="H" data-filter="revenue" class="filter-chk accent-indigo-500"> H</label>
-                            <label class="flex items-center gap-1 cursor-pointer hover:text-indigo-600 transition-colors"><input type="checkbox" checked value="M" data-filter="revenue" class="filter-chk accent-indigo-500"> M</label>
-                            <label class="flex items-center gap-1 cursor-pointer hover:text-indigo-600 transition-colors"><input type="checkbox" checked value="L" data-filter="revenue" class="filter-chk accent-indigo-500"> L</label>
-                            <label class="flex items-center gap-1 cursor-pointer hover:text-indigo-600 transition-colors text-slate-400"><input type="checkbox" checked value="U" data-filter="revenue" class="filter-chk accent-indigo-500"> None</label>
-                        </div>
+                <button onclick="signInGuest()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium py-3 px-4 rounded-xl transition duration-200 border border-slate-600">
+                    Continue as Guest
+                </button>
+            </div>
+
+            <!-- Error message container -->
+            <div id="auth-error-msg" class="mt-6 text-xs text-red-400 hidden bg-red-900/30 p-3 rounded text-left border border-red-800/50">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP (Hidden until auth) -->
+    <div id="app-container" class="hidden flex-col min-h-screen">
+        <!-- Navbar -->
+        <nav class="bg-[#1e293b] border-b border-slate-700 p-4">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-chart-line text-blue-500 text-2xl"></i>
+                    <span class="text-xl font-bold tracking-wide hidden sm:inline">Quantum<span class="text-blue-500">Wealth</span></span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div id="user-profile" class="flex items-center gap-2 text-sm text-slate-300">
+                        <!-- Populated by JS -->
                     </div>
-                    <!-- Likelihood Filters -->
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <span class="text-slate-500 text-xs font-medium uppercase tracking-wider w-20">Likelihood</span>
-                        <div class="flex gap-3 text-sm">
-                            <label class="flex items-center gap-1 cursor-pointer hover:text-indigo-600 transition-colors"><input type="checkbox" checked value="H" data-filter="likelihood" class="filter-chk accent-indigo-500"> H</label>
-                            <label class="flex items-center gap-1 cursor-pointer hover:text-indigo-600 transition-colors"><input type="checkbox" checked value="M" data-filter="likelihood" class="filter-chk accent-indigo-500"> M</label>
-                            <label class="flex items-center gap-1 cursor-pointer hover:text-indigo-600 transition-colors"><input type="checkbox" checked value="L" data-filter="likelihood" class="filter-chk accent-indigo-500"> L</label>
-                            <label class="flex items-center gap-1 cursor-pointer hover:text-indigo-600 transition-colors text-slate-400"><input type="checkbox" checked value="U" data-filter="likelihood" class="filter-chk accent-indigo-500"> None</label>
+                    <button onclick="signOutUser()" class="text-sm bg-slate-800 hover:bg-slate-700 border border-slate-600 px-3 py-1.5 rounded transition">
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="flex-grow max-w-6xl mx-auto w-full p-4 flex flex-col gap-6">
+            
+            <!-- Header / Summary -->
+            <div class="bg-[#1e293b] rounded-xl p-6 shadow-lg border border-slate-700 flex flex-col md:flex-row justify-between items-center">
+                <div>
+                    <h2 class="text-sm uppercase tracking-wider text-slate-400">Total Portfolio Value</h2>
+                    <div class="text-4xl font-light mt-1" id="total-value-display">$0.00</div>
+                </div>
+                <div class="flex space-x-4 mt-4 md:mt-0 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
+                    <button onclick="switchTab('holdings')" id="tab-btn-holdings" class="whitespace-nowrap px-4 py-2 text-slate-300 font-medium tab-active transition-colors">Current Holdings</button>
+                    <button onclick="switchTab('analysis')" id="tab-btn-analysis" class="whitespace-nowrap px-4 py-2 text-slate-300 font-medium transition-colors">Analysis</button>
+                    <button onclick="switchTab('future')" id="tab-btn-future" class="whitespace-nowrap px-4 py-2 text-slate-300 font-medium transition-colors">Future Plan</button>
+                </div>
+            </div>
+
+            <!-- TAB 1: HOLDINGS -->
+            <div id="tab-holdings" class="space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Add New Holding Form -->
+                    <div class="bg-[#1e293b] rounded-xl p-6 border border-slate-700 lg:col-span-1 h-fit">
+                        <h3 class="text-lg font-semibold mb-4 border-b border-slate-700 pb-2">Add Holding</h3>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm text-slate-400 mb-1">Asset Type</label>
+                            <select id="asset-type" onchange="toggleAssetForm()" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white outline-none focus:border-blue-500">
+                                <option value="stock">Stock / ETF</option>
+                                <option value="cash">Cash / Equivalents</option>
+                            </select>
+                        </div>
+
+                        <!-- Stock Fields -->
+                        <div id="form-stock" class="space-y-3">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Market</label>
+                                    <input type="text" id="s-market" placeholder="e.g. NASDAQ" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white text-sm outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Ticker</label>
+                                    <input type="text" id="s-ticker" placeholder="e.g. AAPL" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white text-sm outline-none">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Shares</label>
+                                    <input type="number" id="s-qty" step="any" placeholder="0.0" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white text-sm outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Currency</label>
+                                    <input type="text" id="s-currency" value="USD" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white text-sm outline-none">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Buy Price</label>
+                                    <input type="number" id="s-buy" step="any" placeholder="0.00" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white text-sm outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Current Price</label>
+                                    <input type="number" id="s-current" step="any" placeholder="0.00" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white text-sm outline-none">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Purchase Date</label>
+                                <input type="date" id="s-date" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white text-sm outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Cash Fields -->
+                        <div id="form-cash" class="space-y-3 hidden">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Currency</label>
+                                <input type="text" id="c-currency" value="USD" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white text-sm outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Total Amount</label>
+                                <input type="number" id="c-amount" step="any" placeholder="0.00" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white text-sm outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Annual Interest Rate (%)</label>
+                                <input type="number" id="c-rate" step="any" placeholder="4.5" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-white text-sm outline-none">
+                            </div>
+                        </div>
+
+                        <button onclick="addHolding()" class="w-full mt-5 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded transition">
+                            Add to Portfolio
+                        </button>
+                    </div>
+
+                    <!-- Holdings List -->
+                    <div class="bg-[#1e293b] rounded-xl p-6 border border-slate-700 lg:col-span-2 overflow-x-auto">
+                        <h3 class="text-lg font-semibold mb-4 border-b border-slate-700 pb-2">Current Weights & Holdings</h3>
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-xs uppercase text-slate-400 border-b border-slate-700">
+                                    <th class="py-2">Asset</th>
+                                    <th class="py-2">Qty / Amt</th>
+                                    <th class="py-2">Current Price</th>
+                                    <th class="py-2">Total Value</th>
+                                    <th class="py-2">Weight</th>
+                                    <th class="py-2 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="holdings-list" class="text-sm">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                        <div id="empty-state" class="text-center py-8 text-slate-500 hidden">
+                            No holdings added yet.
                         </div>
                     </div>
                 </div>
             </div>
 
-            <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 border-t border-gray-100 pt-4">Plotted Photos (<span id="photo-count">0</span>)</h2>
-            <div id="gallery" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Gallery items will be injected here -->
+            <!-- TAB 2: ANALYSIS -->
+            <div id="tab-analysis" class="space-y-6 hidden">
+                <!-- Global Portfolio Analysis -->
+                <div class="bg-gradient-to-r from-[#1e293b] to-slate-800 rounded-xl p-6 border border-slate-700 shadow-xl relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                        <i class="fa-solid fa-brain text-8xl"></i>
+                    </div>
+                    <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center">
+                        <div>
+                            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-robot text-blue-500"></i> AI Analyst Overview
+                            </h3>
+                            <p class="text-sm text-slate-400 mt-1 max-w-2xl">
+                                Generates a comprehensive review factoring in your portfolio weighting, market dynamics, 12-month outlook, and risk tolerance.
+                            </p>
+                        </div>
+                        <button onclick="analyzePortfolio()" class="mt-4 md:mt-0 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-full flex items-center gap-2 transition">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Analyze Portfolio
+                        </button>
+                    </div>
+                    
+                    <!-- Response Area -->
+                    <div id="portfolio-analysis-result" class="mt-6 bg-[#0f172a] rounded-lg p-5 border border-slate-700 hidden">
+                        <div id="pa-loader" class="hidden flex items-center gap-3 text-blue-400">
+                            <div class="loader"></div> <span>Consulting market models...</span>
+                        </div>
+                        <div id="pa-content" class="markdown-body text-sm text-slate-300"></div>
+                    </div>
+                </div>
+
+                <!-- Individual Stock Analysis -->
+                <div class="bg-[#1e293b] rounded-xl p-6 border border-slate-700">
+                    <h3 class="text-lg font-semibold mb-4 border-b border-slate-700 pb-2">Individual Asset Analysis</h3>
+                    <p class="text-xs text-slate-500 mb-4">* YTD performance is dynamically estimated for demonstration. API required for live data.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="analysis-cards">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+                
+                <!-- Modal for Individual Analysis -->
+                <div id="analysis-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 hidden p-4">
+                    <div class="bg-[#1e293b] rounded-xl border border-slate-600 max-w-2xl w-full max-h-[80vh] flex flex-col shadow-2xl">
+                        <div class="p-4 border-b border-slate-700 flex justify-between items-center">
+                            <h3 class="text-lg font-bold" id="modal-title">Asset Analysis</h3>
+                            <button onclick="closeModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+                        </div>
+                        <div class="p-6 overflow-y-auto flex-grow">
+                            <div id="modal-loader" class="flex flex-col items-center justify-center py-10 hidden">
+                                <div class="loader mb-4"></div>
+                                <p class="text-slate-400">Synthesizing analyst data...</p>
+                            </div>
+                            <div id="modal-content" class="markdown-body text-sm text-slate-300"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: FUTURE PLAN -->
+            <div id="tab-future" class="space-y-6 hidden">
+                <!-- Historical Context -->
+                <div class="bg-[#1e293b] rounded-xl p-6 border border-slate-700 flex justify-around items-center text-center">
+                    <div>
+                        <div class="text-slate-400 text-sm">Est. 1Y Return</div>
+                        <div class="text-2xl font-bold text-green-400">+11.2%</div>
+                    </div>
+                    <div class="h-10 w-px bg-slate-700"></div>
+                    <div>
+                        <div class="text-slate-400 text-sm">Est. 5Y Ann. Return</div>
+                        <div class="text-2xl font-bold text-green-400">+9.8%</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    <!-- Calculator 1: Find Future Size -->
+                    <div class="bg-[#1e293b] rounded-xl p-6 border border-slate-700 flex flex-col">
+                        <h3 class="text-lg font-semibold mb-2 text-blue-400"><i class="fa-solid fa-forward-fast mr-2"></i>Project Future Wealth</h3>
+                        <p class="text-sm text-slate-400 mb-6">Calculate expected portfolio size based on desired return.</p>
+                        
+                        <div class="space-y-6 flex-grow">
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <label class="text-sm text-slate-300">Desired Annual Return Rate</label>
+                                    <span id="val-return" class="text-blue-400 font-bold">8.0%</span>
+                                </div>
+                                <input type="range" id="slide-return" min="1" max="25" step="0.5" value="8" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <label class="text-sm text-slate-300">Years in Market</label>
+                                    <span id="val-years1" class="text-blue-400 font-bold">15 Yrs</span>
+                                </div>
+                                <input type="range" id="slide-years1" min="1" max="40" step="1" value="15" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
+
+                        <div class="mt-8 pt-6 border-t border-slate-700 text-center">
+                            <div class="text-slate-400 text-sm mb-1">Projected Portfolio Size</div>
+                            <div id="calc1-result" class="text-4xl font-light text-white">$0.00</div>
+                        </div>
+                    </div>
+
+                    <!-- Calculator 2: Find Required Rate -->
+                    <div class="bg-[#1e293b] rounded-xl p-6 border border-slate-700 flex flex-col">
+                        <h3 class="text-lg font-semibold mb-2 text-emerald-400"><i class="fa-solid fa-bullseye mr-2"></i>Determine Required Return</h3>
+                        <p class="text-sm text-slate-400 mb-6">Find the rate needed to hit a target portfolio size.</p>
+                        
+                        <div class="space-y-6 flex-grow">
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <label class="text-sm text-slate-300">Target Portfolio Size</label>
+                                    <span id="val-target" class="text-emerald-400 font-bold">$1,000,000</span>
+                                </div>
+                                <input type="range" id="slide-target" min="50000" max="10000000" step="50000" value="10000000" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <label class="text-sm text-slate-300">Years to Target</label>
+                                    <span id="val-years2" class="text-emerald-400 font-bold">10 Yrs</span>
+                                </div>
+                                <input type="range" id="slide-years2" min="1" max="40" step="1" value="10" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
+
+                        <div class="mt-8 pt-6 border-t border-slate-700 text-center">
+                            <div class="text-slate-400 text-sm mb-1">Required Annual Return Rate</div>
+                            <div id="calc2-result" class="text-4xl font-light text-white">0.0%</div>
+                            <div id="calc2-risk" class="text-xs mt-2 px-2 py-1 bg-slate-800 rounded inline-block text-slate-300">Risk Profile: Calculating...</div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
             
-            <div id="empty-state" class="text-center py-12 flex flex-col items-center text-slate-400">
-                <i data-lucide="map" class="w-12 h-12 mb-3 opacity-20"></i>
-                <p class="text-sm">No mapped photos yet.</p>
-            </div>
-        </div>
-    </aside>
+        </main>
+    </div>
 
-    <!-- Map Container -->
-    <main class="flex-1 h-2/3 md:h-full relative z-0">
-        <div id="map" class="w-full h-full"></div>
-    </main>
-
+    <!-- Firebase Imports -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'photo-map-explorer';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-
-        // Initialize Lucide icons
-        lucide.createIcons();
-
-        // Application State
-        const state = {
-            markers: {}, // Changed to object for easier ID lookup
-            filters: {
-                revenue: new Set(['H', 'M', 'L', 'U']),
-                likelihood: new Set(['H', 'M', 'L', 'U'])
-            },
-            bounds: null
+        const providedConfig = {
+            apiKey: "AIzaSyDudUxzIzerhfrxJwE2_2Eeoc4rFtNstp0",
+            authDomain: "thisis50-e2aa3.firebaseapp.com",
+            projectId: "thisis50-e2aa3",
+            storageBucket: "thisis50-e2aa3.firebasestorage.app",
+            messagingSenderId: "125723749679",
+            appId: "1:125723749679:web:749fab5b7c313abfedc5da",
+            measurementId: "G-B6RBG4BKGE"
         };
-
-        // Initialize Map
-        const map = L.map('map').setView([20, 0], 2);
         
-        // Add OpenStreetMap tiles
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : providedConfig;
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const googleProvider = new GoogleAuthProvider();
+        
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-portfolio-app';
 
-        // FeatureGroup to hold all markers for easy bounds calculation
-        const markersGroup = L.featureGroup().addTo(map);
+        window.portfolioHoldings = [];
+        window.totalPortfolioValue = 0;
+        window.currentUser = null;
+        let unsubscribeHoldings = null;
 
-        // DOM Elements
-        const dropzone = document.getElementById('dropzone');
-        const fileInput = document.getElementById('file-input');
-        const gallery = document.getElementById('gallery');
-        const emptyState = document.getElementById('empty-state');
-        const photoCountEl = document.getElementById('photo-count');
-        const statusContainer = document.getElementById('status-container');
-        const statusMessage = document.getElementById('status-message');
-
-        // Setup filter listeners
-        document.querySelectorAll('.filter-chk').forEach(chk => {
-            chk.addEventListener('change', (e) => {
-                const type = e.target.dataset.filter;
-                const val = e.target.value;
-                if (e.target.checked) {
-                    state.filters[type].add(val);
-                } else {
-                    state.filters[type].delete(val);
-                }
-                applyFilters();
-            });
-        });
-
-        async function initializeAppCloud() {
+        // --- AUTHENTICATION ---
+        async function initAuth() {
             try {
-                if (typeof __initial_auth_token !== 'undefined') {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
                 }
-                setupCloudSync();
             } catch (error) {
-                console.error("Auth error:", error);
-                showStatus("Could not connect to cloud storage.");
+                console.error("Auto-login error:", error);
             }
         }
 
-        function setupCloudSync() {
-            if (!auth.currentUser) return;
+        window.signInWithGoogle = async function() {
+            const errorBox = document.getElementById('auth-error-msg');
+            errorBox.classList.add('hidden');
             
-            const photosRef = collection(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'photos');
-            
-            showStatus("Loading saved photos from cloud...");
-            
-            onSnapshot(photosRef, (snapshot) => {
-                let count = 0;
+            try {
+                await signInWithPopup(auth, googleProvider);
+            } catch (error) {
+                console.error("Google Auth Error:", error);
                 
-                snapshot.docChanges().forEach(change => {
-                    const data = change.doc.data();
-                    const docId = change.doc.id;
-                    
-                    if (change.type === 'added') {
-                        addPhotoToMap(docId, data);
-                    } else if (change.type === 'modified') {
-                        updatePhotoInMap(docId, data);
-                    } else if (change.type === 'removed') {
-                        removePhotoFromMap(docId);
-                    }
-                });
-
-                applyFilters();
+                // Show specific, helpful error messaging on screen
+                errorBox.classList.remove('hidden');
                 
-                // Hide empty state if items exist
-                if (Object.keys(state.markers).length > 0) {
-                    emptyState.classList.add('hidden');
+                if (error.code === 'auth/unauthorized-domain') {
+                    errorBox.innerHTML = `<strong>Domain Blocked:</strong> You must add this URL to the "Authorized domains" list in your Firebase Console (Authentication > Settings).<br><br><em>Tip: For now, click "Continue as Guest".</em>`;
+                } else if (error.code === 'auth/popup-closed-by-user') {
+                    errorBox.innerHTML = `<strong>Popup Closed:</strong> The login window was closed before finishing.`;
+                } else if (error.code === 'auth/operation-not-allowed') {
+                    errorBox.innerHTML = `<strong>Google Auth Disabled:</strong> You need to enable "Google" inside the Firebase Console (Authentication > Sign-in method).`;
+                } else if (error.message.includes('cross-origin')) {
+                    errorBox.innerHTML = `<strong>Iframe Blocked:</strong> Your browser blocked the popup due to cross-origin security. Click "Continue as Guest" instead while testing here.`;
                 } else {
-                    emptyState.classList.remove('hidden');
+                    errorBox.innerHTML = `<strong>Error:</strong> ${error.message} (${error.code})`;
                 }
-                
-                // Only zoom to fit on initial load if we have markers
-                if (Object.keys(state.markers).length > 0 && !state.bounds) {
-                    map.fitBounds(markersGroup.getBounds(), { padding: [50, 50], maxZoom: 16 });
-                    state.bounds = true; // Mark as bounded so we don't snap back on every edit
-                }
-            }, (error) => {
-                console.error("Cloud sync error:", error);
-                showStatus("Error syncing with cloud.");
-            });
-        }
-
-        // Start Cloud Connection on load
-        // Start Cloud Connection on load
-        initializeAppCloud();
-
-        // Custom Map Pin Icon using SVG
-        const createCustomIcon = (imageUrl, isKept) => {
-            const pinColor = isKept ? 'bg-emerald-500' : 'bg-indigo-500';
-            const borderColor = isKept ? 'border-emerald-500' : 'border-indigo-500';
-            
-            return L.divIcon({
-                className: 'custom-marker',
-                html: `
-                    <div class="relative group cursor-pointer w-12 h-12">
-                        <div class="absolute inset-0 bg-white rounded-full shadow-lg border-2 ${borderColor} overflow-hidden transform group-hover:scale-110 transition-transform duration-200 z-10">
-                            <img src="${imageUrl}" class="w-full h-full object-cover" alt="pin thumbnail">
-                        </div>
-                        <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 ${pinColor} rotate-45 z-0 shadow-md"></div>
-                    </div>
-                `,
-                iconSize: [48, 56],
-                iconAnchor: [24, 56],
-                popupAnchor: [0, -56]
-            });
+            }
         };
 
-        // Event Listeners for Drag and Drop
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropzone.addEventListener(eventName, preventDefaults, false);
-            document.body.addEventListener(eventName, preventDefaults, false);
+        window.signInGuest = async function() {
+            try {
+                await signInAnonymously(auth);
+            } catch (error) {
+                console.error("Guest Auth Error:", error);
+                showMessage("Failed to continue as guest.");
+            }
+        };
+
+        window.signOutUser = async function() {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("Sign out error:", error);
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            window.currentUser = user;
+            if (user) {
+                document.getElementById('login-container').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                document.getElementById('app-container').classList.add('flex');
+                
+                const profileDiv = document.getElementById('user-profile');
+                if (user.isAnonymous) {
+                    profileDiv.innerHTML = `<i class="fa-solid fa-user-secret"></i> <span>Guest User</span>`;
+                } else {
+                    const photo = user.photoURL ? `<img src="${user.photoURL}" class="w-6 h-6 rounded-full border border-slate-500">` : `<i class="fa-solid fa-user text-blue-400"></i>`;
+                    const name = user.displayName || user.email || 'User';
+                    profileDiv.innerHTML = `${photo} <span>${name}</span>`;
+                }
+
+                loadData(user.uid);
+            } else {
+                document.getElementById('login-container').classList.remove('hidden');
+                document.getElementById('app-container').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('flex');
+                document.getElementById('auth-error-msg').classList.add('hidden');
+                
+                if (unsubscribeHoldings) unsubscribeHoldings();
+            }
         });
 
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
+        initAuth();
 
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropzone.addEventListener(eventName, highlight, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropzone.addEventListener(eventName, unhighlight, false);
-        });
-
-        function highlight(e) {
-            dropzone.classList.add('border-indigo-500', 'bg-indigo-100');
-        }
-
-        function unhighlight(e) {
-            dropzone.classList.remove('border-indigo-500', 'bg-indigo-100');
-        }
-
-        // Handle File Selection (Drop or Click)
-        dropzone.addEventListener('drop', handleDrop, false);
-        fileInput.addEventListener('change', (e) => handleFiles(e.target.files), false);
-
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            handleFiles(files);
-        }
-
-        function showStatus(message) {
-            statusMessage.textContent = message;
-            statusContainer.classList.remove('hidden');
-            setTimeout(() => {
-                statusContainer.classList.add('hidden');
-            }, 5000);
-        }
-
-        // Compresses image to a small base64 string suitable for fast cloud storage
-        function createThumbnailBase64(fileOrBlob) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 250; // Keep it small for quick loading
-                    const scaleSize = MAX_WIDTH / img.width;
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scaleSize;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    // Convert to high-compression JPEG
-                    resolve(canvas.toDataURL('image/jpeg', 0.6)); 
-                };
-                img.src = URL.createObjectURL(fileOrBlob);
+        // --- DATABASE OPERATIONS ---
+        function loadData(userId) {
+            const holdingsRef = collection(db, 'artifacts', appId, 'users', userId, 'holdings');
+            
+            unsubscribeHoldings = onSnapshot(holdingsRef, (snapshot) => {
+                window.portfolioHoldings = [];
+                snapshot.forEach((doc) => {
+                    window.portfolioHoldings.push({ id: doc.id, ...doc.data() });
+                });
+                updateUI();
+            }, (error) => {
+                console.error("Firestore error:", error);
+                showMessage("Failed to sync database.");
             });
         }
 
-        async function handleFiles(files) {
-            if (!files || files.length === 0) return;
-            if (!auth.currentUser) {
-                showStatus("Please wait, connecting to cloud...");
+        window.addHolding = async function() {
+            if (!window.currentUser) return;
+            
+            const type = document.getElementById('asset-type').value;
+            let data = { type: type, timestamp: new Date().toISOString() };
+
+            if (type === 'stock') {
+                const ticker = document.getElementById('s-ticker').value.toUpperCase();
+                const qty = parseFloat(document.getElementById('s-qty').value);
+                const currentPrice = parseFloat(document.getElementById('s-current').value);
+                
+                if (!ticker || isNaN(qty) || isNaN(currentPrice)) {
+                    showMessage("Please fill Ticker, Shares, and Current Price."); return;
+                }
+                
+                data = {
+                    ...data,
+                    market: document.getElementById('s-market').value.toUpperCase(),
+                    ticker: ticker,
+                    currency: document.getElementById('s-currency').value.toUpperCase(),
+                    buyPrice: parseFloat(document.getElementById('s-buy').value) || 0,
+                    currentPrice: currentPrice,
+                    qty: qty,
+                    purchaseDate: document.getElementById('s-date').value
+                };
+            } else {
+                const currency = document.getElementById('c-currency').value.toUpperCase();
+                const amount = parseFloat(document.getElementById('c-amount').value);
+                
+                if (!currency || isNaN(amount)) {
+                    showMessage("Please fill Currency and Total Amount."); return;
+                }
+                
+                data = {
+                    ...data,
+                    ticker: currency + ' (Cash)',
+                    currency: currency,
+                    amount: amount,
+                    currentPrice: 1,
+                    qty: amount, 
+                    interestRate: parseFloat(document.getElementById('c-rate').value) || 0
+                };
+            }
+
+            try {
+                const holdingsRef = collection(db, 'artifacts', appId, 'users', window.currentUser.uid, 'holdings');
+                await addDoc(holdingsRef, data);
+                
+                document.querySelectorAll('input').forEach(i => {
+                    if(i.type !== 'range' && i.id !== 's-currency' && i.id !== 'c-currency') i.value = '';
+                });
+            } catch (e) {
+                console.error("Error adding:", e);
+                showMessage("Failed to add holding.");
+            }
+        }
+
+        window.deleteHolding = async function(id) {
+            if (!window.currentUser) return;
+            try {
+                await deleteDoc(doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'holdings', id));
+            } catch (e) {
+                console.error("Error deleting:", e);
+            }
+        }
+
+        // --- UI & LOGIC ---
+        function updateUI() {
+            window.totalPortfolioValue = window.portfolioHoldings.reduce((sum, h) => sum + (h.qty * h.currentPrice), 0);
+            document.getElementById('total-value-display').innerText = formatMoney(window.totalPortfolioValue);
+            
+            runFutureMath();
+
+            const tbody = document.getElementById('holdings-list');
+            const emptyState = document.getElementById('empty-state');
+            
+            tbody.innerHTML = '';
+            if (window.portfolioHoldings.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                
+                const sorted = [...window.portfolioHoldings].sort((a,b) => (b.qty * b.currentPrice) - (a.qty * a.currentPrice));
+
+                sorted.forEach(h => {
+                    const val = h.qty * h.currentPrice;
+                    const weight = window.totalPortfolioValue > 0 ? ((val / window.totalPortfolioValue) * 100).toFixed(1) : 0;
+                    
+                    let assetHtml = h.type === 'stock' 
+                        ? `<div class="font-bold">${h.ticker} <span class="text-[10px] text-slate-500 font-normal ml-1 border border-slate-600 px-1 rounded">${h.market}</span></div>`
+                        : `<div class="font-bold text-emerald-400"><i class="fa-solid fa-money-bill-wave mr-1"></i> ${h.ticker}</div><div class="text-xs text-slate-500">Yield: ${h.interestRate}%</div>`;
+
+                    tbody.innerHTML += `
+                        <tr class="border-b border-slate-800 hover:bg-slate-800/50 transition">
+                            <td class="py-3 pr-2">${assetHtml}</td>
+                            <td class="py-3 text-slate-300 pr-2">${h.qty.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:4})}</td>
+                            <td class="py-3 text-slate-300 pr-2">${formatMoney(h.currentPrice, h.currency)}</td>
+                            <td class="py-3 font-medium text-white pr-2">${formatMoney(val, h.currency)}</td>
+                            <td class="py-3 text-blue-400 font-medium pr-2">${weight}%</td>
+                            <td class="py-3 text-right">
+                                <button onclick="deleteHolding('${h.id}')" class="text-red-400 hover:text-red-300 p-2"><i class="fa-solid fa-trash"></i></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            renderAnalysisCards();
+        }
+
+        window.toggleAssetForm = function() {
+            const type = document.getElementById('asset-type').value;
+            if (type === 'stock') {
+                document.getElementById('form-stock').classList.remove('hidden');
+                document.getElementById('form-cash').classList.add('hidden');
+            } else {
+                document.getElementById('form-stock').classList.add('hidden');
+                document.getElementById('form-cash').classList.remove('hidden');
+            }
+        }
+
+        window.switchTab = function(tab) {
+            ['holdings', 'analysis', 'future'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`tab-btn-${t}`).classList.remove('tab-active');
+            });
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-btn-${tab}`).classList.add('tab-active');
+        }
+
+        // --- FUTURE PLAN MATH ---
+        function runFutureMath() {
+            const pv = window.totalPortfolioValue || 1000;
+
+            const r1 = parseFloat(document.getElementById('slide-return').value) / 100;
+            const t1 = parseInt(document.getElementById('slide-years1').value);
+            const fv1 = pv * Math.pow(1 + r1, t1);
+            document.getElementById('calc1-result').innerText = formatMoney(fv1);
+
+            let targetFv = parseFloat(document.getElementById('slide-target').value);
+            const t2 = parseInt(document.getElementById('slide-years2').value);
+            
+            if(pv > 0) document.getElementById('slide-target').min = Math.floor(pv);
+
+            let reqRate = 0;
+            if (pv > 0 && targetFv > pv) {
+                reqRate = (Math.pow(targetFv / pv, 1 / t2) - 1) * 100;
+            }
+            
+            const reqDisplay = Math.max(0, reqRate);
+            document.getElementById('calc2-result').innerText = reqDisplay.toFixed(2) + '%';
+
+            const riskEl = document.getElementById('calc2-risk');
+            if (reqDisplay < 4) { riskEl.innerHTML = "Risk Profile: <strong>Conservative</strong>"; riskEl.className = "text-xs mt-2 px-2 py-1 bg-green-900/50 text-green-400 rounded inline-block"; }
+            else if (reqDisplay < 8) { riskEl.innerHTML = "Risk Profile: <strong>Moderate</strong>"; riskEl.className = "text-xs mt-2 px-2 py-1 bg-blue-900/50 text-blue-400 rounded inline-block"; }
+            else if (reqDisplay < 12) { riskEl.innerHTML = "Risk Profile: <strong>Aggressive</strong>"; riskEl.className = "text-xs mt-2 px-2 py-1 bg-orange-900/50 text-orange-400 rounded inline-block"; }
+            else { riskEl.innerHTML = "Risk Profile: <strong>Very High / Speculative</strong>"; riskEl.className = "text-xs mt-2 px-2 py-1 bg-red-900/50 text-red-400 rounded inline-block"; }
+            
+            window.requiredRiskRate = reqDisplay;
+        }
+
+        ['slide-return', 'slide-years1', 'slide-target', 'slide-years2'].forEach(id => {
+            document.getElementById(id).addEventListener('input', (e) => {
+                let val = e.target.value;
+                if (id === 'slide-return') document.getElementById('val-return').innerText = val + '%';
+                if (id === 'slide-years1') document.getElementById('val-years1').innerText = val + ' Yrs';
+                if (id === 'slide-target') document.getElementById('val-target').innerText = formatMoney(val).split('.')[0];
+                if (id === 'slide-years2') document.getElementById('val-years2').innerText = val + ' Yrs';
+                runFutureMath();
+            });
+        });
+
+        // --- AI ANALYSIS (GEMINI) ---
+        const geminiApiKey = ""; 
+        
+        function getMockYTD(ticker) {
+            let hash = 0;
+            for (let i = 0; i < ticker.length; i++) hash = ticker.charCodeAt(i) + ((hash << 5) - hash);
+            return ((hash % 400) / 10).toFixed(1);
+        }
+
+        function renderAnalysisCards() {
+            const container = document.getElementById('analysis-cards');
+            container.innerHTML = '';
+            
+            const stocks = window.portfolioHoldings.filter(h => h.type === 'stock');
+            
+            if (stocks.length === 0) {
+                container.innerHTML = '<div class="col-span-3 text-slate-500 text-sm">Add stock holdings to see individual analysis.</div>';
                 return;
             }
-            
-            let filesProcessed = 0;
-            let filesWithNoGPS = 0;
-            let newMarkersAdded = false;
 
-            showStatus("Processing and safely saving images... (This may take a moment)");
+            stocks.forEach(s => {
+                const ytd = getMockYTD(s.ticker);
+                const color = parseFloat(ytd) >= 0 ? 'text-green-400' : 'text-red-400';
+                const sign = parseFloat(ytd) >= 0 ? '+' : '';
 
-            const photosRef = collection(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'photos');
+                container.innerHTML += `
+                    <div class="bg-slate-800 rounded-lg p-4 border border-slate-700 flex flex-col justify-between">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <div class="font-bold text-lg">${s.ticker}</div>
+                                <div class="text-xs text-slate-400">${s.market}</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-slate-400">YTD (Est)</div>
+                                <div class="font-medium ${color}">${sign}${ytd}%</div>
+                            </div>
+                        </div>
+                        <button onclick="analyzeStock('${s.ticker}')" class="mt-4 w-full bg-slate-700 hover:bg-slate-600 text-sm py-1.5 rounded transition">
+                            <i class="fa-solid fa-magnifying-glass mr-1"></i> Analyze
+                        </button>
+                    </div>
+                `;
+            });
+        }
 
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                const isHeic = file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
-                
-                if (!file.type.startsWith('image/') && !isHeic) continue;
+        async function fetchGemini(prompt) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${geminiApiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: "You are a top-tier, excellent market analyst on Wall Street. You provide concise, data-driven, professional, and highly insightful financial analysis formatted clearly in Markdown." }] }
+            };
 
-                filesProcessed++;
-
+            for (let i = 0; i < 3; i++) {
                 try {
-                    // Extract GPS data using exifr (works on original HEIC)
-                    const gpsData = await exifr.gps(file);
-                    
-                    if (gpsData && gpsData.latitude != null && gpsData.longitude != null) {
-                        let displayFile = file;
-
-                        // Convert HEIC to JPEG so standard browsers can render it on canvas
-                        if (isHeic) {
-                            try {
-                                const convertedBlob = await heic2any({
-                                    blob: file,
-                                    toType: "image/jpeg",
-                                    quality: 0.6 // Slightly lower quality for faster conversion memory
-                                });
-                                displayFile = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
-                                displayFile.name = file.name; // Keep original name for UI
-                            } catch (err) {
-                                console.error("HEIC conversion failed for", file.name, err);
-                                continue;
-                            }
-                        }
-
-                        // Generate small thumbnail to save in cloud
-                        const thumbnailBase64 = await createThumbnailBase64(displayFile);
-                        
-                        // Save to Cloud Storage (this triggers the onSnapshot listener to update the map automatically)
-                        await addDoc(photosRef, {
-                            name: file.name,
-                            lat: gpsData.latitude,
-                            lng: gpsData.longitude,
-                            thumbnailBase64: thumbnailBase64,
-                            timestamp: Date.now(),
-                            revenueRank: 'U',    // Default Unranked
-                            likelihoodRank: 'U', // Default Unranked
-                            kept: false
-                        });
-
-                        newMarkersAdded = true;
+                    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    const result = await response.json();
+                    if (result.candidates && result.candidates[0]) {
+                        return result.candidates[0].content.parts[0].text;
                     } else {
-                        filesWithNoGPS++;
+                        throw new Error("Invalid API response");
                     }
                 } catch (error) {
-                    console.error("Error parsing EXIF for", file.name, error);
-                    filesWithNoGPS++;
+                    if (i === 2) return `*Analysis unavailable at this time.* Error: ${error.message}`;
+                    await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
                 }
             }
-
-            // Update UI based on results
-            if (filesProcessed === 0) {
-                showStatus("Please upload valid image files (JPEG, PNG, WEBP, HEIC).");
-            } else if (filesWithNoGPS > 0) {
-                showStatus(`${filesWithNoGPS} photo(s) didn't have GPS metadata and were skipped.`);
-            } else if (newMarkersAdded) {
-                showStatus("Photos successfully saved to your cloud space!");
-            }
-            
-            // Reset input so the same files can be selected again if needed
-            fileInput.value = '';
         }
 
-        // --- Core Item Logic ---
+        window.analyzePortfolio = async function() {
+            if (window.portfolioHoldings.length === 0) {
+                showMessage("Your portfolio is empty. Add holdings first."); return;
+            }
 
-        function addPhotoToMap(docId, data) {
-            // Create the Marker
-            const marker = L.marker([data.lat, data.lng], { 
-                icon: createCustomIcon(data.thumbnailBase64, data.kept) 
-            });
+            document.getElementById('portfolio-analysis-result').classList.remove('hidden');
+            document.getElementById('pa-loader').classList.remove('hidden');
+            document.getElementById('pa-content').innerHTML = '';
 
-            // Format coordinates for display
-            const latStr = data.lat.toFixed(5);
-            const lngStr = data.lng.toFixed(5);
+            const reqRate = window.requiredRiskRate ? window.requiredRiskRate.toFixed(2) : '8.00';
+            let pData = window.portfolioHoldings.map(h => {
+                const val = h.qty * h.currentPrice;
+                const weight = ((val / window.totalPortfolioValue) * 100).toFixed(1);
+                return `${h.ticker} (${h.type}): $${val.toFixed(2)} (${weight}%)`;
+            }).join(", ");
 
-            // Create Popup Content
-            const popupContent = `
-                <div class="bg-white">
-                    <img src="${data.thumbnailBase64}" class="popup-image" alt="Captured photo" />
-                    <div class="popup-details">
-                        <h3 class="font-semibold text-slate-800 text-sm truncate" title="${data.name}">${data.name}</h3>
-                        <p class="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                            <i data-lucide="navigation" class="w-3 h-3"></i>
-                            ${latStr}, ${lngStr}
-                        </p>
-                        ${data.kept ? `<div class="mt-2 text-xs font-bold text-emerald-600">✓ Kept</div>` : ''}
-                    </div>
-                </div>
+            const prompt = `
+                I am a stock market investor. 
+                My current portfolio total value is $${window.totalPortfolioValue.toFixed(2)}. 
+                Based on my future plan calculations, I require an average annual return of ${reqRate}% to reach my retirement/financial goals. Use this required return rate to establish my tolerance for risk (e.g. higher required return = requires higher risk tolerance).
+                
+                Here are my current holdings and their weightings:
+                ${pData}
+
+                Please provide a strong, expert analysis of my portfolio overall. 
+                You MUST include:
+                1. Portfolio weighting critique.
+                2. Current Market dynamics affecting this mix.
+                3. A 12-month outlook for these stocks with a "Risk Coefficient" score (1-10).
+                4. The estimated % of top Wall Street analysts who currently rate my major holdings as a Buy, Sell, and Hold.
             `;
 
-            marker.bindPopup(popupContent, { maxWidth: 250 });
-            
-            // Save to state
-            state.markers[docId] = { docId, data, marker, galleryItem: null };
-
-            // Re-initialize lucide icons for the newly injected popup
-            marker.on('popupopen', () => {
-                lucide.createIcons();
-            });
-
-            // Create Sidebar Gallery Card
-            createGalleryItem(docId);
+            const markdown = await fetchGemini(prompt);
+            document.getElementById('pa-loader').classList.add('hidden');
+            document.getElementById('pa-content').innerHTML = marked.parse(markdown);
         }
 
-        function updatePhotoInMap(docId, data) {
-            const item = state.markers[docId];
-            if (!item) return;
+        window.analyzeStock = async function(ticker) {
+            document.getElementById('analysis-modal').classList.remove('hidden');
+            document.getElementById('modal-loader').classList.remove('hidden');
+            document.getElementById('modal-content').innerHTML = '';
+            document.getElementById('modal-title').innerText = `${ticker} Analysis`;
 
-            item.data = data;
+            const reqRate = window.requiredRiskRate ? window.requiredRiskRate.toFixed(2) : '8.00';
             
-            // Update Marker Icon silently (retains popup state if open)
-            item.marker.setIcon(createCustomIcon(data.thumbnailBase64, data.kept));
-            
-            // Update DOM element directly so we don't lose scroll position
-            updateGalleryItemDOM(docId);
-        }
-
-        function removePhotoFromMap(docId) {
-            const item = state.markers[docId];
-            if (!item) return;
-
-            // Remove from map & DOM
-            item.marker.remove();
-            if (item.galleryItem) item.galleryItem.remove();
-            
-            delete state.markers[docId];
-        }
-
-        // --- View & Interaction Logic ---
-
-        function applyFilters() {
-            let visibleCount = 0;
-
-            Object.values(state.markers).forEach(item => {
-                const isRevenueMatch = state.filters.revenue.has(item.data.revenueRank);
-                const isLikelihoodMatch = state.filters.likelihood.has(item.data.likelihoodRank);
+            const prompt = `
+                I hold the stock ${ticker} in my portfolio.
+                My future financial plan requires an overall annual return of ${reqRate}%, defining my baseline risk tolerance.
                 
-                const isVisible = isRevenueMatch && isLikelihoodMatch;
-
-                if (isVisible) {
-                    item.marker.addTo(markersGroup);
-                    if (item.galleryItem) item.galleryItem.style.display = 'flex';
-                    visibleCount++;
-                } else {
-                    item.marker.remove();
-                    if (item.galleryItem) item.galleryItem.style.display = 'none';
-                }
-            });
-
-            photoCountEl.textContent = visibleCount;
-        }
-
-        // Helper to generate the rank toggle buttons
-        function getRankButtons(docId, category, currentRank) {
-            const ranks = ['H', 'M', 'L'];
-            let html = '';
-            ranks.forEach(r => {
-                const isActive = r === currentRank;
-                const activeClasses = isActive ? 'bg-indigo-600 text-white border-indigo-600 shadow-inner' : 'bg-white text-slate-600 border-gray-200 hover:bg-slate-50';
-                html += `<button onclick="updateRank('${docId}', '${category}', '${r}')" class="flex-1 border text-xs py-1 rounded transition-colors ${activeClasses}">${r}</button>`;
-            });
-            return html;
-        }
-
-        function createGalleryItem(docId) {
-            const itemState = state.markers[docId];
-            if (!itemState) return;
-
-            const item = document.createElement('div');
-            itemState.galleryItem = item;
-            
-            // Initial render
-            updateGalleryItemDOM(docId);
-            gallery.prepend(item);
-        }
-
-        function updateGalleryItemDOM(docId) {
-            const itemState = state.markers[docId];
-            if (!itemState || !itemState.galleryItem) return;
-
-            const data = itemState.data;
-            const item = itemState.galleryItem;
-            
-            // Update classes based on kept state
-            const borderClass = data.kept ? 'border-emerald-400 shadow-md ring-1 ring-emerald-400' : 'border-gray-200 shadow-sm';
-            
-            item.className = `flex flex-col bg-white rounded-xl overflow-hidden transition-all border ${borderClass}`;
-            
-            item.innerHTML = `
-                <div class="relative h-32 cursor-pointer group" onclick="flyToMarker('${docId}')">
-                    <img src="${data.thumbnailBase64}" class="w-full h-full object-cover" alt="${data.name}">
-                    <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
-                    <button class="absolute bottom-2 right-2 bg-black/50 text-white rounded-full p-1.5 hover:bg-indigo-500 transition-colors shadow-sm" title="View on map">
-                        <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
-                    </button>
-                    ${data.kept ? '<div class="absolute top-2 right-2 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">KEPT</div>' : ''}
-                </div>
-                
-                <div class="p-3 flex-1 flex flex-col">
-                    <h4 class="text-xs font-bold text-slate-800 truncate mb-3" title="${data.name}">${data.name}</h4>
-                    
-                    <!-- Rankings -->
-                    <div class="space-y-2 mb-4">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[10px] font-semibold text-slate-500 uppercase">Revenue</span>
-                            <div class="flex gap-1 w-24">
-                                ${getRankButtons(docId, 'revenueRank', data.revenueRank)}
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-[10px] font-semibold text-slate-500 uppercase">Likelihood</span>
-                            <div class="flex gap-1 w-24">
-                                ${getRankButtons(docId, 'likelihoodRank', data.likelihoodRank)}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-auto pt-3 border-t border-gray-100 flex gap-2">
-                        <button onclick="toggleKeep('${docId}')" class="flex-1 flex items-center justify-center gap-1 py-1.5 rounded text-xs font-medium transition-colors ${data.kept ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' : 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600'}">
-                            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
-                            ${data.kept ? 'Kept' : 'Keep'}
-                        </button>
-                        <button onclick="deletePhoto('${docId}')" class="flex-1 flex items-center justify-center gap-1 py-1.5 rounded text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-colors">
-                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                            Remove
-                        </button>
-                    </div>
-                </div>
+                Act as an excellent market analyst. Provide an analysis specifically for ${ticker}.
+                You MUST include:
+                1. How this stock fits into a portfolio aiming for a ${reqRate}% return.
+                2. Market dynamics currently pushing or pulling this specific stock.
+                3. A 12-month outlook for ${ticker} with a specific Risk Coefficient score (1-10).
+                4. The general consensus % of top analysts who rate it a Buy, Sell, and Hold.
             `;
-            
-            // Re-initialize icons for this specific element
-            lucide.createIcons({ root: item });
+
+            const markdown = await fetchGemini(prompt);
+            document.getElementById('modal-loader').classList.add('hidden');
+            document.getElementById('modal-content').innerHTML = marked.parse(markdown);
         }
 
-        // --- Interaction Functions (Global Scope for inline onclick) ---
+        window.closeModal = function() {
+            document.getElementById('analysis-modal').classList.add('hidden');
+        }
 
-        window.flyToMarker = function(docId) {
-            const item = state.markers[docId];
-            if (!item) return;
-            
-            map.flyTo([item.data.lat, item.data.lng], 16, { duration: 1.5 });
-            
-            setTimeout(() => {
-                item.marker.openPopup();
-            }, 1000);
-        };
-
-        window.updateRank = async function(docId, field, value) {
-            if (!auth.currentUser) return;
-            const item = state.markers[docId];
-            if (!item) return;
-
-            // Optimistic UI update
-            item.data[field] = value;
-            updateGalleryItemDOM(docId);
-            applyFilters();
-
-            // Cloud update
-            try {
-                const docRef = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'photos', docId);
-                await updateDoc(docRef, { [field]: value });
-            } catch (err) {
-                console.error("Error updating rank:", err);
-                showStatus("Failed to save rank to cloud.");
-            }
-        };
-
-        window.toggleKeep = async function(docId) {
-            if (!auth.currentUser) return;
-            const item = state.markers[docId];
-            if (!item) return;
-
-            const newKeptStatus = !item.data.kept;
-            
-            // Optimistic UI update
-            item.data.kept = newKeptStatus;
-            updateGalleryItemDOM(docId);
-            item.marker.setIcon(createCustomIcon(item.data.thumbnailBase64, newKeptStatus));
-
-            // Cloud update
-            try {
-                const docRef = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'photos', docId);
-                await updateDoc(docRef, { kept: newKeptStatus });
-            } catch (err) {
-                console.error("Error updating kept status:", err);
-                showStatus("Failed to save status to cloud.");
-            }
-        };
-
-        window.deletePhoto = async function(docId) {
-            if (!auth.currentUser) return;
-
-            // Remove from UI immediately for responsiveness
-            removePhotoFromMap(docId);
-            applyFilters();
-
-            // Cloud update
-            try {
-                const docRef = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'photos', docId);
-                await deleteDoc(docRef);
-            } catch (err) {
-                console.error("Error deleting photo:", err);
-                showStatus("Failed to delete photo from cloud.");
-            }
-        };
-
-        // Handle Map Resize when window changes
-        window.addEventListener('resize', () => {
-            map.invalidateSize();
-        });
+        function formatMoney(amount, currency = 'USD') {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency }).format(amount);
+        }
+        
+        function showMessage(msg) {
+            const t = document.createElement('div');
+            t.className = 'fixed bottom-4 right-4 bg-slate-800 border border-slate-600 text-white px-4 py-3 rounded shadow-lg z-50';
+            t.innerText = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
     </script>
 </body>
 </html>
