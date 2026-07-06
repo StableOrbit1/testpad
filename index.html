@@ -36,7 +36,7 @@
             height: 24px;
             animation: spin 1s linear infinite;
         }
-        .loader-sm { width: 16px; height: 16px; border-width: 2px; }
+        .loader-sm { width: 14px; height: 14px; border-width: 2px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .markdown-body h3 { font-size: 1.1rem; font-weight: 600; margin-top: 1rem; color: #94a3b8; }
@@ -286,12 +286,12 @@
                                 <i class="fa-solid fa-satellite-dish text-blue-400"></i> Live Market Connect
                             </h4>
                             <p class="text-xs text-slate-400 mt-1 max-w-lg">
-                                Enter your free API key from <a href="https://twelvedata.com/" target="_blank" class="text-blue-400 hover:underline">twelvedata.com</a> to pull live 1D and 1W performance metrics. Key saves to your private profile.
+                                Enter your free API key from <a href="https://twelvedata.com/" target="_blank" class="text-blue-400 hover:underline">twelvedata.com</a>. This syncs safely within the 8 calls/minute limit.
                             </p>
                         </div>
                         <div class="flex items-center gap-2 w-full lg:w-auto">
                             <input type="text" id="twelve-data-key" placeholder="Twelve Data API Key" class="bg-[#0f172a] border border-slate-600 rounded p-2 text-white text-sm outline-none focus:border-blue-500 w-full lg:w-64 font-mono">
-                            <button onclick="saveAndFetchLiveMarketData()" id="btn-fetch-live" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded text-sm transition flex items-center gap-2 whitespace-nowrap">
+                            <button onclick="saveAndFetchLiveMarketData()" id="btn-fetch-live" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded text-sm transition flex items-center justify-center gap-2 whitespace-nowrap min-w-[100px]">
                                 <i class="fa-solid fa-cloud-arrow-down"></i> Sync
                             </button>
                         </div>
@@ -564,17 +564,14 @@
 
         // --- DATABASE OPERATIONS ---
         function loadData(userId) {
-            // Load Settings (Twelve Data API Key)
             const settingsRef = doc(db, 'artifacts', appId, 'users', userId, 'settings', 'config');
             unsubscribeSettings = onSnapshot(settingsRef, (snap) => {
                 if (snap.exists() && snap.data().twelveDataKey) {
                     document.getElementById('twelve-data-key').value = snap.data().twelveDataKey;
-                    // Attempt initial fetch if key is present
                     if (Object.keys(window.liveMarketData).length === 0) fetchLiveMarketData();
                 }
             }, (error) => { console.error("Firestore error loading settings:", error); });
 
-            // Load Holdings
             const holdingsRef = collection(db, 'artifacts', appId, 'users', userId, 'holdings');
             unsubscribeHoldings = onSnapshot(holdingsRef, (snapshot) => {
                 window.portfolioHoldings = [];
@@ -584,7 +581,6 @@
                 updateUI();
             }, (error) => { console.error("Firestore error:", error); });
 
-            // Load History for Performance Tab
             const historyRef = collection(db, 'artifacts', appId, 'users', userId, 'history');
             unsubscribeHistory = onSnapshot(historyRef, (snapshot) => {
                 window.portfolioHistory = [];
@@ -603,7 +599,6 @@
             const now = Date.now();
             const lastEntry = window.portfolioHistory[0]; 
             
-            // 7 days interval
             if (!lastEntry || (now - lastEntry.timestamp > 604800000)) {
                 try {
                     const hRef = collection(db, 'artifacts', appId, 'users', window.currentUser.uid, 'history');
@@ -663,7 +658,6 @@
                 document.querySelectorAll('input').forEach(i => {
                     if(i.type !== 'range' && i.id !== 'fx-rate' && i.id !== 'twelve-data-key') i.value = '';
                 });
-                // Fetch data for the newly added stock if key exists
                 if (document.getElementById('twelve-data-key').value) fetchLiveMarketData();
             } catch (e) { showMessage("Failed to add holding."); }
         }
@@ -674,14 +668,13 @@
             catch (e) { console.error("Error deleting:", e); }
         }
 
-        // --- TWELVE DATA API LOGIC ---
+        // --- TWELVE DATA API LOGIC (WITH RATE LIMIT HANDLING) ---
         window.saveAndFetchLiveMarketData = async function() {
             const key = document.getElementById('twelve-data-key').value.trim();
             if (!key) {
                 showMessage("Please enter a valid API key first.");
                 return;
             }
-            // Save to Firebase securely
             if (window.currentUser) {
                 try {
                     const settingsRef = doc(db, 'artifacts', appId, 'users', window.currentUser.uid, 'settings', 'config');
@@ -695,69 +688,89 @@
             const apiKey = document.getElementById('twelve-data-key').value.trim();
             if (!apiKey) return;
 
-            const stocks = window.portfolioHoldings.filter(h => h.type === 'stock').map(s => s.ticker);
-            if (stocks.length === 0) return;
+            // Use a Set to remove duplicate tickers so we don't waste API calls
+            const uniqueStocks = [...new Set(window.portfolioHoldings.filter(h => h.type === 'stock').map(s => s.ticker))];
+            if (uniqueStocks.length === 0) return;
 
             const btn = document.getElementById('btn-fetch-live');
             const originalBtnHtml = btn.innerHTML;
-            btn.innerHTML = `<div class="loader loader-sm"></div> Syncing...`;
             btn.disabled = true;
 
-            const symbols = stocks.join(',');
+            let processed = 0;
 
-            try {
-                // Fetch 1D Quote data (bulk)
-                const quoteRes = await fetch(`https://api.twelvedata.com/quote?symbol=${symbols}&apikey=${apiKey}`);
-                const quoteData = await quoteRes.json();
-
-                if (quoteData.status === 'error') throw new Error(quoteData.message);
-
-                // Fetch 1W Historical data (bulk)
-                const tsRes = await fetch(`https://api.twelvedata.com/time_series?symbol=${symbols}&interval=1week&outputsize=2&apikey=${apiKey}`);
-                const tsData = await tsRes.json();
-
-                if (tsData.status === 'error') throw new Error(tsData.message);
-
-                // Normalize data structure based on if 1 symbol or multiple returned
-                let quotes = stocks.length === 1 ? { [stocks[0]]: quoteData } : quoteData;
-                let timeSeries = stocks.length === 1 ? { [stocks[0]]: tsData } : tsData;
-
-                stocks.forEach(ticker => {
-                    let dayChange = '--';
-                    let weekChange = '--';
-                    let currentPrice = null;
-
-                    if (quotes[ticker] && quotes[ticker].percent_change) {
-                        dayChange = parseFloat(quotes[ticker].percent_change).toFixed(2);
-                        currentPrice = parseFloat(quotes[ticker].close);
+            // Helper function that handles fetching and automatically pauses on 429 limits
+            const fetchWithRetry = async (url, symbol) => {
+                while (true) {
+                    try {
+                        const res = await fetch(url);
+                        const data = await res.json();
+                        
+                        if (data.status === 'error') {
+                            if (data.code === 429) {
+                                // 8 calls/min limit reached. Inform user and wait 60s.
+                                btn.innerHTML = `<div class="loader loader-sm"></div> API Limit. Pausing 60s...`;
+                                await new Promise(r => setTimeout(r, 61000));
+                                btn.innerHTML = `<div class="loader loader-sm"></div> Resuming ${symbol}...`;
+                                continue; // Loop restarts and tries again
+                            } else {
+                                console.error(`API Error for ${symbol}:`, data.message);
+                                return null;
+                            }
+                        }
+                        return data;
+                    } catch (err) {
+                        console.error("Network error:", err);
+                        return null;
                     }
+                }
+            };
 
-                    if (timeSeries[ticker] && timeSeries[ticker].values && timeSeries[ticker].values.length > 1) {
-                        const currentClose = parseFloat(timeSeries[ticker].values[0].close);
-                        const prevClose = parseFloat(timeSeries[ticker].values[1].close);
-                        weekChange = (((currentClose - prevClose) / prevClose) * 100).toFixed(2);
-                    }
+            // Loop through stocks one by one to respect limits and update UI progressively
+            for (const symbol of uniqueStocks) {
+                btn.innerHTML = `<div class="loader loader-sm"></div> Syncing ${symbol} (${processed + 1}/${uniqueStocks.length})...`;
 
-                    window.liveMarketData[ticker] = { day: dayChange, week: weekChange, currentPrice };
-                });
+                let dayChange = '--';
+                let weekChange = '--';
+                let currentPrice = null;
 
-                showMessage("Live market data updated successfully!");
-                updateUI(); // Re-render tables with new data
+                // 1. Fetch live quote
+                const quoteUrl = `https://api.twelvedata.com/quote?symbol=${symbol}&apikey=${apiKey}`;
+                const quoteData = await fetchWithRetry(quoteUrl, symbol);
+                
+                if (quoteData) {
+                    currentPrice = parseFloat(quoteData.close);
+                    dayChange = parseFloat(quoteData.percent_change).toFixed(2);
+                }
 
-            } catch (error) {
-                console.error("Twelve Data API Error:", error);
-                showMessage("API Error: " + error.message);
-            } finally {
-                btn.innerHTML = originalBtnHtml;
-                btn.disabled = false;
+                // 2. Fetch 1W time series
+                const tsUrl = `https://api.twelvedata.com/time_series?symbol=${symbol}&interval=1week&outputsize=2&apikey=${apiKey}`;
+                const tsData = await fetchWithRetry(tsUrl, symbol);
+
+                if (tsData && tsData.values && tsData.values.length > 1) {
+                    const currentWeekClose = parseFloat(tsData.values[0].close);
+                    const prevWeekClose = parseFloat(tsData.values[1].close);
+                    weekChange = (((currentWeekClose - prevWeekClose) / prevWeekClose) * 100).toFixed(2);
+                }
+
+                // Save to memory
+                window.liveMarketData[symbol] = { day: dayChange, week: weekChange, currentPrice };
+                processed++;
+                
+                // Update table immediately so the user sees progress
+                updateUI();
+                
+                // Small 1.5s delay between stocks to prevent rapid bursting within the limit
+                await new Promise(r => setTimeout(r, 1500));
             }
+
+            btn.innerHTML = originalBtnHtml;
+            btn.disabled = false;
         }
 
         // --- UI & LOGIC ---
         window.updateUI = function() {
             const fxRate = parseFloat(document.getElementById('fx-rate').value) || 1.35;
             
-            // Calculate total portfolio value strictly in CAD
             let totalCAD = 0;
             const processedHoldings = window.portfolioHoldings.map(h => {
                 const nativeVal = h.qty * h.currentPrice;
