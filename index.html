@@ -3,239 +3,442 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BattleTags | Epic Photo Mosaic</title>
+    <title>BattleTags Member Impact Survey</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { background-color: #020617; /* slate-950 */ overflow-x: hidden; }
-        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #10b981; }
-        
-        /* Ensures the grid items are perfectly square and responsive */
-        .mosaic-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 4px;
-            padding: 4px;
+        /* Custom Golf-themed accents */
+        :root {
+            --brand-green: #15803d; /* Tailwind green-700 */
+            --brand-light: #dcfce7; /* Tailwind green-100 */
         }
-        @media (min-width: 768px) {
-            .mosaic-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; padding: 8px; }
+        .accent-brand {
+            accent-color: var(--brand-green);
         }
     </style>
 </head>
-<body class="text-slate-200 h-screen flex flex-col custom-scrollbar">
+<body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen">
 
-    <!-- Loading Screen -->
-    <div id="screen-loading" class="fixed inset-0 z-[200] bg-slate-950 flex flex-col items-center justify-center transition-opacity duration-500">
-        <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-emerald-500 mb-4"></i>
-        <div class="font-black text-slate-400 uppercase tracking-widest text-sm">Syncing Vault...</div>
-    </div>
+    <!-- Header -->
+    <header class="bg-green-700 text-white py-6 shadow-md">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-2xl md:text-3xl font-bold tracking-tight">BattleTags Member Impact</h1>
+            <p class="mt-2 text-green-100 text-sm md:text-base">Help us shape the future of golf community engagement.</p>
+        </div>
+    </header>
 
-    <!-- Floating Top Nav / Filter -->
-    <div class="fixed top-6 left-1/2 -translate-x-1/2 z-40 w-[90%] max-w-lg">
-        <div class="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 p-3 md:p-4 rounded-3xl shadow-2xl flex items-center gap-3 transition-all hover:border-emerald-500/50">
-            <div class="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center shrink-0 shadow-inner border border-emerald-500/30">
-                <i data-lucide="search" class="w-5 h-5"></i>
-            </div>
-            <div class="relative w-full">
-                <select id="player-selector" onchange="renderMosaic(this.value)" class="w-full bg-transparent text-white font-bold outline-none cursor-pointer appearance-none text-sm md:text-base">
-                    <option value="" class="bg-slate-900 text-white">Global Mosaic (All Evidence)</option>
-                </select>
-                <div class="absolute inset-y-0 right-2 flex items-center pointer-events-none text-slate-400">
-                    <i data-lucide="chevron-down" class="w-4 h-4"></i>
+    <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-700 mb-4"></div>
+            <p class="text-gray-500">Connecting securely...</p>
+        </div>
+
+        <!-- Success Message (Hidden by default) -->
+        <div id="successMessage" class="hidden bg-green-50 border border-green-200 rounded-xl p-8 text-center shadow-sm">
+            <svg class="w-16 h-16 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Thank you!</h2>
+            <p class="text-gray-600">Your feedback has been securely submitted. We appreciate you being part of the BattleTags pilot.</p>
+        </div>
+
+        <!-- Error Message (Hidden by default) -->
+        <div id="errorMessage" class="hidden bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6 shadow-sm">
+            <p id="errorText" class="font-medium">An error occurred. Please try again.</p>
+        </div>
+
+        <!-- Survey Form -->
+        <form id="surveyForm" class="hidden space-y-10 bg-white p-6 md:p-8 rounded-xl shadow-sm border border-gray-100">
+            
+            <!-- Section 1 -->
+            <section class="space-y-6">
+                <div class="border-b border-gray-200 pb-2 mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900">Section 1: Course Utilization & Play Frequency</h2>
                 </div>
+
+                <div class="space-y-3">
+                    <label class="block font-medium text-gray-900 text-lg">1. Compared to this time last season, how has participating in BattleTags impacted the number of rounds you played?</label>
+                    <div class="space-y-2 pl-2">
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q1_rounds" value="Significantly more (30%+)" required class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>I played significantly more golf (30%+ more rounds)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q1_rounds" value="Noticeably more (10-25%)" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>I played noticeably more golf (10% to 25% more rounds)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q1_rounds" value="About the same" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>I played about the same amount of golf</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q1_rounds" value="Less" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>I played less golf</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <label class="block font-medium text-gray-900 text-lg">2. How often did you actively check the BattleTags app, leaderboard, or WhatsApp group during a typical week?</label>
+                    <div class="space-y-2 pl-2">
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q2_app_checks" value="Daily / Multiple times a day" required class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>Daily / Multiple times a day</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q2_app_checks" value="2 to 4 times a week" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>2 to 4 times a week</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q2_app_checks" value="Once a week" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>Once a week</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q2_app_checks" value="Rarely" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>Rarely</span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 2 -->
+            <section class="space-y-6">
+                <div class="border-b border-gray-200 pb-2 mb-6 mt-8">
+                    <h2 class="text-xl font-semibold text-gray-900">Section 2: Community & Clique Breaking</h2>
+                </div>
+
+                <div class="space-y-3">
+                    <label class="block font-medium text-gray-900 text-lg">3. Before this year’s BattleTags pilot, how many of the 27 participating golfers did you play with on a regular basis?</label>
+                    <div class="space-y-2 pl-2">
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q3_prior_golfers" value="0 to 2" required class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>0 to 2 golfers (I mostly stuck to my own small group/clique)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q3_prior_golfers" value="3 to 5" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>3 to 5 golfers</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q3_prior_golfers" value="6 to 7" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>6 to 7 golfers</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q3_prior_golfers" value="8+" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>8+ golfers</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <label class="block font-medium text-gray-900 text-lg">4. Because of BattleTags, how many <em>new</em> or unfamiliar club members did you play a round with this season?</label>
+                    <div class="space-y-2 pl-2">
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q4_new_golfers" value="1 to 2" required class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>1 to 2 new golfers</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q4_new_golfers" value="3 to 5" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>3 to 5 new golfers</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q4_new_golfers" value="6 to 10" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>6 to 10 new golfers</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q4_new_golfers" value="10+" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>10+ new golfers (Complete game-changer for my social circle)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <label class="block font-medium text-gray-900 text-lg">5. "BattleTags made me feel more connected to our clubhouse community and made it much easier to get a game when my regular group wasn't available."</label>
+                    <div class="space-y-2 pl-2">
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q5_connection" value="Strongly Agree" required class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>Strongly Agree</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q5_connection" value="Agree" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>Agree</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q5_connection" value="Neutral" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>Neutral</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q5_connection" value="Disagree" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>Disagree</span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 3 -->
+            <section class="space-y-6">
+                <div class="border-b border-gray-200 pb-2 mb-6 mt-8">
+                    <h2 class="text-xl font-semibold text-gray-900">Section 3: The 19th Hole & Clubhouse Spend</h2>
+                </div>
+
+                <div class="space-y-3">
+                    <label class="block font-medium text-gray-900 text-lg">6. After finishing a BattleTags match on the 18th green, how often did you stick around the clubhouse or bar to settle wagers, grab drinks, or check the gallery compared to a normal round?</label>
+                    <div class="space-y-2 pl-2">
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q6_19th_hole" value="Almost every time" required class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>Almost every time – it became a post-round ritual</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q6_19th_hole" value="More often than usual" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>More often than usual (about 50% of the time)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q6_19th_hole" value="No difference" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>No difference from my usual routine</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q6_19th_hole" value="Less often" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>Less often</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <label class="block font-medium text-gray-900 text-lg">7. If you had to estimate, how did BattleTags impact your spending on food, drinks, or pro shop items at the clubhouse this season?</label>
+                    <div class="space-y-2 pl-2">
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q7_spend" value="Noticeably more" required class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>I definitely spent noticeably more at the clubhouse/bar this season</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q7_spend" value="Slightly more" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>I spent slightly more</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q7_spend" value="No change" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>My spending didn't change</span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 4 -->
+            <section class="space-y-6">
+                <div class="border-b border-gray-200 pb-2 mb-6 mt-8">
+                    <h2 class="text-xl font-semibold text-gray-900">Section 4: The "Secret Sauce" & Testimonials</h2>
+                </div>
+
+                <div class="space-y-3">
+                    <label class="block font-medium text-gray-900 text-lg">8. Which aspect of the BattleTags pilot drove the most excitement and banter for you? (Select up to 2)</label>
+                    <div class="space-y-2 pl-2" id="q8_checkboxes">
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="checkbox" name="q8_excitement" value="Physical Tags" class="w-5 h-5 accent-brand cursor-pointer rounded">
+                            <span>The IRL physical bag tags (clipping someone's tag to my bag!)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="checkbox" name="q8_excitement" value="Leaderboard" class="w-5 h-5 accent-brand cursor-pointer rounded">
+                            <span>Climbing the online leaderboard & tracking stats</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="checkbox" name="q8_excitement" value="Photo Gallery" class="w-5 h-5 accent-brand cursor-pointer rounded">
+                            <span>The post-match photo gallery & trophy room</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="checkbox" name="q8_excitement" value="WhatsApp Alerts" class="w-5 h-5 accent-brand cursor-pointer rounded">
+                            <span>The WhatsApp banter and match challenge alerts</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="checkbox" name="q8_excitement" value="Wagering" class="w-5 h-5 accent-brand cursor-pointer rounded">
+                            <span>The mid-season wagering / prediction games</span>
+                        </label>
+                    </div>
+                    <p id="q8_error" class="text-red-500 text-sm hidden pl-2">Please select at least 1 and up to 2 options.</p>
+                </div>
+
+                <div class="space-y-3">
+                    <label class="block font-medium text-gray-900 text-lg">9. In one sentence, how would you describe the BattleTags experience to a golfer at another country club?</label>
+                    <textarea name="q9_description" rows="3" required
+                        class="w-full rounded-lg border-gray-300 border p-3 focus:ring-2 focus:ring-green-600 focus:border-green-600 outline-none transition"
+                        placeholder="It's like..."></textarea>
+                </div>
+
+                <div class="space-y-3">
+                    <label class="block font-medium text-gray-900 text-lg">10. How disappointed would you be if our club did NOT offer BattleTags next season?</label>
+                    <div class="space-y-2 pl-2">
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q10_disappointed" value="Very disappointed" required class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>Very disappointed (It is a must-have for my membership now)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q10_disappointed" value="Somewhat disappointed" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>Somewhat disappointed</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q10_disappointed" value="Not disappointed" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>Not disappointed</span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Submit Button -->
+            <div class="pt-6 border-t border-gray-200">
+                <button type="submit" id="submitBtn" 
+                    class="w-full md:w-auto px-8 py-4 bg-green-700 hover:bg-green-800 text-white font-bold rounded-lg shadow-md transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-green-300">
+                    Submit Survey Responses
+                </button>
             </div>
-        </div>
-    </div>
+        </form>
+    </main>
 
-    <!-- Center Stage Logo (Pointer Events None allows clicking photos behind it) -->
-    <div class="fixed inset-0 z-20 pointer-events-none flex flex-col items-center justify-center">
-        <div class="bg-slate-950/60 backdrop-blur-xl border border-emerald-500/30 p-10 md:p-16 rounded-[3rem] shadow-[0_0_100px_rgba(16,185,129,0.15)] flex flex-col items-center justify-center text-center max-w-[90vw] transition-all duration-500 transform scale-100" id="center-emblem">
-            <div class="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center mb-6 shadow-inner border border-emerald-500/30 hidden md:flex">
-                <i data-lucide="camera" class="w-8 h-8"></i>
-            </div>
-            <h1 id="center-title" class="text-4xl md:text-7xl font-black tracking-tighter text-white drop-shadow-lg leading-none">BATTLE<span class="text-emerald-500">TAGS</span></h1>
-            <p id="center-subtitle" class="text-lg md:text-3xl font-black text-emerald-400 tracking-[0.3em] mt-3 drop-shadow-md">2026</p>
-        </div>
-    </div>
-
-    <!-- The Mosaic Grid -->
-    <div id="mosaic-grid" class="mosaic-grid w-full min-h-screen pt-24 pb-24 z-10">
-        <!-- Javascript populates photos here -->
-    </div>
-
-    <!-- Full Screen Lightbox -->
-    <div id="lightbox" class="fixed inset-0 z-[1000] bg-slate-950/95 backdrop-blur-2xl hidden flex-col items-center justify-center p-4 md:p-8 opacity-0 transition-opacity duration-300">
-        <button onclick="closeLightbox()" class="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors bg-slate-800/50 p-4 rounded-full hover:bg-slate-700 shadow-lg">
-            <i data-lucide="x" class="w-6 h-6"></i>
-        </button>
-        <img id="lightbox-img" src="" class="max-w-full max-h-[65vh] rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] object-contain border border-slate-700/50">
-        <div class="mt-8 text-center bg-slate-900/50 px-8 py-4 rounded-2xl border border-slate-800 backdrop-blur-sm">
-            <h2 id="lightbox-title" class="text-xl md:text-3xl font-black text-white uppercase tracking-tight"></h2>
-            <p id="lightbox-score" class="text-sm md:text-base font-black text-emerald-400 uppercase tracking-[0.2em] mt-2"></p>
-            <div class="flex justify-center items-center gap-2 mt-3 text-slate-400 text-xs font-bold uppercase tracking-widest">
-                <i data-lucide="calendar" class="w-4 h-4"></i> <span id="lightbox-date"></span>
-            </div>
-        </div>
-    </div>
-
+    <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, persistentLocalCache, initializeFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const DATABASE_FOLDER_NAME = 'friday-harbour-battle-tags';
+        // Global Firebase configuration provided by the environment
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        // Setup Config matching your main app
-        let firebaseConfig;
-        let activeAppId;
-        try {
-            firebaseConfig = JSON.parse(__firebase_config);
-            activeAppId = typeof __app_id !== 'undefined' ? __app_id : DATABASE_FOLDER_NAME;
-        } catch (e) {
-            firebaseConfig = {
-                apiKey: "AIzaSyDf_1RE4hscqVVbHoN7Vvqoylj8elWLUn4",
-                authDomain: "battletags-27390.firebaseapp.com",
-                projectId: "battletags-27390",
-                storageBucket: "battletags-27390.firebasestorage.app",
-                messagingSenderId: "930795580018",
-                appId: "1:930795580018:web:b82b95d64572483f85f0eb"
-            };
-            activeAppId = DATABASE_FOLDER_NAME;
-        }
-
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        let db;
-        try { db = initializeFirestore(app, { localCache: persistentLocalCache() }); } 
-        catch (e) { db = getFirestore(app); }
+        const db = getFirestore(app);
 
-        let allPlayers = [];
-        let allMatchesWithPhotos = [];
+        // UI Elements
+        const form = document.getElementById('surveyForm');
+        const loadingState = document.getElementById('loadingState');
+        const successMessage = document.getElementById('successMessage');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const submitBtn = document.getElementById('submitBtn');
 
-        async function init() {
-            lucide.createIcons();
+        // State
+        let currentUser = null;
 
-            // Authenticate (Try custom token, fallback to anonymous)
+        // Checkbox limitation logic (Max 2 for Q8)
+        const q8Checkboxes = document.querySelectorAll('input[name="q8_excitement"]');
+        q8Checkboxes.forEach(cb => {
+            cb.addEventListener('change', () => {
+                const checkedCount = document.querySelectorAll('input[name="q8_excitement"]:checked').length;
+                if (checkedCount >= 2) {
+                    q8Checkboxes.forEach(box => {
+                        if (!box.checked) box.disabled = true;
+                    });
+                } else {
+                    q8Checkboxes.forEach(box => box.disabled = false);
+                }
+            });
+        });
+
+        // Initialize Authentication (Anonymous)
+        const initAuth = async () => {
             try {
+                // If a custom token exists, use it, otherwise sign in anonymously
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
+                    import("https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js").then(({ signInWithCustomToken }) => {
+                        signInWithCustomToken(auth, __initial_auth_token).catch(err => console.error("Custom auth failed:", err));
+                    });
                 } else {
                     await signInAnonymously(auth);
                 }
-            } catch (err) { console.error("Auth Failed", err); }
-
-            // Fetch Players for Dropdown
-            const qP = collection(db, 'artifacts', activeAppId, 'public', 'data', 'players');
-            onSnapshot(qP, (snapshot) => {
-                allPlayers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => a.name.localeCompare(b.name));
-                populateDropdown();
-            });
-
-            // Fetch Matches
-            const qM = collection(db, 'artifacts', activeAppId, 'public', 'data', 'matches');
-            onSnapshot(qM, (snapshot) => {
-                const rawMatches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                
-                // Filter down to ONLY completed matches that actually have an image URL
-                allMatchesWithPhotos = rawMatches
-                    .filter(m => m.status === 'completed' && m.photoUrl && m.winner)
-                    .sort((a, b) => new Date(b.date) - new Date(a.date)); // Newest first
-
-                document.getElementById('screen-loading').style.opacity = '0';
-                setTimeout(() => document.getElementById('screen-loading').classList.add('hidden'), 500);
-                
-                // Render initial global mosaic
-                renderMosaic('');
-            });
-        }
-
-        function populateDropdown() {
-            const select = document.getElementById('player-selector');
-            const currentVal = select.value;
-            select.innerHTML = '<option value="" class="bg-slate-900 text-white">Global Mosaic (All Evidence)</option>';
-            allPlayers.forEach(p => {
-                const opt = new Option(p.name, p.name);
-                opt.className = "bg-slate-900 text-white";
-                if (p.name === currentVal) opt.selected = true;
-                select.add(opt);
-            });
-        }
-
-        // Make functions globally available for inline HTML handlers
-        window.renderMosaic = function(playerName) {
-            const grid = document.getElementById('mosaic-grid');
-            const centerTitle = document.getElementById('center-title');
-            const centerSubtitle = document.getElementById('center-subtitle');
-
-            let displayPhotos = allMatchesWithPhotos;
-
-            // Filter logic and UI text updating
-            if (playerName) {
-                // Find photos where the selected player was involved
-                displayPhotos = allMatchesWithPhotos.filter(m => m.player1 === playerName || m.player2 === playerName || m.winner === playerName || m.loser === playerName);
-                centerTitle.innerHTML = `<span class="text-white">${playerName.toUpperCase()}</span>`;
-                centerSubtitle.innerText = "PHOTO VAULT";
-            } else {
-                centerTitle.innerHTML = `BATTLE<span class="text-emerald-500">TAGS</span>`;
-                centerSubtitle.innerText = "2026";
+            } catch (error) {
+                console.error("Auth error:", error);
+                showError("Unable to connect securely to the database.");
             }
+        };
 
-            if (displayPhotos.length === 0) {
-                grid.innerHTML = `<div class="col-span-full mt-32 flex flex-col items-center justify-center text-slate-500 font-bold uppercase tracking-widest"><i data-lucide="camera-off" class="w-12 h-12 mb-4 opacity-50"></i> No photographic evidence found.</div>`;
-                lucide.createIcons();
+        // Listen for Auth state changes
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                // Reveal form when authenticated
+                loadingState.classList.add('hidden');
+                form.classList.remove('hidden');
+            }
+        });
+
+        // Handle Form Submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMessage.classList.add('hidden');
+
+            // Mandatory Auth Guard Check (Rule 3)
+            if (!currentUser) {
+                showError("You must be connected to submit the survey.");
                 return;
             }
 
-            // To make the mosaic look incredibly full and epic even if there are only a few photos, 
-            // we will let the CSS grid natively handle it, but we won't artificially duplicate data.
-            grid.innerHTML = displayPhotos.map(m => {
-                const isTie = m.winner === 'Tie';
-                const matchTitle = isTie ? `${m.player1} TIED ${m.player2}` : `${m.winner} DEF. ${m.loser}`;
-                // Using an encoded string for the lightbox parameters to handle spaces and special chars
-                const matchTitleLightBox = isTie ? `${m.player1} <span class="text-slate-500 lowercase mx-2">tied</span> ${m.player2}` : `${m.winner} <span class="text-emerald-500 lowercase mx-2">def.</span> ${m.loser}`;
+            // Validate Checkbox (Q8)
+            const checkedQ8 = Array.from(document.querySelectorAll('input[name="q8_excitement"]:checked')).map(cb => cb.value);
+            if (checkedQ8.length === 0 || checkedQ8.length > 2) {
+                document.getElementById('q8_error').classList.remove('hidden');
+                return;
+            } else {
+                document.getElementById('q8_error').classList.add('hidden');
+            }
+
+            // UI Loading state
+            const originalBtnText = submitBtn.innerText;
+            submitBtn.innerText = "Submitting...";
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+
+            try {
+                const formData = new FormData(form);
                 
-                return `
-                <div onclick="openLightbox('${m.photoUrl}', '${encodeURIComponent(matchTitleLightBox)}', '${m.score}', '${m.date}')" class="relative group cursor-pointer overflow-hidden aspect-square bg-slate-900 rounded-lg">
-                    <img src="${m.photoUrl}" alt="Match Photo" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-125 opacity-50 md:opacity-60 group-hover:opacity-100 saturate-50 group-hover:saturate-100" loading="lazy" onerror="this.src='https://via.placeholder.com/300x300?text=Missing+Image'">
-                    
-                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3 md:p-4">
-                        <span class="text-[9px] md:text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-0.5">${m.date}</span>
-                        <span class="text-[10px] md:text-sm font-black text-white uppercase tracking-tight leading-tight mb-1">${matchTitle}</span>
-                        <span class="text-[9px] md:text-[10px] font-bold text-slate-300 uppercase tracking-wider">${m.score}</span>
-                    </div>
-                    
-                    <div class="absolute top-3 right-3 w-8 h-8 bg-black/60 backdrop-blur-md rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 border border-slate-700/50">
-                        <i data-lucide="maximize-2" class="w-4 h-4 text-white"></i>
-                    </div>
-                </div>
-            `}).join('');
+                // Construct Survey Payload
+                const surveyData = {
+                    submittedBy: currentUser.uid,
+                    submittedAt: serverTimestamp(),
+                    courseUtilization: {
+                        roundsPlayedImpact: formData.get('q1_rounds'),
+                        appCheckFrequency: formData.get('q2_app_checks')
+                    },
+                    community: {
+                        priorRegularGolfers: formData.get('q3_prior_golfers'),
+                        newGolfersPlayedWith: formData.get('q4_new_golfers'),
+                        connectionAgreement: formData.get('q5_connection')
+                    },
+                    clubhouseSpend: {
+                        nineteenthHoleFrequency: formData.get('q6_19th_hole'),
+                        spendImpact: formData.get('q7_spend')
+                    },
+                    testimonials: {
+                        excitingAspects: checkedQ8,
+                        oneSentenceDescription: formData.get('q9_description'),
+                        disappointmentLevel: formData.get('q10_disappointed')
+                    }
+                };
 
-            lucide.createIcons();
-        };
+                // Save to Firestore (Rule 1: Public Data Path)
+                const surveysRef = collection(db, 'artifacts', appId, 'public', 'data', 'pilot_surveys');
+                await addDoc(surveysRef, surveyData);
 
-        window.openLightbox = function(url, titleHtmlEnc, score, date) {
-            document.getElementById('lightbox-img').src = url;
-            document.getElementById('lightbox-title').innerHTML = decodeURIComponent(titleHtmlEnc);
-            document.getElementById('lightbox-score').innerText = `Score: ${score}`;
-            document.getElementById('lightbox-date').innerText = date;
-            
-            const lb = document.getElementById('lightbox');
-            lb.classList.remove('hidden');
-            setTimeout(() => lb.classList.remove('opacity-0'), 10);
-        };
+                // Show Success
+                form.classList.add('hidden');
+                successMessage.classList.remove('hidden');
+                
+            } catch (error) {
+                console.error("Submission error:", error);
+                showError("Failed to save your response. Please try again.");
+                
+                // Reset Button
+                submitBtn.innerText = originalBtnText;
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+            }
+        });
 
-        window.closeLightbox = function() {
-            const lb = document.getElementById('lightbox');
-            lb.classList.add('opacity-0');
-            setTimeout(() => lb.classList.add('hidden'), 300);
-        };
+        function showError(msg) {
+            errorText.innerText = msg;
+            errorMessage.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
-        // Run initialization
-        init();
+        // Boot
+        initAuth();
     </script>
 </body>
 </html>
-
