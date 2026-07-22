@@ -6,156 +6,290 @@
     <title>BattleTags Member Impact Survey</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root { --brand-green: #15803d; }
-        .accent-brand { accent-color: var(--brand-green); }
+        :root {
+            --brand-green: #15803d;
+        }
+        .accent-brand {
+            accent-color: var(--brand-green);
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen">
 
+    <!-- Header -->
     <header class="bg-green-700 text-white py-6 shadow-md">
-        <div class="max-w-3xl mx-auto px-4 text-center">
-            <h1 class="text-2xl font-bold tracking-tight">BattleTags Member Impact</h1>
-            <p class="mt-2 text-green-100 text-sm">Help us shape the future of golf community engagement.</p>
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-2xl md:text-3xl font-bold tracking-tight">BattleTags Member Impact</h1>
+            <p class="mt-2 text-green-100 text-sm md:text-base">Help us shape the future of golf community engagement.</p>
         </div>
     </header>
 
-    <main class="max-w-3xl mx-auto px-4 py-8">
+    <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
+        <!-- Loading State -->
         <div id="loadingState" class="text-center py-12">
             <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-700 mb-4"></div>
-            <p class="text-gray-500">Connecting securely to BattleTags...</p>
+            <p class="text-gray-500 font-medium">Connecting securely to BattleTags...</p>
         </div>
 
-        <div id="successMessage" class="hidden bg-green-50 border border-green-200 rounded-xl p-8 text-center shadow-sm">
+        <!-- Success Message -->
+        <div id="successMessage" class="hidden bg-green-50 border border-green-200 rounded-xl p-8 text-center shadow-sm transform transition duration-500">
+            <svg class="w-16 h-16 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
             <h2 class="text-2xl font-bold text-gray-900 mb-2">Thank you!</h2>
-            <p class="text-gray-600">Your feedback has been securely submitted.</p>
+            <p class="text-gray-600">Your feedback has been securely submitted. We appreciate you being part of the BattleTags pilot.</p>
         </div>
 
+        <!-- Error Message -->
         <div id="errorMessage" class="hidden bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6 shadow-sm">
             <p id="errorText" class="font-medium">An error occurred. Please try again.</p>
         </div>
 
-        <form id="surveyForm" class="hidden space-y-10 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <!-- Survey Form -->
+        <form id="surveyForm" class="hidden space-y-10 bg-white p-6 md:p-8 rounded-xl shadow-sm border border-gray-100 transition-opacity duration-300">
             
+            <!-- Section 1 -->
             <section class="space-y-6">
-                <h2 class="text-xl font-semibold text-gray-900 border-b pb-2">Section 1: Course Utilization</h2>
+                <div class="border-b border-gray-200 pb-2 mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900">Section 1: Course Utilization</h2>
+                </div>
+
                 <div class="space-y-3">
-                    <label class="block font-medium text-gray-900">1. Compared to this time last season, how has participating in BattleTags impacted the number of rounds you played?</label>
+                    <label class="block font-medium text-gray-900 text-lg">1. Compared to this time last season, how has participating in BattleTags impacted the number of rounds you played?</label>
                     <div class="space-y-2 pl-2">
-                        <label class="flex items-center space-x-3"><input type="radio" name="q1_rounds" value="Significantly more (30%+)" required class="w-5 h-5 accent-brand"> <span>Significantly more (30%+ more rounds)</span></label>
-                        <label class="flex items-center space-x-3"><input type="radio" name="q1_rounds" value="Noticeably more (10-25%)" class="w-5 h-5 accent-brand"> <span>Noticeably more (10% to 25% more rounds)</span></label>
-                        <label class="flex items-center space-x-3"><input type="radio" name="q1_rounds" value="About the same" class="w-5 h-5 accent-brand"> <span>About the same</span></label>
-                        <label class="flex items-center space-x-3"><input type="radio" name="q1_rounds" value="Less" class="w-5 h-5 accent-brand"> <span>Less</span></label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q1_rounds" value="Significantly more (30%+)" required class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>I played significantly more golf (30%+ more rounds)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q1_rounds" value="Noticeably more (10-25%)" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>I played noticeably more golf (10% to 25% more rounds)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q1_rounds" value="About the same" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>I played about the same amount of golf</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q1_rounds" value="Less" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>I played less golf</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="space-y-3 mt-6">
+                    <label class="block font-medium text-gray-900 text-lg">2. How often did you actively check the BattleTags app or leaderboard during a typical week?</label>
+                    <div class="space-y-2 pl-2">
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q2_app_checks" value="Daily / Multiple times a day" required class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>Daily / Multiple times a day</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q2_app_checks" value="2 to 4 times a week" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>2 to 4 times a week</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q2_app_checks" value="Once a week" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>Once a week</span>
+                        </label>
                     </div>
                 </div>
             </section>
 
+            <!-- Section 2 -->
             <section class="space-y-6">
-                <h2 class="text-xl font-semibold text-gray-900 border-b pb-2">Section 2: Community & Clique Breaking</h2>
+                <div class="border-b border-gray-200 pb-2 mb-6 mt-8">
+                    <h2 class="text-xl font-semibold text-gray-900">Section 2: Community & Clique Breaking</h2>
+                </div>
+
                 <div class="space-y-3">
-                    <label class="block font-medium text-gray-900">2. Because of BattleTags, how many *new* or unfamiliar club members did you play a round with this season?</label>
+                    <label class="block font-medium text-gray-900 text-lg">3. Because of BattleTags, how many *new* or unfamiliar club members did you play a round with this season?</label>
                     <div class="space-y-2 pl-2">
-                        <label class="flex items-center space-x-3"><input type="radio" name="q2_new_golfers" value="1 to 2" required class="w-5 h-5 accent-brand"> <span>1 to 2 new golfers</span></label>
-                        <label class="flex items-center space-x-3"><input type="radio" name="q2_new_golfers" value="3 to 5" class="w-5 h-5 accent-brand"> <span>3 to 5 new golfers</span></label>
-                        <label class="flex items-center space-x-3"><input type="radio" name="q2_new_golfers" value="6 to 10" class="w-5 h-5 accent-brand"> <span>6 to 10 new golfers</span></label>
-                        <label class="flex items-center space-x-3"><input type="radio" name="q2_new_golfers" value="10+" class="w-5 h-5 accent-brand"> <span>10+ new golfers (Game-changer)</span></label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q3_new_golfers" value="1 to 2" required class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>1 to 2 new golfers</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q3_new_golfers" value="3 to 5" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>3 to 5 new golfers</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q3_new_golfers" value="6 to 10" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>6 to 10 new golfers</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q3_new_golfers" value="10+" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>10+ new golfers (Game-changer for my social circle)</span>
+                        </label>
                     </div>
                 </div>
             </section>
 
+            <!-- Section 3 -->
             <section class="space-y-6">
-                <h2 class="text-xl font-semibold text-gray-900 border-b pb-2">Section 3: The 19th Hole</h2>
+                <div class="border-b border-gray-200 pb-2 mb-6 mt-8">
+                    <h2 class="text-xl font-semibold text-gray-900">Section 3: The 19th Hole</h2>
+                </div>
+
                 <div class="space-y-3">
-                    <label class="block font-medium text-gray-900">3. After a match, how often did you stick around the clubhouse to settle wagers or check the gallery?</label>
+                    <label class="block font-medium text-gray-900 text-lg">4. After finishing a match, how often did you stick around the clubhouse or bar to settle wagers or check the gallery?</label>
                     <div class="space-y-2 pl-2">
-                        <label class="flex items-center space-x-3"><input type="radio" name="q3_19th_hole" value="Almost every time" required class="w-5 h-5 accent-brand"> <span>Almost every time</span></label>
-                        <label class="flex items-center space-x-3"><input type="radio" name="q3_19th_hole" value="More often than usual" class="w-5 h-5 accent-brand"> <span>More often than usual</span></label>
-                        <label class="flex items-center space-x-3"><input type="radio" name="q3_19th_hole" value="No difference" class="w-5 h-5 accent-brand"> <span>No difference</span></label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q4_19th_hole" value="Almost every time" required class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>Almost every time – it became a post-round ritual</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q4_19th_hole" value="More often than usual" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>More often than usual (about 50% of the time)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 hover:bg-gray-50 rounded-lg transition">
+                            <input type="radio" name="q4_19th_hole" value="No difference" class="w-5 h-5 accent-brand cursor-pointer">
+                            <span>No difference from my usual routine</span>
+                        </label>
                     </div>
                 </div>
             </section>
 
+            <!-- Section 4 -->
             <section class="space-y-6">
-                <h2 class="text-xl font-semibold text-gray-900 border-b pb-2">Section 4: Testimonial</h2>
+                <div class="border-b border-gray-200 pb-2 mb-6 mt-8">
+                    <h2 class="text-xl font-semibold text-gray-900">Section 4: Testimonial</h2>
+                </div>
+
                 <div class="space-y-3">
-                    <label class="block font-medium text-gray-900">4. In one sentence, how would you describe the BattleTags experience to another golfer?</label>
-                    <textarea name="q4_description" rows="3" required class="w-full rounded-lg border-gray-300 border p-3 focus:ring-2 focus:ring-green-600 outline-none" placeholder="It's like..."></textarea>
+                    <label class="block font-medium text-gray-900 text-lg">5. In one sentence, how would you describe the BattleTags experience to a golfer at another country club?</label>
+                    <textarea name="q5_description" rows="3" required
+                        class="w-full rounded-lg border-gray-300 border p-3 focus:ring-2 focus:ring-green-600 focus:border-green-600 outline-none transition"
+                        placeholder="It's like..."></textarea>
                 </div>
             </section>
 
-            <div class="pt-6 border-t">
-                <button type="submit" id="submitBtn" class="w-full px-8 py-4 bg-green-700 hover:bg-green-800 text-white font-bold rounded-lg shadow-md transition">
+            <!-- Submit Button -->
+            <div class="pt-6 border-t border-gray-200">
+                <button type="submit" id="submitBtn" 
+                    class="w-full md:w-auto px-8 py-4 bg-green-700 hover:bg-green-800 text-white font-bold rounded-lg shadow-md transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-green-300">
                     Submit Survey Responses
                 </button>
             </div>
         </form>
     </main>
 
+    <!-- Environment Integrated Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // 🔥 STEP 1: PASTE YOUR FIREBASE CONFIG HERE
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
+        // Pulling secure credentials directly from the environment variables
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'friday-harbour-battle-tags';
 
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // UI Elements
+        const form = document.getElementById('surveyForm');
+        const loadingState = document.getElementById('loadingState');
+        const successMessage = document.getElementById('successMessage');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const submitBtn = document.getElementById('submitBtn');
+
         let currentUser = null;
 
-        // Authenticate Anonymously
-        signInAnonymously(auth).catch(err => {
-            console.error(err);
-            document.getElementById('errorText').innerText = "Database connection failed. Please ensure Anonymous Auth is enabled.";
-            document.getElementById('errorMessage').classList.remove('hidden');
-        });
+        // Step 1: Strict Auth Pipeline
+        const initAuth = async () => {
+            try {
+                // If the environment provides an auth token, use it. Otherwise sign in anonymously.
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Auth initialization failed:", error);
+                showError("Unable to connect securely to the database. Check authentication settings.");
+            }
+        };
 
+        // Listen for Auth state changes
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                document.getElementById('loadingState').classList.add('hidden');
-                document.getElementById('surveyForm').classList.remove('hidden');
+                // Reveal form when securely authenticated
+                loadingState.classList.add('hidden');
+                form.classList.remove('hidden');
             }
         });
 
-        document.getElementById('surveyForm').addEventListener('submit', async (e) => {
+        // Step 2: Handle Form Submission
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.innerText = "Submitting...";
+            errorMessage.classList.add('hidden');
+
+            // Mandatory Auth Guard
+            if (!currentUser) {
+                showError("You must be connected to submit the survey.");
+                return;
+            }
+
+            // Update UI to Loading
+            const originalBtnText = submitBtn.innerText;
+            submitBtn.innerText = "Submitting securely...";
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
 
             try {
-                const formData = new FormData(e.target);
+                const formData = new FormData(form);
                 
-                // 🔥 STEP 2: SAVING TO YOUR PRODUCTION DATABASE PATH
-                await addDoc(collection(db, 'pilot_surveys'), {
+                const surveyData = {
                     submittedBy: currentUser.uid,
                     submittedAt: serverTimestamp(),
-                    roundsPlayedImpact: formData.get('q1_rounds'),
-                    newGolfersPlayedWith: formData.get('q2_new_golfers'),
-                    nineteenthHoleFrequency: formData.get('q3_19th_hole'),
-                    testimonial: formData.get('q4_description')
-                });
+                    courseUtilization: {
+                        roundsPlayedImpact: formData.get('q1_rounds'),
+                        appCheckFrequency: formData.get('q2_app_checks')
+                    },
+                    community: {
+                        newGolfersPlayedWith: formData.get('q3_new_golfers')
+                    },
+                    clubhouseSpend: {
+                        nineteenthHoleFrequency: formData.get('q4_19th_hole')
+                    },
+                    testimonials: {
+                        oneSentenceDescription: formData.get('q5_description')
+                    }
+                };
 
-                document.getElementById('surveyForm').classList.add('hidden');
-                document.getElementById('successMessage').classList.remove('hidden');
+                // Writing dynamically to your authorized data path
+                const surveysRef = collection(db, 'artifacts', appId, 'public', 'data', 'pilot_surveys');
+                await addDoc(surveysRef, surveyData);
+
+                // Show Success Message
+                form.classList.add('hidden');
+                successMessage.classList.remove('hidden');
+                
             } catch (error) {
-                console.error(error);
-                btn.disabled = false;
-                btn.innerText = "Submit Survey Responses";
-                document.getElementById('errorText').innerText = "Permission Denied. Please check your Firestore Rules.";
-                document.getElementById('errorMessage').classList.remove('hidden');
+                console.error("Database submission error:", error);
+                showError("Failed to save your response. It's likely your Firebase security rules blocked the request.");
+                
+                // Reset Button
+                submitBtn.innerText = originalBtnText;
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
             }
         });
+
+        function showError(msg) {
+            errorText.innerText = msg;
+            errorMessage.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            loadingState.classList.add('hidden');
+        }
+
+        // Boot
+        initAuth();
     </script>
 </body>
 </html>
