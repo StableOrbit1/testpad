@@ -25,7 +25,7 @@
         <!-- Loading State -->
         <div id="loadingState" class="text-center py-12">
             <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-700 mb-4"></div>
-            <p class="text-gray-500 font-medium">Connecting securely to BattleTags...</p>
+            <p class="text-gray-500 font-medium" id="loadingText">Connecting securely to BattleTags...</p>
         </div>
 
         <!-- Success Message -->
@@ -37,9 +37,10 @@
             <p class="text-gray-600">Your feedback has been securely submitted. We appreciate you being part of the BattleTags pilot.</p>
         </div>
 
-        <!-- Error Message -->
+        <!-- Error Message Box -->
         <div id="errorMessage" class="hidden bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6 shadow-sm">
-            <p id="errorText" class="font-medium">An error occurred. Please try again.</p>
+            <p class="font-bold">Notice / Error:</p>
+            <p id="errorText" class="text-sm mt-1"></p>
         </div>
 
         <!-- Survey Form -->
@@ -120,7 +121,6 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Hard-coded configuration mapping directly to your project
         const firebaseConfig = {
             apiKey: "AIzaSyDf_1RE4hscqVVbHoN7Vvqoylj8elWLUn4",
             authDomain: "friday-harbour-battle-tags.firebaseapp.com",
@@ -143,10 +143,10 @@
 
         let currentUser = null;
 
-        // Sign in anonymously so users don't need a login prompt
+        // Trigger Anonymous Login
         signInAnonymously(auth).catch((error) => {
             console.error("Auth Error:", error);
-            showError(`Authentication failed: ${error.message}`);
+            showError(`Authentication Error: ${error.message}. Please verify Anonymous Auth is enabled in your Firebase Console.`);
         });
 
         onAuthStateChanged(auth, (user) => {
@@ -162,14 +162,13 @@
             errorMessage.classList.add('hidden');
 
             if (!currentUser) {
-                showError("You must be connected to submit the survey.");
+                showError("Error: You are not authenticated yet. Please wait a moment for the connection to establish.");
                 return;
             }
 
             const originalBtnText = submitBtn.innerText;
             submitBtn.innerText = "Submitting securely...";
             submitBtn.disabled = true;
-            submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
 
             try {
                 const formData = new FormData(form);
@@ -201,10 +200,9 @@
                 
             } catch (error) {
                 console.error("Database submission error:", error);
-                showError("Failed to save response. Please check your Firestore Security Rules.");
+                showError(`Database Write Failed: ${error.message}. Please check your Firestore Security Rules.`);
                 submitBtn.innerText = originalBtnText;
                 submitBtn.disabled = false;
-                submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
             }
         });
 
