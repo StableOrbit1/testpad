@@ -25,7 +25,7 @@
         <!-- Loading State -->
         <div id="loadingState" class="text-center py-12">
             <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-700 mb-4"></div>
-            <p class="text-gray-500 font-medium" id="loadingText">Connecting securely to BattleTags...</p>
+            <p class="text-gray-500 font-medium">Connecting securely to BattleTags...</p>
         </div>
 
         <!-- Success Message -->
@@ -120,22 +120,20 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // ==========================================
-        // ⚠️ CRITICAL: PASTE YOUR FIREBASE CONFIG HERE
-        // ==========================================
-        // You can find this in your Firebase Console:
-        // Project Settings (Gear Icon) -> General -> Scroll down to "Your apps" -> "Firebase SDK snippet" -> "Config"
+        // Hard-coded configuration mapping directly to your project
         const firebaseConfig = {
-            apiKey: "PASTE_YOUR_API_KEY_HERE",
-            authDomain: "PASTE_YOUR_PROJECT_ID.firebaseapp.com",
-            projectId: "PASTE_YOUR_PROJECT_ID",
-            storageBucket: "PASTE_YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "PASTE_YOUR_SENDER_ID",
-            appId: "PASTE_YOUR_APP_ID"
+            apiKey: "AIzaSyDf_1RE4hscqVVbHoN7Vvqoylj8elWLUn4",
+            authDomain: "friday-harbour-battle-tags.firebaseapp.com",
+            projectId: "friday-harbour-battle-tags",
+            storageBucket: "friday-harbour-battle-tags.appspot.com",
+            messagingSenderId: "friday-harbour",
+            appId: "friday-harbour-battle-tags-app"
         };
-        // ==========================================
 
-        let app, auth, db;
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
         const form = document.getElementById('surveyForm');
         const loadingState = document.getElementById('loadingState');
         const successMessage = document.getElementById('successMessage');
@@ -145,29 +143,19 @@
 
         let currentUser = null;
 
-        try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
+        // Sign in anonymously so users don't need a login prompt
+        signInAnonymously(auth).catch((error) => {
+            console.error("Auth Error:", error);
+            showError(`Authentication failed: ${error.message}`);
+        });
 
-            // Sign in anonymously on page load
-            signInAnonymously(auth).catch((error) => {
-                console.error("Auth Error:", error);
-                showError(`Authentication failed. Did you add your GitHub domain to Authorized Domains in Firebase? (${error.message})`);
-            });
-
-            // Listen for Auth state changes
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    currentUser = user;
-                    loadingState.classList.add('hidden');
-                    form.classList.remove('hidden');
-                }
-            });
-        } catch (error) {
-            console.error("Initialization Error:", error);
-            showError("Could not initialize Firebase. Please check your firebaseConfig block in the code.");
-        }
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                loadingState.classList.add('hidden');
+                form.classList.remove('hidden');
+            }
+        });
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -204,7 +192,7 @@
                     }
                 };
 
-                // Writing dynamically to your specific BattleTags database path
+                // Writing straight to your specified collection path
                 const surveysRef = collection(db, 'artifacts', 'friday-harbour-battle-tags', 'public', 'data', 'pilot_surveys');
                 await addDoc(surveysRef, surveyData);
 
@@ -213,7 +201,7 @@
                 
             } catch (error) {
                 console.error("Database submission error:", error);
-                showError("Failed to save response. Please ensure your Firestore Security Rules match the required path.");
+                showError("Failed to save response. Please check your Firestore Security Rules.");
                 submitBtn.innerText = originalBtnText;
                 submitBtn.disabled = false;
                 submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
@@ -229,3 +217,4 @@
     </script>
 </body>
 </html>
+
