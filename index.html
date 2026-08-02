@@ -6,7 +6,7 @@
     <title>Pocket Caddie AR</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
+        body, html {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #0f172a;
             color: white;
@@ -14,42 +14,31 @@
             touch-action: none;
             margin: 0;
             padding: 0;
+            height: 100vh; 
+            height: 100dvh; 
         }
 
         /* AR Video Background */
         #ar-video {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            object-fit: cover;
-            z-index: 0;
-            display: none;
+            position: fixed; top: 0; left: 0;
+            width: 100vw; height: 100vh; height: 100dvh;
+            object-fit: cover; z-index: 0; display: none;
         }
 
         /* Container for UI to sit above AR */
         #ui-layer {
-            position: relative;
-            z-index: 10;
-            width: 100vw;
-            height: 100vh;
+            position: relative; z-index: 10;
+            width: 100vw; height: 100%;
+            display: flex; flex-direction: column;
         }
 
         .view-section {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            width: 100%;
-            padding: 20px;
-            box-sizing: border-box;
-            text-align: center;
-            background-color: #0f172a;
-            transition: background-color 0.3s;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            flex: 1; width: 100%; padding: 15px; box-sizing: border-box; text-align: center;
+            background-color: #0f172a; transition: background-color 0.3s;
+            overflow-y: auto;
         }
         .view-section.active { display: flex; }
-        
-        /* Transparent views for AR mode */
         .ar-mode .view-section { background-color: rgba(0, 0, 0, 0.4); }
 
         /* Buttons */
@@ -58,67 +47,64 @@
         .btn-purple { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4); }
         .btn-green:active, .btn-blue:active, .btn-purple:active { transform: scale(0.95); }
 
-        /* Level UI */
-        #level-container { width: 240px; height: 240px; border-radius: 50%; background-color: #1e293b; border: 6px solid #334155; position: relative; margin: 0 auto; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
+        /* Green Reader Bubble UI */
+        #level-container { width: 220px; height: 220px; border-radius: 50%; background-color: #1e293b; border: 6px solid #334155; position: relative; margin: 0 auto; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
         #level-container::before { content: ''; position: absolute; background-color: rgba(255,255,255,0.15); top: 50%; left: 5%; right: 5%; height: 2px; transform: translateY(-50%); }
         #level-container::after { content: ''; position: absolute; background-color: rgba(255,255,255,0.15); left: 50%; top: 5%; bottom: 5%; width: 2px; transform: translateX(-50%); }
-        .target { width: 50px; height: 50px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; }
-        #bubble { width: 40px; height: 40px; background-color: #10b981; border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); transition: transform 0.05s linear; box-shadow: 0 0 15px rgba(16, 185, 129, 0.8); z-index: 2; }
+        .target { width: 40px; height: 40px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; }
+        #bubble { width: 34px; height: 34px; background-color: #10b981; border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); transition: transform 0.05s linear; box-shadow: 0 0 15px rgba(16, 185, 129, 0.8); z-index: 2; }
 
         /* Canvas Styles */
+        canvas { max-width: 100%; max-height: 35vh; object-fit: contain; }
         .solid-canvas { background-color: #1e293b; border-radius: 16px; border: 2px solid #334155; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
         .ar-canvas { background-color: transparent !important; border: 2px dashed rgba(255,255,255,0.3); border-radius: 16px; }
     </style>
 </head>
 <body>
 
-    <!-- AR Camera Feed -->
     <video id="ar-video" autoplay playsinline muted></video>
 
     <div id="ui-layer">
         <!-- Toast Notification -->
-        <div id="toast" class="absolute top-5 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-4 rounded-xl font-semibold shadow-lg hidden z-50 text-center w-11/12 max-w-sm border border-red-400 transition-all">
+        <div id="toast" class="absolute top-5 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hidden z-50 text-center w-11/12 max-w-sm border border-red-400 transition-all">
             <span id="toast-msg">Message</span>
-            <button id="close-toast" class="mt-3 block w-full bg-black bg-opacity-20 rounded py-2 text-sm">Dismiss</button>
+            <button id="close-toast" class="mt-2 block w-full bg-black bg-opacity-20 rounded py-2 text-sm">Dismiss</button>
         </div>
 
         <!-- MAIN MENU -->
         <div id="view-main" class="view-section active">
-            <div class="mb-6 text-center">
-                <h1 class="text-4xl font-black tracking-tight text-white mb-2">Pocket Caddie</h1>
+            <div class="mb-4 text-center mt-2">
+                <h1 class="text-4xl font-black tracking-tight text-white mb-1">Pocket Caddie</h1>
                 <p class="text-slate-400 text-sm">Select a tool to get started</p>
             </div>
 
-            <div class="grid grid-cols-1 gap-4 w-full max-w-xs h-[75vh] overflow-y-auto pb-8">
-                <!-- Green Reader -->
-                <div class="bg-slate-800 rounded-2xl p-5 border border-slate-700 shadow-xl relative overflow-hidden" onclick="startAppMode('reader')">
-                    <div class="absolute top-0 right-0 w-24 h-24 bg-green-500 opacity-10 rounded-bl-full"></div>
+            <div class="grid grid-cols-1 gap-3 w-full max-w-xs pb-4">
+                <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-xl relative overflow-hidden" onclick="startAppMode('reader')">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-green-500 opacity-10 rounded-bl-full"></div>
                     <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(16,185,129,0.5)]">
                         <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
                     </div>
                     <h3 class="text-lg font-bold text-white mb-1">Green Reader</h3>
-                    <p class="text-slate-400 text-xs">Read slopes and calculate putt breaks.</p>
+                    <p class="text-slate-400 text-[11px]">Read slopes and calculate putt breaks.</p>
                 </div>
 
-                <!-- Full Swing Sim -->
-                <div class="bg-slate-800 rounded-2xl p-5 border border-slate-700 shadow-xl relative overflow-hidden" onclick="startAppMode('sim')">
-                    <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500 opacity-10 rounded-bl-full"></div>
+                <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-xl relative overflow-hidden" onclick="startAppMode('sim')">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-blue-500 opacity-10 rounded-bl-full"></div>
                     <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(59,130,246,0.5)]">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     </div>
                     <h3 class="text-lg font-bold text-white mb-1">Full Swing Sim</h3>
-                    <p class="text-slate-400 text-xs">Analyze club face angle at impact.</p>
+                    <p class="text-slate-400 text-[11px]">Track speed, face angle, and distance.</p>
                 </div>
 
-                <!-- AR Putting Game -->
-                <div class="bg-slate-800 rounded-2xl p-5 border border-slate-700 shadow-xl relative overflow-hidden border-2 border-purple-500" onclick="startAppMode('putt')">
-                    <div class="absolute top-0 right-0 w-24 h-24 bg-purple-500 opacity-20 rounded-bl-full"></div>
+                <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-xl relative overflow-hidden border-2 border-purple-500" onclick="startAppMode('putt')">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-purple-500 opacity-20 rounded-bl-full"></div>
                     <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(139,92,246,0.8)]">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="4"/></svg>
                     </div>
-                    <h3 class="text-lg font-bold text-white mb-1">AR Putting Simulator</h3>
-                    <p class="text-purple-200 text-xs font-bold mb-1">Camera Required</p>
-                    <p class="text-slate-400 text-xs">Overlay the ball & putter on your real floor.</p>
+                    <h3 class="text-lg font-bold text-white mb-1">AR Putting Sim</h3>
+                    <p class="text-purple-200 text-[10px] font-bold mb-1">Camera Required</p>
+                    <p class="text-slate-400 text-[11px]">Overlay the ball & putter on your floor.</p>
                 </div>
             </div>
         </div>
@@ -128,81 +114,128 @@
         <!-- ============================================== -->
         <div id="gr-view-calibrate" class="view-section">
             <h2 class="text-2xl font-bold mb-2">Zero Camera Bump</h2>
-            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-xs mb-8 mt-4">
-                <div class="text-sm text-slate-400 mb-4">Raw Phone Tilt:</div>
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 w-full max-w-xs mb-4">
+                <div class="text-sm text-slate-400 mb-2">Raw Phone Tilt:</div>
                 <div class="flex justify-around">
                     <div><div class="text-xs text-slate-500 mb-1">X-Axis</div><div class="text-2xl font-bold text-yellow-400"><span id="gr-cal-x">0.0</span>&deg;</div></div>
                     <div><div class="text-xs text-slate-500 mb-1">Y-Axis</div><div class="text-2xl font-bold text-yellow-400"><span id="gr-cal-y">0.0</span>&deg;</div></div>
                 </div>
             </div>
-            <button onclick="grSetZero()" class="btn-green text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs mb-4">Set Zero Level</button>
+            <button onclick="grSetZero()" class="btn-green text-white font-bold py-3 px-10 rounded-full text-lg w-full max-w-xs mb-3">Set Zero Level</button>
             <button onclick="grSkipZero()" class="text-slate-400 py-3 w-full max-w-xs active:text-white">Skip</button>
         </div>
 
         <div id="gr-view-distance" class="view-section">
             <h2 class="text-2xl font-bold mb-2">Putt Distance</h2>
-            <div class="flex items-center justify-center gap-4 mb-10 mt-8">
+            <div class="flex items-center justify-center gap-4 mb-8 mt-4">
                 <button onclick="grUpdateDist(-1)" class="w-14 h-14 bg-slate-800 rounded-full text-2xl font-bold border border-slate-600">-</button>
                 <div class="text-5xl font-bold w-24 text-center" id="gr-dist-val">10</div>
                 <button onclick="grUpdateDist(1)" class="w-14 h-14 bg-slate-800 rounded-full text-2xl font-bold border border-slate-600">+</button>
             </div>
-            <button onclick="grStartCapture()" class="btn-green text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs">Next Step</button>
+            <button onclick="grStartCapture()" class="btn-green text-white font-bold py-3 px-10 rounded-full text-lg w-full max-w-xs">Next Step</button>
         </div>
 
         <div id="gr-view-capture" class="view-section">
             <h2 class="text-2xl font-bold mb-2" id="gr-capture-title">Step 1: 1/3 Distance</h2>
             <div id="level-container" class="mb-6 mt-4"><div class="target"></div><div id="bubble"></div></div>
-            <button onclick="grCaptureData()" class="btn-green text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs">Capture Reading</button>
+            <button onclick="grCaptureData()" class="btn-green text-white font-bold py-3 px-10 rounded-full text-lg w-full max-w-xs">Capture Reading</button>
         </div>
 
         <div id="gr-view-results" class="view-section">
-            <div class="text-sm text-slate-400 uppercase tracking-widest mb-1">Green Reading</div>
+            <div class="text-xs text-slate-400 uppercase tracking-widest mb-1 mt-2">Green Reading</div>
             <h2 class="text-3xl font-bold mb-1 text-green-400" id="gr-result-aim">Aim 4" Right</h2>
-            <canvas id="grCanvas" width="300" height="350" class="solid-canvas mb-6 mt-4"></canvas>
-            <button onclick="grReset()" class="bg-slate-800 border border-slate-600 text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs mb-3">Read Another Putt</button>
+            <canvas id="grCanvas" width="300" height="300" class="solid-canvas mb-4 mt-2"></canvas>
+            <button onclick="grReset()" class="bg-slate-800 border border-slate-600 text-white font-bold py-3 px-10 rounded-full text-lg w-full max-w-xs mb-2">Read Another Putt</button>
             <button onclick="exitToMenu()" class="text-slate-400 py-2 w-full max-w-xs active:text-white">Back to Menu</button>
         </div>
 
         <!-- ============================================== -->
         <!-- 2. FULL SWING SIMULATOR                        -->
         <!-- ============================================== -->
+        <div id="sim-view-setup" class="view-section">
+            <div class="text-blue-400 uppercase tracking-widest text-xs font-bold mb-1">Scenario</div>
+            <h2 class="text-5xl font-black mb-4" id="sim-scen-dist">210 Yards</h2>
+            
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 w-full max-w-xs mb-6">
+                <div class="text-sm text-slate-400 mb-2">Select Club</div>
+                <div class="flex items-center justify-between bg-slate-900 rounded-lg p-2 border border-slate-600">
+                    <button onclick="simUpdateClub(-1)" class="w-10 h-10 bg-slate-700 rounded-md text-xl font-bold">&larr;</button>
+                    <div class="text-xl font-bold text-white text-center w-32">
+                        <div id="sim-club-name">7 Iron</div>
+                        <div class="text-[10px] text-slate-400 font-normal">Max: <span id="sim-club-max">165</span>y</div>
+                    </div>
+                    <button onclick="simUpdateClub(1)" class="w-10 h-10 bg-slate-700 rounded-md text-xl font-bold">&rarr;</button>
+                </div>
+            </div>
+
+            <button onclick="showView('sim-view-address')" class="btn-blue text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs mb-3">Address Ball</button>
+            <button onclick="exitToMenu()" class="text-slate-400 py-2 w-full max-w-xs active:text-white">Menu</button>
+        </div>
+
         <div id="sim-view-address" class="view-section">
             <h2 class="text-2xl font-bold mb-2">The Address</h2>
-            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 w-full max-w-xs mb-8 mt-4">
-                <div class="text-xs text-slate-400 mb-4 uppercase tracking-wider">Live Sensor Data</div>
-                <div class="grid grid-cols-3 gap-2 text-center">
+            <p class="text-slate-400 text-sm max-w-xs mb-2">Grip phone like a club. Screen facing you.</p>
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 w-full max-w-xs mb-6 mt-2">
+                <div class="text-xs text-slate-400 mb-2 uppercase tracking-wider">Live Sensor Data</div>
+                <div class="grid grid-cols-3 gap-1 text-center">
                     <div><div class="text-[10px] text-slate-500">ROT</div><div class="text-lg font-mono font-bold text-blue-400" id="sim-live-a">0&deg;</div></div>
                     <div><div class="text-[10px] text-slate-500">TILT</div><div class="text-lg font-mono font-bold text-blue-400" id="sim-live-b">0&deg;</div></div>
                     <div><div class="text-[10px] text-slate-500">FACE</div><div class="text-lg font-mono font-bold text-blue-400" id="sim-live-g">0&deg;</div></div>
                 </div>
             </div>
-            <button onclick="simSetAddress()" class="btn-blue text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs mb-4">Lock Address</button>
-            <button onclick="exitToMenu()" class="text-slate-400 py-2 w-full max-w-xs active:text-white">Back to Menu</button>
+            <button onclick="simSetAddress()" class="btn-blue text-white font-bold py-3 px-10 rounded-full text-lg w-full max-w-xs mb-3">Lock Address</button>
+            <button onclick="showView('sim-view-setup')" class="text-slate-400 py-2 w-full max-w-xs active:text-white">Back to Setup</button>
         </div>
 
         <div id="sim-view-swing" class="view-section">
             <h2 id="sim-status" class="text-blue-400 mb-2 text-3xl font-bold uppercase">Ready</h2>
-            <p class="text-slate-400 text-sm max-w-xs mb-10">Take your swing! We are tracking your arc...</p>
+            <p class="text-slate-400 text-sm max-w-xs mb-8">Take your swing! Tracking speed and face angle...</p>
             <button onclick="showView('sim-view-address')" class="text-slate-500 py-2 px-6 border border-slate-700 rounded-full">Cancel</button>
         </div>
 
         <div id="sim-view-results" class="view-section">
-            <div class="text-sm text-slate-400 uppercase tracking-widest mb-1">Impact Result</div>
-            <h2 class="text-4xl font-bold mb-1" id="sim-result-angle">0&deg; Square</h2>
-            <canvas id="simCanvas" width="280" height="280" class="solid-canvas mb-8 mt-4"></canvas>
-            <button onclick="simSwingAgain()" class="btn-blue text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs mb-3">Swing Again</button>
-            <button onclick="exitToMenu()" class="text-slate-400 py-2 w-full max-w-xs active:text-white">Menu</button>
+            <div class="w-full max-w-sm">
+                <div class="flex justify-between items-end mb-2">
+                    <div class="text-left">
+                        <div class="text-[10px] text-slate-400 uppercase tracking-widest">Hit Distance</div>
+                        <div class="text-3xl font-black text-white"><span id="sim-res-dist">0</span> <span class="text-lg text-slate-400 font-bold">Yards</span></div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[10px] text-slate-400 uppercase tracking-widest">Remaining</div>
+                        <div class="text-xl font-bold text-blue-400" id="sim-res-rem">0 yds</div>
+                    </div>
+                </div>
+                
+                <canvas id="simCanvas" width="280" height="200" class="solid-canvas mb-3 w-full"></canvas>
+                
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 text-center">
+                        <div class="text-[10px] text-slate-400 uppercase">Face Angle</div>
+                        <div class="text-xl font-bold" id="sim-res-face">0&deg; Sq</div>
+                        <div class="text-[10px] font-bold mt-1" id="sim-res-offline">On Target</div>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 text-center relative overflow-hidden">
+                        <div class="absolute bottom-0 left-0 h-1 bg-blue-500" id="sim-speed-bar" style="width: 50%;"></div>
+                        <div class="text-[10px] text-slate-400 uppercase">Swing Speed</div>
+                        <div class="text-xl font-bold"><span id="sim-res-mph">0</span> <span class="text-xs text-slate-400 font-normal">mph</span></div>
+                        <div class="text-[10px] font-bold text-blue-300 mt-1"><span id="sim-res-pct">0</span>% Effort</div>
+                    </div>
+                </div>
+
+                <button onclick="simGenerateScenario()" class="btn-blue text-white font-bold py-3 px-10 rounded-full text-lg w-full mb-2">Next Shot</button>
+                <button onclick="exitToMenu()" class="text-slate-400 py-2 w-full active:text-white">Menu</button>
+            </div>
         </div>
 
         <!-- ============================================== -->
         <!-- 3. AR PUTTING SIMULATOR                        -->
         <!-- ============================================== -->
         <div id="pg-view-setup" class="view-section">
-            <div class="bg-slate-900 bg-opacity-80 p-4 rounded-xl border border-slate-700 w-full max-w-xs mb-6 backdrop-blur-sm">
+            <div class="bg-slate-900 bg-opacity-80 p-4 rounded-xl border border-slate-700 w-full max-w-xs mb-4 backdrop-blur-sm mt-2">
                 <div class="text-purple-400 uppercase tracking-widest text-xs font-bold mb-1">Hole Distance</div>
                 <h2 class="text-4xl font-bold mb-1" id="pg-scen-dist">15 ft</h2>
                 <p class="text-white mb-2 text-lg drop-shadow-md" id="pg-scen-break">Break: 4" Right</p>
-                <div class="text-sm text-slate-300 mt-4 mb-2">Adjust Aim Offset</div>
+                <div class="text-sm text-slate-300 mt-3 mb-1">Adjust Aim Offset</div>
                 <div class="flex items-center justify-between bg-slate-800 rounded-lg p-2">
                     <button onclick="pgUpdateAim(-1)" class="w-10 h-10 bg-slate-700 rounded-md text-xl font-bold border border-slate-600">&larr;</button>
                     <div class="text-2xl font-bold text-white"><span id="pg-aim-val">0</span>&deg;</div>
@@ -210,29 +243,25 @@
                 </div>
             </div>
 
-            <button onclick="pgSetAddress()" class="btn-purple text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs mb-4 shadow-[0_0_20px_rgba(139,92,246,0.6)]">Lock Putter & Play</button>
+            <button onclick="pgSetAddress()" class="btn-purple text-white font-bold py-3 px-10 rounded-full text-lg w-full max-w-xs mb-3 shadow-[0_0_20px_rgba(139,92,246,0.6)]">Lock Putter & Play</button>
             <button onclick="exitToMenu()" class="text-slate-300 py-2 w-full max-w-xs active:text-white bg-black bg-opacity-50 rounded-full">Exit AR Mode</button>
         </div>
 
         <div id="pg-view-swing" class="view-section">
-            <div class="bg-black bg-opacity-50 px-6 py-2 rounded-full backdrop-blur-sm mb-4">
-                <h2 id="pg-status" class="text-purple-400 text-xl font-bold uppercase drop-shadow-md">Make Your Putt</h2>
+            <div class="bg-black bg-opacity-50 px-6 py-2 rounded-full backdrop-blur-sm mb-2 mt-2">
+                <h2 id="pg-status" class="text-purple-400 text-lg font-bold uppercase drop-shadow-md">Make Your Putt</h2>
             </div>
-            
-            <canvas id="pgSwingCanvas" width="300" height="400" class="ar-canvas mb-6 backdrop-blur-none"></canvas>
-
-            <button onclick="showView('pg-view-setup')" class="text-white bg-slate-800 bg-opacity-80 py-2 px-8 border border-slate-600 rounded-full backdrop-blur-sm">Reset</button>
+            <canvas id="pgSwingCanvas" width="300" height="350" class="ar-canvas mb-4 backdrop-blur-none"></canvas>
+            <button onclick="showView('pg-view-setup')" class="text-white bg-slate-800 bg-opacity-80 py-2 px-8 border border-slate-600 rounded-full backdrop-blur-sm">Reset Aim</button>
         </div>
 
         <div id="pg-view-roll" class="view-section">
-            <div class="bg-black bg-opacity-50 px-6 py-2 rounded-full backdrop-blur-sm mb-4">
-                <h2 class="text-3xl font-bold text-white drop-shadow-md" id="pg-roll-result">Rolling...</h2>
+            <div class="bg-black bg-opacity-50 px-6 py-2 rounded-full backdrop-blur-sm mb-2 mt-2">
+                <h2 class="text-2xl font-bold text-white drop-shadow-md" id="pg-roll-result">Rolling...</h2>
             </div>
-            
-            <canvas id="pgRollCanvas" width="300" height="400" class="ar-canvas mb-6 backdrop-blur-none"></canvas>
-            
-            <button id="pg-btn-next" style="display:none;" onclick="pgGenerateScenario()" class="btn-purple text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs mb-3 shadow-[0_0_20px_rgba(139,92,246,0.6)]">Next Hole</button>
-            <button onclick="exitToMenu()" class="text-white bg-slate-800 bg-opacity-80 py-3 w-full max-w-xs rounded-full backdrop-blur-sm">Exit AR</button>
+            <canvas id="pgRollCanvas" width="300" height="350" class="ar-canvas mb-4 backdrop-blur-none"></canvas>
+            <button id="pg-btn-next" style="display:none;" onclick="pgGenerateScenario()" class="btn-purple text-white font-bold py-3 px-10 rounded-full text-lg w-full max-w-xs mb-2 shadow-[0_0_20px_rgba(139,92,246,0.6)]">Next Hole</button>
+            <button onclick="exitToMenu()" class="text-white bg-slate-800 bg-opacity-80 py-2 w-full max-w-xs rounded-full backdrop-blur-sm">Exit AR</button>
         </div>
     </div>
 
@@ -271,7 +300,6 @@
                 showMessage("HTTPS Required for Gyroscope/Camera access!"); return;
             }
             appMode = mode;
-
             if (mode === 'putt') await startCamera();
 
             if (!sensorListenerAdded) {
@@ -313,7 +341,7 @@
 
         function routeToFirstView() {
             if (appMode === 'reader') { grReset(); showView('gr-view-calibrate'); } 
-            else if (appMode === 'sim') { showView('sim-view-address'); }
+            else if (appMode === 'sim') { simGenerateScenario(); }
             else if (appMode === 'putt') { pgGenerateScenario(); }
         }
 
@@ -344,7 +372,7 @@
             }
             gr.liveX = gr.rawX - gr.offX; gr.liveY = gr.rawY - gr.offY;
             if (document.getElementById('gr-view-capture').classList.contains('active')) {
-                const maxA = 20, maxM = 100; let cX = Math.max(-maxA, Math.min(maxA, gr.liveX)), cY = Math.max(-maxA, Math.min(maxA, gr.liveY));
+                const maxA = 20, maxM = 90; let cX = Math.max(-maxA, Math.min(maxA, gr.liveX)), cY = Math.max(-maxA, Math.min(maxA, gr.liveY));
                 bubble.style.transform = `translate(calc(-50% + ${(cX/maxA)*maxM}px), calc(-50% + ${(cY/maxA)*maxM}px))`;
                 if (Math.abs(gr.liveX) < 0.5 && Math.abs(gr.liveY) < 0.5) { bubble.style.backgroundColor = "#10b981"; bubble.style.boxShadow = "0 0 15px rgba(16, 185, 129, 0.8)"; } 
                 else { bubble.style.backgroundColor = "#f59e0b"; bubble.style.boxShadow = "0 0 15px rgba(245, 158, 11, 0.8)"; }
@@ -363,8 +391,8 @@
             let rawInches = gr.dist * (Math.abs(wX) * 1.75); let speedMod = Math.max(0.5, Math.min(1 - (wY * 0.1), 1.5)); 
             let totInches = Math.round(rawInches * speedMod); let aimDir = wX > 0 ? "Right" : "Left";
             const resAim = document.getElementById('gr-result-aim');
-            if (totInches < 1) { resAim.innerText = "Aim Dead Center"; resAim.className = "text-3xl font-bold mb-1 text-white"; totInches = 0; } 
-            else { resAim.innerText = `Aim ${totInches}" ${aimDir}`; resAim.className = aimDir === "Right" ? "text-3xl font-bold mb-1 text-blue-400" : "text-3xl font-bold mb-1 text-red-400"; }
+            if (totInches < 1) { resAim.innerText = "Aim Dead Center"; resAim.className = "text-2xl font-bold mb-1 text-white"; totInches = 0; } 
+            else { resAim.innerText = `Aim ${totInches}" ${aimDir}`; resAim.className = aimDir === "Right" ? "text-2xl font-bold mb-1 text-blue-400" : "text-2xl font-bold mb-1 text-red-400"; }
             grDrawCanvas(totInches, aimDir);
         }
         function grDrawCanvas(breakAmt, aimDir) {
@@ -381,49 +409,144 @@
         }
 
         // ==========================================
-        // 2. FULL SWING SIM LOGIC 
+        // 2. FULL SWING SIM LOGIC (Updated with Speed/Distance)
         // ==========================================
-        const sim = { base: {a:0, b:0, g:0}, state: 'IDLE', minDev: 999, faceLock: 0 };
+        const clubs = [
+            { name: "Driver", max: 280 }, { name: "3 Wood", max: 240 }, { name: "3 Iron", max: 215 },
+            { name: "5 Iron", max: 190 }, { name: "7 Iron", max: 165 }, { name: "9 Iron", max: 140 }, { name: "Wedge", max: 110 }
+        ];
+
+        const sim = { 
+            base: {a:0, b:0, g:0}, state: 'IDLE', minDev: 999, faceLock: 0,
+            distToHole: 200, clubIdx: 0, maxBack: 0, dsStart: 0, dsDist: 0
+        };
         const simCanvas = document.getElementById('simCanvas'); const simCtx = simCanvas.getContext('2d');
+
+        function simGenerateScenario() {
+            sim.distToHole = Math.floor(Math.random() * (500 - 100 + 1)) + 100;
+            document.getElementById('sim-scen-dist').innerText = sim.distToHole + " Yards";
+            
+            // Auto-select best club
+            sim.clubIdx = clubs.findIndex(c => c.max <= sim.distToHole);
+            if(sim.clubIdx === -1) sim.clubIdx = clubs.length - 1; // Shortest club
+            if(sim.distToHole > clubs[0].max) sim.clubIdx = 0; // Driver
+
+            simUpdateClubUI();
+            showView('sim-view-setup');
+        }
+
+        function simUpdateClub(dir) {
+            sim.clubIdx = Math.max(0, Math.min(clubs.length - 1, sim.clubIdx + dir));
+            simUpdateClubUI();
+        }
+
+        function simUpdateClubUI() {
+            document.getElementById('sim-club-name').innerText = clubs[sim.clubIdx].name;
+            document.getElementById('sim-club-max').innerText = clubs[sim.clubIdx].max;
+        }
+
         function simHandleSensor(e) {
             if (document.getElementById('sim-view-address').classList.contains('active')) {
-                document.getElementById('sim-live-a').innerText = Math.round(e.alpha) + '°'; document.getElementById('sim-live-b').innerText = Math.round(e.beta) + '°'; document.getElementById('sim-live-g').innerText = Math.round(e.gamma) + '°';
+                document.getElementById('sim-live-a').innerText = Math.round(e.alpha) + '°'; 
+                document.getElementById('sim-live-b').innerText = Math.round(e.beta) + '°'; 
+                document.getElementById('sim-live-g').innerText = Math.round(e.gamma) + '°';
             }
             if (document.getElementById('sim-view-swing').classList.contains('active')) simProcessArc(e);
         }
+
         function simSetAddress() {
             sim.base = {a: parseFloat(document.getElementById('sim-live-a').innerText), b: parseFloat(document.getElementById('sim-live-b').innerText), g: parseFloat(document.getElementById('sim-live-g').innerText)};
-            simSwingAgain();
-        }
-        function simSwingAgain() {
-            sim.state = 'IDLE'; sim.minDev = 999; sim.faceLock = 0;
+            sim.state = 'IDLE'; sim.minDev = 999; sim.faceLock = 0; sim.maxBack = 0;
             document.getElementById('sim-status').innerText = "READY"; document.getElementById('sim-status').className = "text-blue-400 mb-2 text-3xl font-bold uppercase";
             showView('sim-view-swing');
         }
+
         function simProcessArc(e) {
             let dA = getShortestAngle(e.alpha, sim.base.a), dB = getShortestAngle(e.beta, sim.base.b), dG = getShortestAngle(e.gamma, sim.base.g);
             let arcDev = Math.sqrt(dA*dA + dB*dB); const status = document.getElementById('sim-status');
-            if (sim.state === 'IDLE' && arcDev > 20) { sim.state = 'BACKSWING'; status.innerText = "BACKSWING"; status.className = "text-yellow-400 mb-2 text-3xl font-bold uppercase"; } 
+            
+            if (sim.state === 'IDLE' && arcDev > 20) { 
+                sim.state = 'BACKSWING'; status.innerText = "BACKSWING"; status.className = "text-yellow-400 mb-2 text-3xl font-bold uppercase"; 
+            } 
             else if (sim.state === 'BACKSWING') {
+                sim.maxBack = Math.max(sim.maxBack, arcDev);
                 if (arcDev < sim.minDev) sim.minDev = arcDev;
-                if (arcDev < 30 && arcDev < (sim.minDev + 15)) { sim.state = 'DOWNSWING'; sim.minDev = arcDev; status.innerText = "DOWNSWING"; status.className = "text-orange-400 mb-2 text-3xl font-bold uppercase"; }
+                if (arcDev < 30 && arcDev < (sim.minDev + 15)) { 
+                    sim.state = 'DOWNSWING'; sim.minDev = arcDev; 
+                    sim.dsStart = Date.now(); sim.dsDist = sim.maxBack; // Track time & angle for speed
+                    status.innerText = "DOWNSWING"; status.className = "text-orange-400 mb-2 text-3xl font-bold uppercase"; 
+                }
             } else if (sim.state === 'DOWNSWING') {
                 if (arcDev < sim.minDev) { sim.minDev = arcDev; sim.faceLock = dG; }
-                if (arcDev < 15 || (arcDev > sim.minDev + 15)) { sim.state = 'IMPACT'; simDrawImpact(sim.faceLock); }
+                if (arcDev < 15 || (arcDev > sim.minDev + 15)) { 
+                    sim.state = 'IMPACT'; 
+                    
+                    let dt = (Date.now() - sim.dsStart) / 1000;
+                    if (dt < 0.05) dt = 0.05; // Prevent inf
+                    
+                    // Calc Speed: 400 deg/sec = ~120 mph (fast swing)
+                    let degPerSec = sim.dsDist / dt;
+                    let speedMph = (degPerSec / 400) * 120;
+                    
+                    // Sanity limits
+                    speedMph = Math.max(20, Math.min(speedMph, 140)); 
+                    
+                    simDrawImpact(sim.faceLock, speedMph); 
+                }
             }
         }
-        function simDrawImpact(faceAngle) {
-            showView('sim-view-results'); let ang = Math.round(faceAngle);
-            const resA = document.getElementById('sim-result-angle');
-            if (Math.abs(ang) <= 2) { resA.innerText = "0° Square"; resA.className = "text-4xl font-bold mb-1 text-green-400"; } 
-            else if (ang > 0) { resA.innerText = `+${ang}° Open`; resA.className = "text-4xl font-bold mb-1 text-red-400"; } 
-            else { resA.innerText = `${Math.abs(ang)}° Closed`; resA.className = "text-4xl font-bold mb-1 text-blue-400"; }
-            simCtx.clearRect(0,0,simCanvas.width,simCanvas.height); const cx = simCanvas.width/2, cy = simCanvas.height/2;
+
+        function simDrawImpact(faceAngle, speedMph) {
+            let ang = Math.round(faceAngle);
+            
+            // Calc Speed % (relative to 120mph)
+            let speedPct = Math.round((speedMph / 120) * 100);
+            document.getElementById('sim-res-mph').innerText = Math.round(speedMph);
+            document.getElementById('sim-res-pct').innerText = speedPct;
+            document.getElementById('sim-speed-bar').style.width = Math.min(100, speedPct) + '%';
+            
+            // Calc Distance (Club Max * Effort * Face Penalty)
+            let club = clubs[sim.clubIdx];
+            // Normalize: 100 mph = Club Max. (120mph goes 1.2x further)
+            let effortRatio = speedMph / 100; 
+            let rawDist = club.max * effortRatio;
+            
+            // Penalty: lose roughly 1% dist per degree offline
+            let facePenalty = Math.max(0.5, 1 - (Math.abs(ang) * 0.01));
+            let hitDist = Math.round(rawDist * facePenalty);
+            
+            // Offline dispersion
+            let offlineYards = Math.round(hitDist * Math.tan(ang * Math.PI / 180));
+            
+            // Update UI 
+            document.getElementById('sim-res-dist').innerText = hitDist;
+            
+            let remDist = Math.abs(sim.distToHole - hitDist);
+            if (remDist < 3) document.getElementById('sim-res-rem').innerText = "In the Hole!";
+            else document.getElementById('sim-res-rem').innerText = remDist + " yds";
+
+            const resF = document.getElementById('sim-res-face');
+            const resO = document.getElementById('sim-res-offline');
+            if (Math.abs(ang) <= 1) { 
+                resF.innerText = "0° Square"; resF.className = "text-xl font-bold text-green-400"; 
+                resO.innerText = "On Target"; resO.className = "text-[10px] font-bold mt-1 text-green-400";
+            } else if (ang > 0) { 
+                resF.innerText = `+${ang}° Open`; resF.className = "text-xl font-bold text-red-400"; 
+                resO.innerText = `${Math.abs(offlineYards)} yds Right`; resO.className = "text-[10px] font-bold mt-1 text-red-400";
+            } else { 
+                resF.innerText = `${Math.abs(ang)}° Closed`; resF.className = "text-xl font-bold text-blue-400"; 
+                resO.innerText = `${Math.abs(offlineYards)} yds Left`; resO.className = "text-[10px] font-bold mt-1 text-blue-400";
+            }
+
+            // Draw Face Canvas
+            simCtx.clearRect(0,0,simCanvas.width,simCanvas.height); const cx = simCanvas.width/2, cy = 100;
             simCtx.save(); simCtx.translate(cx, cy); simCtx.rotate((Math.max(-45, Math.min(45, ang)) * Math.PI) / 180);
             simCtx.beginPath(); simCtx.roundRect(-40, 5, 80, 16, 8); simCtx.fillStyle = '#94a3b8'; simCtx.fill();
-            simCtx.beginPath(); simCtx.moveTo(0, 5); simCtx.lineTo(0, -100); simCtx.strokeStyle = Math.abs(ang) <= 2 ? '#34d399' : (ang > 0 ? '#f87171' : '#60a5fa'); simCtx.lineWidth = 3; simCtx.stroke();
+            simCtx.beginPath(); simCtx.moveTo(0, 5); simCtx.lineTo(0, -100); simCtx.strokeStyle = Math.abs(ang) <= 1 ? '#34d399' : (ang > 0 ? '#f87171' : '#60a5fa'); simCtx.lineWidth = 3; simCtx.stroke();
             simCtx.restore();
             simCtx.beginPath(); simCtx.arc(cx, cy-15, 12, 0, Math.PI*2); simCtx.fillStyle='#fff'; simCtx.fill();
+
+            showView('sim-view-results'); 
         }
 
         // ==========================================
@@ -433,6 +556,8 @@
         const pgSwingCanvas = document.getElementById('pgSwingCanvas'); const pgSctx = pgSwingCanvas.getContext('2d');
         const pgRollCanvas = document.getElementById('pgRollCanvas'); const pgRctx = pgRollCanvas.getContext('2d');
         let pgAnimId;
+
+        const BALL_RADIUS = 10; const HOLE_RADIUS = BALL_RADIUS * 3;
 
         function pgGenerateScenario() {
             pg.dist = Math.floor(Math.random() * 25) + 5; 
@@ -450,19 +575,13 @@
         function pgSetAddress() {
             pg.state = 'IDLE'; pg.maxBack = 0; pg.faceLock = 0;
             document.getElementById('pg-status').innerText = "MAKE YOUR PUTT";
-            showView('pg-view-swing');
-            pg.captureNext = true;
+            showView('pg-view-swing'); pg.captureNext = true;
         }
 
         function pgHandleSensor(e) {
             if (document.getElementById('pg-view-swing').classList.contains('active')) {
-                if (pg.captureNext) {
-                    pg.base = { b: e.beta, g: e.gamma };
-                    pg.captureNext = false;
-                    return;
-                }
+                if (pg.captureNext) { pg.base = { b: e.beta, g: e.gamma }; pg.captureNext = false; return; }
 
-                // Reverse the backstroke. Pulling phone back = positive strokePitch
                 let strokePitch = -getShortestAngle(e.beta, pg.base.b);
                 let dGamma = getShortestAngle(e.gamma, pg.base.g);
                 
@@ -477,9 +596,7 @@
                 } 
                 else if (pg.state === 'DOWNSWING') {
                     if (strokePitch < 2) { 
-                        pg.state = 'IMPACT'; 
-                        pg.faceLock = dGamma;
-                        pgExecutePuttAR();
+                        pg.state = 'IMPACT'; pg.faceLock = dGamma; pgExecutePuttAR();
                     }
                 }
             }
@@ -489,80 +606,57 @@
             pgSctx.clearRect(0,0,pgSwingCanvas.width,pgSwingCanvas.height);
             const cx = pgSwingCanvas.width/2, cy = 150; 
             
-            // Draw Target/Hole Outline in the distance (AR HUD)
-            pgSctx.beginPath(); pgSctx.arc(cx, 30, 10, 0, Math.PI*2);
+            pgSctx.beginPath(); pgSctx.arc(cx, 30, HOLE_RADIUS, 0, Math.PI*2);
             pgSctx.strokeStyle = 'rgba(255,255,255,0.8)'; pgSctx.lineWidth=2; pgSctx.stroke();
             pgSctx.beginPath(); pgSctx.moveTo(cx, 40); pgSctx.lineTo(cx, cy);
             pgSctx.strokeStyle = 'rgba(255,255,255,0.3)'; pgSctx.setLineDash([5,5]); pgSctx.stroke(); pgSctx.setLineDash([]);
 
-            // Draw Ball
-            pgSctx.beginPath(); pgSctx.arc(cx, cy, 12, 0, Math.PI*2); pgSctx.fillStyle='#fff'; 
+            pgSctx.beginPath(); pgSctx.arc(cx, cy, BALL_RADIUS, 0, Math.PI*2); pgSctx.fillStyle='#fff'; 
             pgSctx.shadowColor='rgba(0,0,0,0.8)'; pgSctx.shadowBlur=6; pgSctx.fill(); pgSctx.shadowBlur=0;
 
-            // Draw Putter Head. Positive pitch (pulling back) increases Y, moving putter visually DOWN the screen (towards player)
             let putterY = cy + 20 + (pitch * 4); 
-            pgSctx.save();
-            pgSctx.translate(cx, putterY);
+            pgSctx.save(); pgSctx.translate(cx, putterY);
             pgSctx.rotate((Math.max(-30, Math.min(30, twist)) * Math.PI) / 180);
             pgSctx.beginPath(); pgSctx.roundRect(-40, 0, 80, 20, 6);
-            pgSctx.fillStyle = 'rgba(148, 163, 184, 0.9)';
-            pgSctx.shadowColor='rgba(0,0,0,0.8)'; pgSctx.shadowBlur=8; pgSctx.fill(); pgSctx.shadowBlur=0;
-            // Aim line on putter
+            pgSctx.fillStyle = 'rgba(148, 163, 184, 0.9)'; pgSctx.shadowColor='rgba(0,0,0,0.8)'; pgSctx.shadowBlur=8; pgSctx.fill(); pgSctx.shadowBlur=0;
             pgSctx.beginPath(); pgSctx.moveTo(0,0); pgSctx.lineTo(0,20); pgSctx.strokeStyle='white'; pgSctx.lineWidth=2; pgSctx.stroke();
             pgSctx.restore();
         }
 
         function pgExecutePuttAR() {
             showView('pg-view-roll');
-            
-            let distHitFt = pg.maxBack * 1.2; // Calibrated swing power
+            let distHitFt = pg.maxBack * 1.2; 
             let launchAngle = pg.aim + pg.faceLock; 
-            
             const W = pgRollCanvas.width, H = pgRollCanvas.height;
-            const holeX = W/2, holeY = 40, startY = H - 100;
+            const holeX = W/2, holeY = 50, startY = H - 50;
             const pxPerFt = (startY - holeY) / pg.dist; 
-            
-            const friction = 0.95;
-            const frictionFactor = 1 - friction; // 0.05
-            
+            const friction = 0.95; const frictionFactor = 1 - friction; 
             let totalDistPx = distHitFt * pxPerFt;
-            let speed = totalDistPx * frictionFactor; // Initial velocity required to reach total distance
+            let speed = totalDistPx * frictionFactor; 
             
             let vx = Math.sin(launchAngle * Math.PI/180) * speed;
             let vy = -Math.cos(launchAngle * Math.PI/180) * speed;
-            
-            // Tuned break pull to naturally curve as speed decreases
             let breakPull = pg.breakAmt * 0.02; 
-
             let bX = W/2, bY = startY;
 
             function animLoop() {
-                vx += breakPull; 
-                vx *= friction; 
-                vy *= friction;
-                bX += vx; 
-                bY += vy;
-                
+                vx += breakPull; vx *= friction; vy *= friction;
+                bX += vx; bY += vy;
                 let curSpeed = Math.sqrt(vx*vx + vy*vy);
 
                 pgRctx.clearRect(0,0,W,H);
                 
-                // Draw AR Hole
-                pgRctx.beginPath(); pgRctx.arc(holeX, holeY, 14, 0, Math.PI*2); 
+                pgRctx.beginPath(); pgRctx.arc(holeX, holeY, HOLE_RADIUS, 0, Math.PI*2); 
                 pgRctx.fillStyle='rgba(0,0,0,0.8)'; pgRctx.fill();
                 pgRctx.strokeStyle='rgba(255,255,255,0.8)'; pgRctx.lineWidth=2; pgRctx.stroke();
 
-                // Draw Ball
-                pgRctx.beginPath(); pgRctx.arc(bX, bY, 10, 0, Math.PI*2); pgRctx.fillStyle='#fff'; 
+                pgRctx.beginPath(); pgRctx.arc(bX, bY, BALL_RADIUS, 0, Math.PI*2); pgRctx.fillStyle='#fff'; 
                 pgRctx.shadowColor='rgba(0,0,0,0.8)'; pgRctx.shadowBlur=6; pgRctx.fill(); pgRctx.shadowBlur=0;
 
-                // IN-MOTION SINK CHECK: If it rolls near the hole at a reasonable speed, drop it in!
                 let distToHole = Math.hypot(bX - holeX, bY - holeY);
-                if (distToHole < 22 && curSpeed < (speed * 0.8)) {
+                if (distToHole < HOLE_RADIUS && curSpeed < (speed * 0.8)) {
                     pgFinishRoll(bX, bY, holeX, holeY, distHitFt, true); return;
                 }
-
-                // Stop conditions (fully stopped or rolled off screen)
                 if (curSpeed < 0.3 || bY < -20 || bX < -20 || bX > W + 20) {
                     pgFinishRoll(bX, bY, holeX, holeY, distHitFt, false); return;
                 }
@@ -573,18 +667,20 @@
 
         function pgFinishRoll(bX, bY, hX, hY, distHitFt, isSink) {
             let resultText = "", resClass = "";
-
             if (isSink) { 
-                resultText = "SINK!"; 
-                resClass = "text-5xl font-black mb-4 text-green-400 drop-shadow-[0_0_10px_rgba(74,222,128,0.8)]";
+                resultText = "SINK!"; resClass = "text-4xl font-black mb-2 text-green-400 drop-shadow-[0_0_10px_rgba(74,222,128,0.8)]";
+                const W = pgRollCanvas.width, H = pgRollCanvas.height;
+                pgRctx.clearRect(0,0,W,H);
+                pgRctx.beginPath(); pgRctx.arc(hX, hY, HOLE_RADIUS, 0, Math.PI*2); 
+                pgRctx.fillStyle='rgba(0,0,0,0.8)'; pgRctx.fill();
+                pgRctx.strokeStyle='rgba(255,255,255,0.8)'; pgRctx.lineWidth=2; pgRctx.stroke();
             } else {
                 if (distHitFt < pg.dist - 2) resultText = "Left it Short";
                 else if (distHitFt > pg.dist + 6) resultText = "Too Hard!";
                 else if (bX > hX) resultText = "Missed Right";
                 else resultText = "Missed Left";
-                resClass = "text-4xl font-bold mb-4 text-red-400 drop-shadow-[0_0_10px_rgba(248,113,113,0.8)]";
+                resClass = "text-3xl font-bold mb-2 text-red-400 drop-shadow-[0_0_10px_rgba(248,113,113,0.8)]";
             }
-            
             document.getElementById('pg-roll-result').innerText = resultText;
             document.getElementById('pg-roll-result').className = resClass;
             document.getElementById('pg-btn-next').style.display = 'block';
@@ -592,3 +688,5 @@
     </script>
 </body>
 </html>
+
+
