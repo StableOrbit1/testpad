@@ -172,7 +172,7 @@
             <button onclick="exitToMenu()" class="text-slate-400 py-2 w-full max-w-xs active:text-white">Menu</button>
         </div>
 
-        <div id="flick3d-view-play" class="view-section p-0 m-0">
+        <div id="flick3d-view-play" class="view-section p-0 m-0 play-screen">
             <div class="absolute top-10 left-0 w-full flex justify-between px-6 z-20 pointer-events-none">
                 <div class="bg-black bg-opacity-70 p-2 rounded-lg backdrop-blur-md text-left border border-slate-600">
                     <div class="text-[10px] text-orange-400 uppercase tracking-widest">Target</div>
@@ -218,7 +218,7 @@
             <button onclick="exitToMenu()" class="text-slate-300 py-2 w-full max-w-xs active:text-white bg-black bg-opacity-50 rounded-full">Exit AR Mode</button>
         </div>
 
-        <div id="pg-view-swing" class="view-section">
+        <div id="pg-view-swing" class="view-section play-screen">
             <div class="bg-black bg-opacity-70 px-6 py-2 rounded-full backdrop-blur-sm mb-2 mt-2 border border-slate-600 z-20">
                 <h2 id="pg-status" class="text-purple-400 text-lg font-bold uppercase drop-shadow-md">Make Your Putt</h2>
             </div>
@@ -226,7 +226,7 @@
             <button onclick="showView('pg-view-setup')" class="text-white bg-slate-800 bg-opacity-90 py-2 px-8 border border-slate-600 rounded-full backdrop-blur-sm z-20 interactive-ui">Reset Aim</button>
         </div>
 
-        <div id="pg-view-roll" class="view-section">
+        <div id="pg-view-roll" class="view-section play-screen">
             <div class="bg-black bg-opacity-70 px-6 py-2 rounded-full backdrop-blur-sm mb-2 mt-2 border border-slate-600 z-20">
                 <h2 class="text-2xl font-bold text-white drop-shadow-md" id="pg-roll-result">Rolling...</h2>
             </div>
@@ -256,15 +256,12 @@
             views.forEach(v => v.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             
-            // Manage background transparencies. 
             uiLayer.classList.remove('bg-mode-active', 'play-mode-active');
             
             if (id === 'flick3d-view-play' || id === 'pg-view-swing' || id === 'pg-view-roll') {
-                // Fully transparent so the 3D Engine or AR Camera is 100% visible
-                uiLayer.classList.add('play-mode-active');
+                uiLayer.classList.add('play-mode-active'); // Fully transparent for 3D/AR to show through
             } else if (appMode === 'flick3d' || appMode === 'putt') {
-                // Semi-transparent overlay so UI text is readable
-                uiLayer.classList.add('bg-mode-active');
+                uiLayer.classList.add('bg-mode-active'); // Semi-transparent for menus over 3D/AR
             }
         }
 
@@ -294,7 +291,7 @@
             }
             appMode = mode;
 
-            // 1. Request Motion IMMEDIATELY 
+            // 1. Request Motion Synchronously
             if (!sensorListenerAdded) {
                 if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                     try {
@@ -452,7 +449,7 @@
 
 
         // ==========================================
-        // 3. 3D FLICK GOLF SIMULATOR
+        // 3. NEW 3D FLICK GOLF SIMULATOR
         // ==========================================
         const flick3d = { 
             initialized: false, scene: null, camera: null, renderer: null, ball: null, clubGroup: null, targetFlag: null, envGroup: null,
@@ -550,8 +547,9 @@
             requestAnimationFrame(animateThreeJS);
             if (flick3d.inFlight) {
                 flick3d.ball.position.add(flick3d.velocity);
-                flick3d.velocity.y -= 0.03; // Matches G calculation below
-                flick3d.velocity.x += (flick3d.flightFace * 0.001); // Hook/Slice spin
+                flick3d.velocity.y -= 0.03; 
+                // Much gentler in-air drift
+                flick3d.velocity.x += (flick3d.flightFace * 0.0003); 
                 
                 // Track Camera dynamically
                 let targetZ = flick3d.ball.position.z + 12;
@@ -620,8 +618,8 @@
                 let strokePitch = getShortestAngle(e.beta, flick3d.baseBeta); 
                 let dGamma = getShortestAngle(e.gamma, flick3d.baseGamma);
                 
-                // Animate Club: Negative X rotation brings the club head towards +Z (camera)
-                if(flick3d.clubGroup) flick3d.clubGroup.rotation.x = THREE.MathUtils.degToRad(-strokePitch);
+                // Animate Club: Positive X rotation swings the club forward, so we use Positive strokePitch to swing club back.
+                if(flick3d.clubGroup) flick3d.clubGroup.rotation.x = THREE.MathUtils.degToRad(strokePitch);
 
                 const status = document.getElementById('flick3d-status');
                 
@@ -648,8 +646,12 @@
         function flick3dExecuteShot(speed, faceAngle) {
             flick3d.state = 'FLIGHT'; flick3d.flightFace = faceAngle;
             let club = golfClubs[flick3d.clubIdx];
-            let effortRatio = Math.min(speed / 400, 1.15); // 400deg/s is standard full
-            let facePenalty = Math.max(0.6, 1 - (Math.abs(faceAngle) * 0.01));
+            
+            // Reduced Sensitivity: Requires a ~600 deg/sec flick to hit 100% effort. Capped strictly at 1.20 (120%).
+            let effortRatio = Math.min(speed / 600, 1.20); 
+            
+            // Reduced Face Penalty
+            let facePenalty = Math.max(0.75, 1 - (Math.abs(faceAngle) * 0.005));
             let targetDist = club.max * effortRatio * facePenalty;
             
             // Trajectory Math
@@ -660,8 +662,10 @@
             flick3d.velocity.y = Math.sin(loftRad) * vMag;
             flick3d.velocity.z = -Math.cos(loftRad) * vMag;
             
+            // Reduced Initial Hook/Slice push
             let faceRad = THREE.MathUtils.degToRad(faceAngle);
-            flick3d.velocity.x = Math.sin(faceRad) * (vMag * 0.3); 
+            flick3d.velocity.x = Math.sin(faceRad) * (vMag * 0.1); 
+            
             flick3d.inFlight = true;
         }
 
