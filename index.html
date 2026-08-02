@@ -23,7 +23,7 @@
             width: 100vw; height: 100vh;
             object-fit: cover;
             z-index: 0;
-            display: none; /* Hidden by default */
+            display: none;
         }
 
         /* Container for UI to sit above AR */
@@ -44,13 +44,13 @@
             padding: 20px;
             box-sizing: border-box;
             text-align: center;
-            background-color: #0f172a; /* Solid background by default */
+            background-color: #0f172a;
             transition: background-color 0.3s;
         }
         .view-section.active { display: flex; }
         
         /* Transparent views for AR mode */
-        .ar-mode .view-section { background-color: rgba(0, 0, 0, 0.4); } /* Slight tint for text readability */
+        .ar-mode .view-section { background-color: rgba(0, 0, 0, 0.4); }
 
         /* Buttons */
         .btn-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); }
@@ -72,7 +72,7 @@
 </head>
 <body>
 
-    <!-- AR Camera Feed (Underneath everything) -->
+    <!-- AR Camera Feed -->
     <video id="ar-video" autoplay playsinline muted></video>
 
     <div id="ui-layer">
@@ -219,7 +219,6 @@
                 <h2 id="pg-status" class="text-purple-400 text-xl font-bold uppercase drop-shadow-md">Make Your Putt</h2>
             </div>
             
-            <!-- Canvas is styled with .ar-canvas to be fully transparent -->
             <canvas id="pgSwingCanvas" width="300" height="400" class="ar-canvas mb-6 backdrop-blur-none"></canvas>
 
             <button onclick="showView('pg-view-setup')" class="text-white bg-slate-800 bg-opacity-80 py-2 px-8 border border-slate-600 rounded-full backdrop-blur-sm">Reset</button>
@@ -263,7 +262,7 @@
         function exitToMenu() { 
             stopCamera();
             appMode = 'menu'; 
-            uiLayer.className = ''; // Remove AR transparency mode
+            uiLayer.className = ''; 
             showView('view-main'); 
         }
 
@@ -273,10 +272,7 @@
             }
             appMode = mode;
 
-            // Start Camera if AR Putting mode
-            if (mode === 'putt') {
-                await startCamera();
-            }
+            if (mode === 'putt') await startCamera();
 
             if (!sensorListenerAdded) {
                 if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
@@ -289,18 +285,15 @@
             } else routeToFirstView();
         }
 
-        // --- AR Camera Logic ---
         async function startCamera() {
             try {
-                cameraStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'environment' }
-                });
+                cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 const videoEl = document.getElementById('ar-video');
                 videoEl.srcObject = cameraStream;
                 videoEl.style.display = 'block';
-                uiLayer.className = 'ar-mode'; // Turns backgrounds transparent
+                uiLayer.className = 'ar-mode';
             } catch (err) {
-                showMessage("Camera denied. AR background disabled, but game will still work.", false);
+                showMessage("Camera denied. AR disabled, but game will still work.", false);
                 uiLayer.className = '';
             }
         }
@@ -339,7 +332,7 @@
         }
 
         // ==========================================
-        // 1. GREEN READER LOGIC (Unchanged)
+        // 1. GREEN READER LOGIC 
         // ==========================================
         const gr = { dist: 10, stage: 1, rawX: 0, rawY: 0, offX: 0, offY: 0, liveX: 0, liveY: 0, read1: {x:0,y:0}, read2: {x:0,y:0} };
         const bubble = document.getElementById('bubble'); const grCanvas = document.getElementById('grCanvas'); const grCtx = grCanvas.getContext('2d');
@@ -388,7 +381,7 @@
         }
 
         // ==========================================
-        // 2. FULL SWING SIM LOGIC (Unchanged)
+        // 2. FULL SWING SIM LOGIC 
         // ==========================================
         const sim = { base: {a:0, b:0, g:0}, state: 'IDLE', minDev: 999, faceLock: 0 };
         const simCanvas = document.getElementById('simCanvas'); const simCtx = simCanvas.getContext('2d');
@@ -434,7 +427,7 @@
         }
 
         // ==========================================
-        // 3. AR PUTTING GAME LOGIC
+        // 3. AR PUTTING GAME LOGIC 
         // ==========================================
         const pg = { dist: 10, breakAmt: 0, aim: 0, base: {b:0, g:0}, state: 'IDLE', maxBack: 0, faceLock: 0 };
         const pgSwingCanvas = document.getElementById('pgSwingCanvas'); const pgSctx = pgSwingCanvas.getContext('2d');
@@ -469,20 +462,21 @@
                     return;
                 }
 
-                let dBeta = getShortestAngle(e.beta, pg.base.b);
+                // Reverse the backstroke. Pulling phone back = positive strokePitch
+                let strokePitch = -getShortestAngle(e.beta, pg.base.b);
                 let dGamma = getShortestAngle(e.gamma, pg.base.g);
                 
-                pgDrawLivePutterAR(dBeta, dGamma);
+                pgDrawLivePutterAR(strokePitch, dGamma);
 
                 if (pg.state === 'IDLE') {
-                    if (Math.abs(dBeta) > 2) { pg.state = 'BACKSWING'; document.getElementById('pg-status').innerText = "SWINGING..."; }
+                    if (strokePitch > 2) { pg.state = 'BACKSWING'; document.getElementById('pg-status').innerText = "SWINGING..."; }
                 } 
                 else if (pg.state === 'BACKSWING') {
-                    pg.maxBack = Math.max(pg.maxBack, Math.abs(dBeta));
-                    if (Math.abs(dBeta) < pg.maxBack - 1) pg.state = 'DOWNSWING';
+                    pg.maxBack = Math.max(pg.maxBack, strokePitch);
+                    if (strokePitch < pg.maxBack - 1) pg.state = 'DOWNSWING';
                 } 
                 else if (pg.state === 'DOWNSWING') {
-                    if (Math.abs(dBeta) < 2) { 
+                    if (strokePitch < 2) { 
                         pg.state = 'IMPACT'; 
                         pg.faceLock = dGamma;
                         pgExecutePuttAR();
@@ -501,17 +495,17 @@
             pgSctx.beginPath(); pgSctx.moveTo(cx, 40); pgSctx.lineTo(cx, cy);
             pgSctx.strokeStyle = 'rgba(255,255,255,0.3)'; pgSctx.setLineDash([5,5]); pgSctx.stroke(); pgSctx.setLineDash([]);
 
-            // Draw Ball (White with slight shadow to pop off real floor)
+            // Draw Ball
             pgSctx.beginPath(); pgSctx.arc(cx, cy, 12, 0, Math.PI*2); pgSctx.fillStyle='#fff'; 
             pgSctx.shadowColor='rgba(0,0,0,0.8)'; pgSctx.shadowBlur=6; pgSctx.fill(); pgSctx.shadowBlur=0;
 
-            // Draw Putter Head
-            let putterY = cy + 20 + (pitch * 4); // Amplified movement
+            // Draw Putter Head. Positive pitch (pulling back) increases Y, moving putter visually DOWN the screen (towards player)
+            let putterY = cy + 20 + (pitch * 4); 
             pgSctx.save();
             pgSctx.translate(cx, putterY);
             pgSctx.rotate((Math.max(-30, Math.min(30, twist)) * Math.PI) / 180);
             pgSctx.beginPath(); pgSctx.roundRect(-40, 0, 80, 20, 6);
-            pgSctx.fillStyle = 'rgba(148, 163, 184, 0.9)'; // Semi-transparent metal
+            pgSctx.fillStyle = 'rgba(148, 163, 184, 0.9)';
             pgSctx.shadowColor='rgba(0,0,0,0.8)'; pgSctx.shadowBlur=8; pgSctx.fill(); pgSctx.shadowBlur=0;
             // Aim line on putter
             pgSctx.beginPath(); pgSctx.moveTo(0,0); pgSctx.lineTo(0,20); pgSctx.strokeStyle='white'; pgSctx.lineWidth=2; pgSctx.stroke();
@@ -521,27 +515,34 @@
         function pgExecutePuttAR() {
             showView('pg-view-roll');
             
-            let distHitFt = pg.maxBack * 1.5; 
+            let distHitFt = pg.maxBack * 1.2; // Calibrated swing power
             let launchAngle = pg.aim + pg.faceLock; 
             
             const W = pgRollCanvas.width, H = pgRollCanvas.height;
             const holeX = W/2, holeY = 40, startY = H - 100;
             const pxPerFt = (startY - holeY) / pg.dist; 
             
+            const friction = 0.95;
+            const frictionFactor = 1 - friction; // 0.05
+            
             let totalDistPx = distHitFt * pxPerFt;
-            let speed = totalDistPx * 0.02; 
+            let speed = totalDistPx * frictionFactor; // Initial velocity required to reach total distance
             
             let vx = Math.sin(launchAngle * Math.PI/180) * speed;
             let vy = -Math.cos(launchAngle * Math.PI/180) * speed;
             
-            let breakPx = pg.breakAmt * (pxPerFt / 12);
-            let breakPull = (breakPx / 1250) * 0.5; 
+            // Tuned break pull to naturally curve as speed decreases
+            let breakPull = pg.breakAmt * 0.02; 
 
             let bX = W/2, bY = startY;
 
             function animLoop() {
-                vx += breakPull; vx *= 0.98; vy *= 0.98;
-                bX += vx; bY += vy;
+                vx += breakPull; 
+                vx *= friction; 
+                vy *= friction;
+                bX += vx; 
+                bY += vy;
+                
                 let curSpeed = Math.sqrt(vx*vx + vy*vy);
 
                 pgRctx.clearRect(0,0,W,H);
@@ -555,23 +556,30 @@
                 pgRctx.beginPath(); pgRctx.arc(bX, bY, 10, 0, Math.PI*2); pgRctx.fillStyle='#fff'; 
                 pgRctx.shadowColor='rgba(0,0,0,0.8)'; pgRctx.shadowBlur=6; pgRctx.fill(); pgRctx.shadowBlur=0;
 
-                if (curSpeed < 0.1 || bY < 0 || bX < 0 || bX > W) {
-                    pgFinishRoll(bX, bY, holeX, holeY, distHitFt); return;
+                // IN-MOTION SINK CHECK: If it rolls near the hole at a reasonable speed, drop it in!
+                let distToHole = Math.hypot(bX - holeX, bY - holeY);
+                if (distToHole < 22 && curSpeed < (speed * 0.8)) {
+                    pgFinishRoll(bX, bY, holeX, holeY, distHitFt, true); return;
+                }
+
+                // Stop conditions (fully stopped or rolled off screen)
+                if (curSpeed < 0.3 || bY < -20 || bX < -20 || bX > W + 20) {
+                    pgFinishRoll(bX, bY, holeX, holeY, distHitFt, false); return;
                 }
                 pgAnimId = requestAnimationFrame(animLoop);
             }
             cancelAnimationFrame(pgAnimId); animLoop();
         }
 
-        function pgFinishRoll(bX, bY, hX, hY, distHitFt) {
-            let distToHole = Math.hypot(bX - hX, bY - hY);
+        function pgFinishRoll(bX, bY, hX, hY, distHitFt, isSink) {
             let resultText = "", resClass = "";
 
-            if (distToHole < 16) { 
-                resultText = "SINK!"; resClass = "text-5xl font-black mb-4 text-green-400 drop-shadow-[0_0_10px_rgba(74,222,128,0.8)]";
+            if (isSink) { 
+                resultText = "SINK!"; 
+                resClass = "text-5xl font-black mb-4 text-green-400 drop-shadow-[0_0_10px_rgba(74,222,128,0.8)]";
             } else {
-                if (distHitFt < pg.dist - 1) resultText = "Left it Short";
-                else if (distHitFt > pg.dist + 3) resultText = "Too Hard!";
+                if (distHitFt < pg.dist - 2) resultText = "Left it Short";
+                else if (distHitFt > pg.dist + 6) resultText = "Too Hard!";
                 else if (bX > hX) resultText = "Missed Right";
                 else resultText = "Missed Left";
                 resClass = "text-4xl font-bold mb-4 text-red-400 drop-shadow-[0_0_10px_rgba(248,113,113,0.8)]";
