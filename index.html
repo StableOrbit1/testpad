@@ -172,23 +172,24 @@
             <button onclick="exitToMenu()" class="text-slate-400 py-2 w-full max-w-xs active:text-white">Menu</button>
         </div>
 
-        <div id="flick3d-view-play" class="view-section p-0 m-0 play-screen">
+        <!-- Transparent Play View -->
+        <div id="flick3d-view-play" class="view-section p-0 m-0 play-screen relative">
             <div class="absolute top-10 left-0 w-full flex justify-between px-6 z-20 pointer-events-none">
-                <div class="bg-black bg-opacity-70 p-2 rounded-lg backdrop-blur-md text-left border border-slate-600">
-                    <div class="text-[10px] text-orange-400 uppercase tracking-widest">Target</div>
+                <div class="bg-black bg-opacity-70 p-2 rounded-lg backdrop-blur-md text-left border border-slate-600 shadow-xl">
+                    <div class="text-[10px] text-orange-400 uppercase tracking-widest font-bold">Target</div>
                     <div class="text-2xl font-bold text-white"><span id="flick3d-hud-dist">0</span>y</div>
                 </div>
-                <div class="bg-black bg-opacity-70 p-2 rounded-lg backdrop-blur-md text-right border border-slate-600">
-                    <div class="text-[10px] text-slate-300 uppercase tracking-widest">Club</div>
-                    <div class="text-lg font-bold text-white" id="flick3d-hud-club">Drv</div>
+                <div class="bg-black bg-opacity-70 p-2 rounded-lg backdrop-blur-md text-right border border-slate-600 shadow-xl">
+                    <div class="text-[10px] text-slate-300 uppercase tracking-widest font-bold">Club</div>
+                    <div class="text-xl font-bold text-white" id="flick3d-hud-club">Drv</div>
                 </div>
             </div>
-            <div class="absolute bottom-10 left-0 w-full flex flex-col items-center z-20">
-                <h2 id="flick3d-status" class="text-white drop-shadow-lg mb-2 text-3xl font-black uppercase" style="text-shadow: 0 4px 10px rgba(0,0,0,0.8);">Ready</h2>
-                <p class="text-white text-[11px] bg-black bg-opacity-70 px-4 py-2 rounded-full mb-6 border border-slate-500 text-center mx-4 backdrop-blur-md" style="text-shadow: 0 2px 4px rgba(0,0,0,0.8);">
-                    Hold phone upright. Tilt top <b class="text-orange-400">towards you</b> to draw back, then flick forward!
-                </p>
-                <button onclick="showView('flick3d-view-setup')" class="bg-slate-800 bg-opacity-90 border border-slate-500 text-white py-2 px-8 rounded-full backdrop-blur-md active:bg-slate-700 interactive-ui">Cancel</button>
+            <div class="absolute bottom-12 left-0 w-full flex flex-col items-center z-20">
+                <div class="bg-black bg-opacity-70 px-8 py-3 rounded-full mb-6 border border-slate-500 backdrop-blur-md shadow-xl text-center mx-4">
+                    <h2 id="flick3d-status" class="text-white drop-shadow-lg text-3xl font-black uppercase tracking-widest mb-1">Ready</h2>
+                    <p class="text-orange-300 text-[11px] font-bold">Hold upright. Tilt top <b class="text-white">TOWARDS YOU</b> to draw back.</p>
+                </div>
+                <button onclick="showView('flick3d-view-setup')" class="bg-slate-800 bg-opacity-90 border border-slate-500 text-white py-3 px-10 rounded-full backdrop-blur-md active:bg-slate-700 interactive-ui shadow-xl font-bold">Cancel</button>
             </div>
         </div>
 
@@ -207,32 +208,65 @@
 
         <!-- 4. AR PUTTING SIMULATOR -->
         <div id="pg-view-setup" class="view-section interactive-ui">
-            <div class="bg-slate-900 bg-opacity-80 p-4 rounded-xl border border-slate-700 w-full max-w-xs mb-4 backdrop-blur-sm mt-2">
+            <div class="bg-slate-900 bg-opacity-90 p-5 rounded-2xl border border-slate-700 w-full max-w-xs mb-6 backdrop-blur-md shadow-2xl mt-4">
                 <div class="flex justify-between items-center mb-1"><div class="text-purple-400 uppercase tracking-widest text-xs font-bold" id="pg-context-title">Putting Practice</div></div>
-                <h2 class="text-4xl font-bold mb-1"><span id="pg-scen-dist">15</span> ft</h2>
-                <p class="text-white mb-2 text-lg drop-shadow-md" id="pg-scen-break">Break: 4" Right</p>
-                <div class="text-sm text-slate-300 mt-3 mb-1">Adjust Aim Offset</div>
-                <div class="flex items-center justify-between bg-slate-800 rounded-lg p-2"><button onclick="pgUpdateAim(-1)" class="w-10 h-10 bg-slate-700 rounded-md text-xl font-bold border border-slate-600">&larr;</button><div class="text-2xl font-bold text-white"><span id="pg-aim-val">0</span>&deg;</div><button onclick="pgUpdateAim(1)" class="w-10 h-10 bg-slate-700 rounded-md text-xl font-bold border border-slate-600">&rarr;</button></div>
+                <h2 class="text-5xl font-black mb-2"><span id="pg-scen-dist">15</span> <span class="text-2xl text-slate-300 font-bold">ft</span></h2>
+                <p class="text-white mb-4 text-lg font-bold" id="pg-scen-break">Break: 4" Right</p>
+                
+                <div class="w-full h-px bg-slate-700 mb-4"></div>
+                
+                <div class="text-xs text-slate-400 uppercase tracking-widest font-bold mb-2">Adjust Aim Offset</div>
+                <div class="flex items-center justify-between bg-slate-800 rounded-xl p-2 border border-slate-600">
+                    <button onclick="pgUpdateAim(-1)" class="w-12 h-12 bg-slate-700 rounded-lg text-2xl font-bold border border-slate-600 active:bg-slate-600">&larr;</button>
+                    <div class="text-2xl font-black text-white"><span id="pg-aim-val">0</span>&deg;</div>
+                    <button onclick="pgUpdateAim(1)" class="w-12 h-12 bg-slate-700 rounded-lg text-2xl font-bold border border-slate-600 active:bg-slate-600">&rarr;</button>
+                </div>
             </div>
-            <button onclick="pgSetAddress()" class="btn-purple text-white font-bold py-3 px-10 rounded-full text-lg w-full max-w-xs mb-3 shadow-[0_0_20px_rgba(139,92,246,0.6)]">Lock Putter & Play</button>
+            <button onclick="pgSetAddress()" class="btn-purple text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs mb-3 shadow-[0_0_20px_rgba(139,92,246,0.5)]">Lock Putter & Play</button>
             <button onclick="exitToMenu()" class="text-slate-300 py-2 w-full max-w-xs active:text-white bg-black bg-opacity-50 rounded-full">Exit AR Mode</button>
         </div>
 
-        <div id="pg-view-swing" class="view-section play-screen">
-            <div class="bg-black bg-opacity-70 px-6 py-2 rounded-full backdrop-blur-sm mb-2 mt-2 border border-slate-600 z-20">
-                <h2 id="pg-status" class="text-purple-400 text-lg font-bold uppercase drop-shadow-md">Make Your Putt</h2>
+        <div id="pg-view-swing" class="view-section play-screen relative">
+            <div class="absolute top-10 flex flex-col items-center z-20 w-full">
+                <div class="bg-black bg-opacity-70 px-8 py-3 rounded-full backdrop-blur-md border border-slate-500 shadow-xl">
+                    <h2 id="pg-status" class="text-purple-400 text-xl font-black uppercase tracking-widest drop-shadow-md">Make Your Putt</h2>
+                </div>
             </div>
+
+            <!-- Live Power Meter -->
+            <div class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-70 p-3 rounded-full border border-slate-500 flex flex-col items-center z-20 backdrop-blur-md shadow-xl">
+                <div class="text-[10px] text-slate-300 uppercase font-bold tracking-widest mb-1">Power</div>
+                <div id="pg-live-power-container" class="text-xl font-black text-blue-400 drop-shadow-md"><span id="pg-live-power">0</span>'</div>
+                
+                <div class="h-32 w-3 bg-slate-800 rounded-full mt-2 relative overflow-hidden border border-slate-700">
+                    <div id="pg-power-bar" class="absolute bottom-0 left-0 w-full bg-blue-400 transition-all duration-75" style="height: 0%;"></div>
+                    <!-- Target line sits at 66% height -->
+                    <div id="pg-target-line" class="absolute left-0 w-full h-1 bg-white z-10 shadow-[0_0_5px_rgba(255,255,255,0.8)]" style="bottom: 66%;"></div>
+                </div>
+                
+                <div class="text-[10px] text-slate-300 mt-2 font-bold tracking-widest">Target<br><span id="pg-target-power-text" class="text-white text-sm font-black drop-shadow-md">15'</span></div>
+            </div>
+
             <canvas id="pgSwingCanvas" width="300" height="350" class="ar-canvas mb-4 backdrop-blur-none pointer-events-none z-10"></canvas>
-            <button onclick="showView('pg-view-setup')" class="text-white bg-slate-800 bg-opacity-90 py-2 px-8 border border-slate-600 rounded-full backdrop-blur-sm z-20 interactive-ui">Reset Aim</button>
+            
+            <div class="absolute bottom-10 z-20 w-full flex justify-center">
+                <button onclick="showView('pg-view-setup')" class="text-white bg-slate-800 bg-opacity-90 py-3 px-10 border border-slate-500 rounded-full backdrop-blur-md interactive-ui shadow-xl font-bold">Reset Aim</button>
+            </div>
         </div>
 
-        <div id="pg-view-roll" class="view-section play-screen">
-            <div class="bg-black bg-opacity-70 px-6 py-2 rounded-full backdrop-blur-sm mb-2 mt-2 border border-slate-600 z-20">
-                <h2 class="text-2xl font-bold text-white drop-shadow-md" id="pg-roll-result">Rolling...</h2>
+        <div id="pg-view-roll" class="view-section play-screen relative">
+            <div class="absolute top-10 flex flex-col items-center z-20 w-full">
+                <div class="bg-black bg-opacity-70 px-8 py-3 rounded-full backdrop-blur-md border border-slate-500 shadow-xl">
+                    <h2 class="text-2xl font-black text-white uppercase tracking-widest drop-shadow-md" id="pg-roll-result">Rolling...</h2>
+                </div>
             </div>
+            
             <canvas id="pgRollCanvas" width="300" height="350" class="ar-canvas mb-4 backdrop-blur-none pointer-events-none z-10"></canvas>
-            <button id="pg-btn-next" style="display:none;" onclick="pgHandleNextHole()" class="btn-purple text-white font-bold py-3 px-10 rounded-full text-lg w-full max-w-xs mb-2 shadow-[0_0_20px_rgba(139,92,246,0.6)] z-20 interactive-ui">Next Hole</button>
-            <button onclick="exitToMenu()" class="text-white bg-slate-800 bg-opacity-90 py-2 w-full max-w-xs rounded-full backdrop-blur-sm border border-slate-600 z-20 interactive-ui">Exit AR</button>
+            
+            <div class="absolute bottom-10 z-20 w-full flex flex-col items-center gap-3">
+                <button id="pg-btn-next" style="display:none;" onclick="pgHandleNextHole()" class="btn-purple text-white font-bold py-4 px-10 rounded-full text-lg w-[250px] shadow-[0_0_20px_rgba(139,92,246,0.6)] interactive-ui">Next Hole</button>
+                <button onclick="exitToMenu()" class="text-white bg-slate-800 bg-opacity-90 py-2 w-[250px] rounded-full backdrop-blur-md border border-slate-500 interactive-ui font-bold">Exit AR</button>
+            </div>
         </div>
     </div>
 
@@ -259,9 +293,9 @@
             uiLayer.classList.remove('bg-mode-active', 'play-mode-active');
             
             if (id === 'flick3d-view-play' || id === 'pg-view-swing' || id === 'pg-view-roll') {
-                uiLayer.classList.add('play-mode-active'); // Fully transparent for 3D/AR to show through
+                uiLayer.classList.add('play-mode-active'); 
             } else if (appMode === 'flick3d' || appMode === 'putt') {
-                uiLayer.classList.add('bg-mode-active'); // Semi-transparent for menus over 3D/AR
+                uiLayer.classList.add('bg-mode-active'); 
             }
         }
 
@@ -291,7 +325,6 @@
             }
             appMode = mode;
 
-            // 1. Request Motion Synchronously
             if (!sensorListenerAdded) {
                 if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                     try {
@@ -300,7 +333,7 @@
                             window.addEventListener('deviceorientation', globalSensorHandler);
                             sensorListenerAdded = true;
                         } else { 
-                            showMessage('Motion permission denied. Cannot play.'); exitToMenu(); return; 
+                            showMessage('Motion permission denied.'); exitToMenu(); return; 
                         }
                     } catch (e) { 
                         showMessage('Error requesting motion. Open directly in Safari.'); exitToMenu(); return; 
@@ -311,10 +344,8 @@
                 }
             }
 
-            // 2. Camera for AR Putting
             if (mode === 'putt') { await startCamera(); } else { stopCamera(); }
 
-            // 3. Initialize 3D Engine for Flick Sim
             if (mode === 'flick3d') {
                 if(!flick3d.initialized) initThreeJS();
                 document.getElementById('flick-3d-container').style.display = 'block';
@@ -322,7 +353,6 @@
                 if(flick3d.initialized) document.getElementById('flick-3d-container').style.display = 'none';
             }
 
-            // 4. Route
             setTimeout(() => routeToFirstView(params), 100);
         }
 
@@ -449,7 +479,7 @@
 
 
         // ==========================================
-        // 3. NEW 3D FLICK GOLF SIMULATOR
+        // 3. 3D FLICK GOLF SIMULATOR
         // ==========================================
         const flick3d = { 
             initialized: false, scene: null, camera: null, renderer: null, ball: null, clubGroup: null, targetFlag: null, envGroup: null,
@@ -474,7 +504,6 @@
             const ambient = new THREE.AmbientLight(0xffffff, 0.9); flick3d.scene.add(ambient);
             const dirLight = new THREE.DirectionalLight(0xffffff, 1.0); dirLight.position.set(100, 200, 50); flick3d.scene.add(dirLight);
 
-            // Ground & Fairway
             const groundGeo = new THREE.PlaneGeometry(3000, 3000);
             const groundMat = new THREE.MeshLambertMaterial({ color: 0x2E8B57 }); 
             const ground = new THREE.Mesh(groundGeo, groundMat);
@@ -489,12 +518,10 @@
 
             flick3d.envGroup = new THREE.Group(); flick3d.scene.add(flick3d.envGroup);
 
-            // Ball 
             const ballGeo = new THREE.SphereGeometry(0.3, 16, 16);
             const ballMat = new THREE.MeshPhongMaterial({ color: 0xffffff });
             flick3d.ball = new THREE.Mesh(ballGeo, ballMat); flick3d.scene.add(flick3d.ball);
 
-            // Flag
             const flagGeo = new THREE.CylinderGeometry(0.1, 0.1, 10);
             const flagMat = new THREE.MeshBasicMaterial({color: 0xffffff});
             flick3d.targetFlag = new THREE.Mesh(flagGeo, flagMat);
@@ -504,7 +531,7 @@
             pennant.position.set(1, 4, 0); flick3d.targetFlag.add(pennant);
             flick3d.scene.add(flick3d.targetFlag);
 
-            // Club (Pivot at the top)
+            // Club
             flick3d.clubGroup = new THREE.Group();
             const shaftGeo = new THREE.CylinderGeometry(0.03, 0.03, 3);
             const shaftMat = new THREE.MeshStandardMaterial({color: 0xaaaaaa, metalness: 0.8});
@@ -548,10 +575,9 @@
             if (flick3d.inFlight) {
                 flick3d.ball.position.add(flick3d.velocity);
                 flick3d.velocity.y -= 0.03; 
-                // Much gentler in-air drift
-                flick3d.velocity.x += (flick3d.flightFace * 0.0003); 
+                // Reduced spin/curve drift
+                flick3d.velocity.x += (flick3d.flightFace * 0.0001); 
                 
-                // Track Camera dynamically
                 let targetZ = flick3d.ball.position.z + 12;
                 let targetX = flick3d.ball.position.x * 0.6;
                 let targetY = Math.max(3, flick3d.ball.position.y + 2);
@@ -581,11 +607,9 @@
         function flick3dShowSetup() {
             document.getElementById('flick3d-scen-dist').innerText = flick3d.distToHole;
             document.getElementById('flick3d-shot-num').innerText = flick3d.shotCount;
-            
             flick3d.clubIdx = golfClubs.findIndex(c => c.max <= flick3d.distToHole);
             if(flick3d.clubIdx === -1) flick3d.clubIdx = golfClubs.length - 1; 
             if(flick3d.distToHole > golfClubs[0].max) flick3d.clubIdx = 0; 
-            
             flick3dUpdateClubUI(); showView('flick3d-view-setup');
         }
 
@@ -603,7 +627,7 @@
             flick3d.camera.position.set(0, 3.5, 8); 
             flick3d.camera.lookAt(0, 3.5, -100); 
             
-            flick3d.clubGroup.position.set(0.2, 3.5, 0); // Pivot above ball
+            flick3d.clubGroup.position.set(0.2, 3.5, 0); 
             flick3d.clubGroup.rotation.set(0,0,0);
             
             document.getElementById('flick3d-status').innerText = "READY";
@@ -614,11 +638,12 @@
             if (document.getElementById('flick3d-view-play').classList.contains('active') && !flick3d.inFlight) {
                 if (flick3d.captureNext) { flick3d.baseBeta = e.beta; flick3d.baseGamma = e.gamma; flick3d.captureNext = false; return; }
 
-                // Pull top of phone towards you (face up) = Backswing
-                let strokePitch = getShortestAngle(e.beta, flick3d.baseBeta); 
+                // Pulling phone towards you (face up) = negative pitch. We negate it to get a positive backswing value.
+                let rawPitch = getShortestAngle(e.beta, flick3d.baseBeta); 
+                let strokePitch = -rawPitch;
                 let dGamma = getShortestAngle(e.gamma, flick3d.baseGamma);
                 
-                // Animate Club: Positive X rotation swings the club forward, so we use Positive strokePitch to swing club back.
+                // BACKSWING FIX: Positive X rotation pitches the top of the club towards the camera
                 if(flick3d.clubGroup) flick3d.clubGroup.rotation.x = THREE.MathUtils.degToRad(strokePitch);
 
                 const status = document.getElementById('flick3d-status');
@@ -647,14 +672,13 @@
             flick3d.state = 'FLIGHT'; flick3d.flightFace = faceAngle;
             let club = golfClubs[flick3d.clubIdx];
             
-            // Reduced Sensitivity: Requires a ~600 deg/sec flick to hit 100% effort. Capped strictly at 1.20 (120%).
+            // Reduced Sensitivity: Requires ~600 deg/sec flick. Capped at 1.20 (120%).
             let effortRatio = Math.min(speed / 600, 1.20); 
             
             // Reduced Face Penalty
             let facePenalty = Math.max(0.75, 1 - (Math.abs(faceAngle) * 0.005));
             let targetDist = club.max * effortRatio * facePenalty;
             
-            // Trajectory Math
             let loftRad = THREE.MathUtils.degToRad(club.loft);
             let g = 0.03 * 2; 
             let vMag = Math.sqrt((targetDist * g) / Math.sin(2 * loftRad));
@@ -662,9 +686,9 @@
             flick3d.velocity.y = Math.sin(loftRad) * vMag;
             flick3d.velocity.z = -Math.cos(loftRad) * vMag;
             
-            // Reduced Initial Hook/Slice push
+            // Reduced Hook/Slice drift
             let faceRad = THREE.MathUtils.degToRad(faceAngle);
-            flick3d.velocity.x = Math.sin(faceRad) * (vMag * 0.1); 
+            flick3d.velocity.x = Math.sin(faceRad) * (vMag * 0.15); 
             
             flick3d.inFlight = true;
         }
@@ -704,31 +728,63 @@
 
         function pgGenerateScenario(forcedDist = null) {
             if (forcedDist !== null) {
-                pg.dist = forcedDist; document.getElementById('pg-context-title').innerText = "On the Green!"; document.getElementById('pg-context-title').className = "text-green-400 uppercase tracking-widest text-xs font-bold";
+                pg.dist = forcedDist; document.getElementById('pg-context-title').innerText = "On the Green!"; document.getElementById('pg-context-title').className = "text-green-400 uppercase tracking-widest text-xs font-bold drop-shadow-md";
             } else {
-                pg.dist = Math.floor(Math.random() * 25) + 5; document.getElementById('pg-context-title').innerText = "Putting Practice"; document.getElementById('pg-context-title').className = "text-purple-400 uppercase tracking-widest text-xs font-bold";
+                pg.dist = Math.floor(Math.random() * 25) + 5; document.getElementById('pg-context-title').innerText = "Putting Practice"; document.getElementById('pg-context-title').className = "text-purple-400 uppercase tracking-widest text-xs font-bold drop-shadow-md";
             }
-            pg.breakAmt = Math.floor(Math.random() * 21) - 10; pg.aim = 0; document.getElementById('pg-aim-val').innerText = pg.aim;
+            // Reduced break severity
+            pg.breakAmt = Math.floor(Math.random() * 11) - 5; 
+            pg.aim = 0; document.getElementById('pg-aim-val').innerText = pg.aim;
             document.getElementById('pg-scen-dist').innerText = `${pg.dist} ft`;
+            document.getElementById('pg-target-power-text').innerText = `${pg.dist}'`;
             let brkStr = pg.breakAmt === 0 ? "Straight" : (pg.breakAmt > 0 ? `${pg.breakAmt}" Right` : `${Math.abs(pg.breakAmt)}" Left`);
             document.getElementById('pg-scen-break').innerText = `Break: ${brkStr}`; document.getElementById('pg-btn-next').style.display = 'none';
             showView('pg-view-setup');
         }
         function pgUpdateAim(dir) { pg.aim += dir; document.getElementById('pg-aim-val').innerText = pg.aim; }
-        function pgSetAddress() { pg.state = 'IDLE'; pg.maxBack = 0; pg.faceLock = 0; document.getElementById('pg-status').innerText = "MAKE YOUR PUTT"; showView('pg-view-swing'); pg.captureNext = true; }
+        function pgSetAddress() { 
+            pg.state = 'IDLE'; pg.maxBack = 0; pg.faceLock = 0; 
+            document.getElementById('pg-status').innerText = "MAKE YOUR PUTT"; 
+            document.getElementById('pg-live-power').innerText = "0";
+            document.getElementById('pg-power-bar').style.height = "0%";
+            showView('pg-view-swing'); pg.captureNext = true; 
+        }
 
         function pgHandleSensor(e) {
             if (document.getElementById('pg-view-swing').classList.contains('active')) {
                 if (pg.captureNext) { pg.base = { b: e.beta, g: e.gamma }; pg.captureNext = false; return; }
                 let strokePitch = -getShortestAngle(e.beta, pg.base.b); let dGamma = getShortestAngle(e.gamma, pg.base.g);
                 pgDrawLivePutterAR(strokePitch, dGamma);
-                if (pg.state === 'IDLE') { if (strokePitch > 2) { pg.state = 'BACKSWING'; document.getElementById('pg-status').innerText = "SWINGING..."; } } 
-                else if (pg.state === 'BACKSWING') { pg.maxBack = Math.max(pg.maxBack, strokePitch); if (strokePitch < pg.maxBack - 1) pg.state = 'DOWNSWING'; } 
-                else if (pg.state === 'DOWNSWING') { if (strokePitch < 2) { pg.state = 'IMPACT'; pg.faceLock = dGamma; pgExecutePuttAR(); } }
+
+                if (pg.state === 'IDLE') { 
+                    if (strokePitch > 2) { pg.state = 'BACKSWING'; document.getElementById('pg-status').innerText = "SWINGING..."; } 
+                } 
+                else if (pg.state === 'BACKSWING') { 
+                    pg.maxBack = Math.max(pg.maxBack, strokePitch); 
+                    if (strokePitch < pg.maxBack - 1) pg.state = 'DOWNSWING'; 
+                } 
+                else if (pg.state === 'DOWNSWING') { 
+                    if (strokePitch < 2) { pg.state = 'IMPACT'; pg.faceLock = dGamma; pgExecutePuttAR(); } 
+                }
             }
         }
 
         function pgDrawLivePutterAR(pitch, twist) {
+            // Update Live Power Meter
+            let estDist = Math.max(0, pitch * 1.2);
+            document.getElementById('pg-live-power').innerText = Math.round(estDist);
+            let pct = Math.min(100, (estDist / (pg.dist * 1.5)) * 100); 
+            let pBar = document.getElementById('pg-power-bar');
+            pBar.style.height = pct + '%';
+            if (Math.abs(estDist - pg.dist) < 2) {
+                pBar.className = "absolute bottom-0 left-0 w-full bg-purple-400 transition-all duration-75";
+                document.getElementById('pg-live-power-container').className = "text-2xl font-black text-purple-400 drop-shadow-md";
+            } else {
+                pBar.className = "absolute bottom-0 left-0 w-full bg-blue-400 transition-all duration-75";
+                document.getElementById('pg-live-power-container').className = "text-2xl font-black text-blue-400 drop-shadow-md";
+            }
+
+            // Draw Putter
             pgSctx.clearRect(0,0,pgSwingCanvas.width,pgSwingCanvas.height); const cx = pgSwingCanvas.width/2, cy = 150; 
             pgSctx.beginPath(); pgSctx.arc(cx, 30, HOLE_RADIUS, 0, Math.PI*2); pgSctx.strokeStyle = 'rgba(255,255,255,0.8)'; pgSctx.lineWidth=2; pgSctx.stroke();
             pgSctx.beginPath(); pgSctx.moveTo(cx, 40); pgSctx.lineTo(cx, cy); pgSctx.strokeStyle = 'rgba(255,255,255,0.3)'; pgSctx.setLineDash([5,5]); pgSctx.stroke(); pgSctx.setLineDash([]);
@@ -739,17 +795,27 @@
         }
 
         function pgExecutePuttAR() {
-            showView('pg-view-roll'); let distHitFt = pg.maxBack * 1.2; let launchAngle = pg.aim + pg.faceLock; 
+            showView('pg-view-roll'); let distHitFt = pg.maxBack * 1.2; 
+            
+            // Substantially reduced face angle penalty to make it much easier to hit straight
+            let launchAngle = pg.aim + (pg.faceLock * 0.25); 
+            
             const W = pgRollCanvas.width, H = pgRollCanvas.height; const holeX = W/2, holeY = 60, startY = H - 50; const pxPerFt = (startY - holeY) / pg.dist; 
             const friction = 0.92; const frictionFactor = 1 - friction; 
             let totalDistPx = distHitFt * pxPerFt; let speed = totalDistPx * frictionFactor; 
-            let vx = Math.sin(launchAngle * Math.PI/180) * speed; let vy = -Math.cos(launchAngle * Math.PI/180) * speed; let breakPull = pg.breakAmt * 0.02; let bX = W/2, bY = startY;
+            
+            let vx = Math.sin(launchAngle * Math.PI/180) * speed; let vy = -Math.cos(launchAngle * Math.PI/180) * speed; 
+            
+            // Reduced break pull
+            let breakPull = pg.breakAmt * 0.012; 
+            let bX = W/2, bY = startY;
 
             function animLoop() {
                 vx += breakPull; vx *= friction; vy *= friction; bX += vx; bY += vy; let curSpeed = Math.sqrt(vx*vx + vy*vy);
                 pgRctx.clearRect(0,0,W,H);
                 pgRctx.beginPath(); pgRctx.arc(holeX, holeY, HOLE_RADIUS, 0, Math.PI*2); pgRctx.fillStyle='rgba(0,0,0,0.8)'; pgRctx.fill(); pgRctx.strokeStyle='rgba(255,255,255,0.8)'; pgRctx.lineWidth=2; pgRctx.stroke();
                 pgRctx.beginPath(); pgRctx.arc(bX, bY, BALL_RADIUS, 0, Math.PI*2); pgRctx.fillStyle='#fff'; pgRctx.shadowColor='rgba(0,0,0,0.8)'; pgRctx.shadowBlur=6; pgRctx.fill(); pgRctx.shadowBlur=0;
+                
                 let distToHole = Math.hypot(bX - holeX, bY - holeY);
                 if (distToHole < HOLE_RADIUS && curSpeed < (speed * 0.95)) { pgFinishRoll(bX, bY, holeX, holeY, distHitFt, true); return; }
                 if (curSpeed < 0.2 || bY < -20 || bX < -20 || bX > W + 20) { pgFinishRoll(bX, bY, holeX, holeY, distHitFt, false); return; }
@@ -781,3 +847,5 @@
     </script>
 </body>
 </html>
+
+
