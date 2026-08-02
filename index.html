@@ -3,185 +3,450 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>iPhone Level</title>
+    <title>Green Reader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
             background-color: #1c1c1e;
             color: white;
             overflow: hidden;
+            touch-action: none;
         }
-        #permission-btn {
-            padding: 15px 30px;
-            font-size: 18px;
-            font-weight: bold;
-            background-color: #0a84ff;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(10, 132, 255, 0.4);
-        }
+        
         #level-container {
-            width: 280px;
-            height: 280px;
+            width: 240px;
+            height: 240px;
             border-radius: 50%;
             background-color: #2c2c2e;
             border: 6px solid #48484a;
             position: relative;
-            display: none;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            margin: 0 auto;
         }
-        /* Level Crosshairs */
         #level-container::before {
             content: '';
             position: absolute;
-            top: 50%;
-            left: 5%;
-            right: 5%;
-            height: 2px;
+            top: 50%; left: 5%; right: 5%; height: 2px;
             background-color: rgba(255,255,255,0.15);
             transform: translateY(-50%);
         }
         #level-container::after {
             content: '';
             position: absolute;
-            left: 50%;
-            top: 5%;
-            bottom: 5%;
-            width: 2px;
+            left: 50%; top: 5%; bottom: 5%; width: 2px;
             background-color: rgba(255,255,255,0.15);
             transform: translateX(-50%);
         }
-        /* Center Target Circle */
         .target {
-            width: 50px;
-            height: 50px;
+            width: 50px; height: 50px;
             border: 2px solid rgba(255,255,255,0.3);
             border-radius: 50%;
             position: absolute;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             z-index: 1;
         }
         #bubble {
-            width: 44px;
-            height: 44px;
+            width: 40px; height: 40px;
             background-color: #32d74b;
             border-radius: 50%;
             position: absolute;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             transition: transform 0.05s linear;
             box-shadow: 0 0 15px rgba(50, 215, 75, 0.8);
             z-index: 2;
         }
-        #readout {
-            margin-top: 40px;
-            font-size: 28px;
-            font-variant-numeric: tabular-nums;
-            text-align: center;
+
+        .view-section {
             display: none;
-            line-height: 1.5;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
+            padding: 20px;
+            box-sizing: border-box;
         }
-        .highlight {
-            color: #32d74b;
-            font-weight: bold;
+        .view-section.active {
+            display: flex;
+        }
+
+        canvas {
+            background-color: #243524;
+            border-radius: 16px;
+            border: 2px solid #3a5a3a;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+            max-width: 100%;
+        }
+        
+        .golf-btn {
+            background: linear-gradient(135deg, #32d74b 0%, #28a73c 100%);
+            box-shadow: 0 4px 15px rgba(50, 215, 75, 0.4);
+            transition: transform 0.1s;
+        }
+        .golf-btn:active {
+            transform: scale(0.95);
         }
     </style>
 </head>
 <body>
 
-    <button id="permission-btn">Enable Level Access</button>
-
-    <div id="level-container">
-        <div class="target"></div>
-        <div id="bubble"></div>
+    <!-- Error Toast -->
+    <div id="error-toast" class="absolute top-5 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-4 rounded-xl font-semibold shadow-lg hidden z-50 text-center w-11/12 max-w-sm border border-red-400">
+        <span id="error-msg">Error message</span>
+        <button id="close-toast" class="mt-3 block w-full bg-red-800 rounded py-2 text-sm">Dismiss</button>
     </div>
 
-    <div id="readout">
-        X: <span id="x-val" class="highlight">0</span>&deg; <br>
-        Y: <span id="y-val" class="highlight">0</span>&deg;
+    <!-- View 1: Intro / Permission -->
+    <div id="view-intro" class="view-section active text-center">
+        <div class="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(50,215,75,0.5)]">
+            <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+        </div>
+        <h1 class="text-3xl font-bold mb-2">Green Reader</h1>
+        <p class="text-gray-400 mb-8 max-w-xs text-sm">We need access to your device's motion sensors to read the green.</p>
+        
+        <button id="btn-start" class="golf-btn text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs flex items-center justify-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"/></svg>
+            Grant Access & Start
+        </button>
+        <p class="text-xs text-gray-600 mt-6 max-w-xs">Must be opened in Safari via HTTPS. Previews or embedded browsers will block sensor access.</p>
+    </div>
+
+    <!-- View 2: Distance Input -->
+    <div id="view-distance" class="view-section text-center">
+        <h2 class="text-2xl font-bold mb-2">Putt Distance</h2>
+        <p class="text-gray-400 mb-8">How long is the putt in feet?</p>
+        
+        <div class="flex items-center justify-center gap-4 mb-10">
+            <button id="btn-dist-minus" class="w-14 h-14 bg-gray-800 rounded-full text-2xl font-bold flex items-center justify-center border border-gray-600 active:bg-gray-700">-</button>
+            <div class="text-5xl font-bold w-24 text-center" id="distance-val">10</div>
+            <button id="btn-dist-plus" class="w-14 h-14 bg-gray-800 rounded-full text-2xl font-bold flex items-center justify-center border border-gray-600 active:bg-gray-700">+</button>
+        </div>
+
+        <button id="btn-confirm-dist" class="golf-btn text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs">
+            Next Step
+        </button>
+    </div>
+
+    <!-- View 3 & 4: Level Capture -->
+    <div id="view-capture" class="view-section text-center">
+        <div class="flex justify-between w-full max-w-xs mb-6 px-4">
+            <div class="h-2 flex-1 bg-green-500 rounded-l-full"></div>
+            <div id="progress-bar-2" class="h-2 flex-1 bg-gray-700 rounded-r-full ml-1 transition-colors duration-300"></div>
+        </div>
+
+        <h2 class="text-2xl font-bold mb-2" id="capture-title">Step 1: 1/3 Distance</h2>
+        <p class="text-gray-400 mb-8 text-sm max-w-xs" id="capture-inst">Place your phone flat on the green at the 1/3 mark, pointing toward the hole.</p>
+        
+        <div id="level-container" class="mb-8">
+            <div class="target"></div>
+            <div id="bubble"></div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 w-full max-w-xs mb-8">
+            <div class="bg-gray-800 p-3 rounded-xl border border-gray-700">
+                <div class="text-xs text-gray-400 mb-1">Side Slope</div>
+                <div class="text-xl font-bold"><span id="val-x">0.0</span>&deg;</div>
+            </div>
+            <div class="bg-gray-800 p-3 rounded-xl border border-gray-700">
+                <div class="text-xs text-gray-400 mb-1">Up/Down</div>
+                <div class="text-xl font-bold"><span id="val-y">0.0</span>&deg;</div>
+            </div>
+        </div>
+
+        <button id="btn-capture" class="golf-btn text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs">
+            Capture Reading
+        </button>
+    </div>
+
+    <!-- View 5: Results -->
+    <div id="view-results" class="view-section text-center">
+        <h2 class="text-3xl font-bold mb-1 text-green-400" id="result-aim">Aim 4" Right</h2>
+        <p class="text-gray-400 mb-6" id="result-desc">Uphill putt, medium break.</p>
+        
+        <canvas id="puttCanvas" width="300" height="400" class="mb-8"></canvas>
+        
+        <button id="btn-reset" class="bg-gray-800 border border-gray-600 text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs active:bg-gray-700">
+            Read Another Putt
+        </button>
     </div>
 
     <script>
-        const btn = document.getElementById('permission-btn');
-        const levelContainer = document.getElementById('level-container');
+        // DOM Elements
+        const views = document.querySelectorAll('.view-section');
+        const toast = document.getElementById('error-toast');
+        const errorMsg = document.getElementById('error-msg');
+        const closeToastBtn = document.getElementById('close-toast');
+        
+        const distanceValEl = document.getElementById('distance-val');
         const bubble = document.getElementById('bubble');
-        const readout = document.getElementById('readout');
-        const xVal = document.getElementById('x-val');
-        const yVal = document.getElementById('y-val');
+        const valX = document.getElementById('val-x');
+        const valY = document.getElementById('val-y');
+        
+        const captureTitle = document.getElementById('capture-title');
+        const captureInst = document.getElementById('capture-inst');
+        const progressBar2 = document.getElementById('progress-bar-2');
+        
+        const resultAim = document.getElementById('result-aim');
+        const resultDesc = document.getElementById('result-desc');
+        const canvas = document.getElementById('puttCanvas');
+        const ctx = canvas.getContext('2d');
 
-        // Maximum pixel travel for the bubble inside the container
-        const maxMove = 115; 
+        // State Variables
+        let puttDistance = 10;
+        let currentStage = 1; 
+        let liveX = 0; 
+        let liveY = 0; 
+        let sensorDataReceived = false;
+        
+        let read1 = { x: 0, y: 0 };
+        let read2 = { x: 0, y: 0 };
+
+        const maxMove = 100;
+
+        // Helpers
+        function showView(id) {
+            views.forEach(v => v.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function showError(msg) {
+            errorMsg.innerText = msg;
+            toast.classList.remove('hidden');
+        }
+        
+        closeToastBtn.addEventListener('click', () => {
+            toast.classList.add('hidden');
+        });
+
+        // --- Permission & Sensor Init ---
+        document.getElementById('btn-start').addEventListener('click', async () => {
+            // Check if we are in a secure context (HTTPS)
+            if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+                showError("HTTPS Required! Apple blocks sensors on HTTP connections. Please host this securely.");
+                return;
+            }
+
+            // iOS 13+ Strict Permission Request
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                try {
+                    const permissionState = await DeviceOrientationEvent.requestPermission();
+                    if (permissionState === 'granted') {
+                        startListening();
+                    } else {
+                        showError('Permission was denied. We cannot access the gyroscope without it.');
+                    }
+                } catch (error) {
+                    showError(`Error requesting permission: ${error.message}. This usually happens if you are in an embedded browser or iframe.`);
+                }
+            } else {
+                // Non iOS 13+ fallback
+                startListening();
+            }
+        });
+
+        function startListening() {
+            window.addEventListener('deviceorientation', handleOrientation);
+            
+            // Wait 500ms to see if we actually get real data. 
+            // If it stays false, the browser is blocking it or device has no sensors.
+            setTimeout(() => {
+                if (sensorDataReceived) {
+                    showView('view-distance');
+                } else {
+                    showError("Listening for sensors, but no data is coming through. If you are in a preview window or an in-app browser, please open directly in Safari.");
+                }
+            }, 600);
+        }
 
         function handleOrientation(event) {
-            // gamma is left-to-right tilt (X axis)
-            let x = event.gamma;
-            // beta is front-to-back tilt (Y axis)
-            let y = event.beta; 
+            let x = event.gamma; 
+            let y = event.beta;  
 
+            // If we get nulls, we aren't getting valid data
             if (x === null || y === null) return;
+            
+            sensorDataReceived = true;
+            liveX = x; 
+            liveY = y;
 
-            // Cap the angles at 45 degrees so the bubble stays inside the visual circle
-            const maxAngle = 45;
+            const maxAngle = 20; 
             let cappedX = Math.max(-maxAngle, Math.min(maxAngle, x));
             let cappedY = Math.max(-maxAngle, Math.min(maxAngle, y));
 
-            // Calculate movement percentage based on tilt
             let moveX = (cappedX / maxAngle) * maxMove;
             let moveY = (cappedY / maxAngle) * maxMove;
 
-            // Apply translation to the bubble
             bubble.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px))`;
+            valX.innerText = x.toFixed(1);
+            valY.innerText = y.toFixed(1);
 
-            // Update numerical text readout (rounded to 1 decimal place)
-            xVal.innerText = x.toFixed(1);
-            yVal.innerText = y.toFixed(1);
-
-            // Change bubble color if perfectly level (within 1 degree)
-            if (Math.abs(x) < 1 && Math.abs(y) < 1) {
+            if (Math.abs(x) < 0.5 && Math.abs(y) < 0.5) {
                 bubble.style.backgroundColor = "#32d74b";
-                bubble.style.boxShadow = "0 0 20px rgba(50, 215, 75, 1)";
+                bubble.style.boxShadow = "0 0 15px rgba(50, 215, 75, 0.8)";
             } else {
                 bubble.style.backgroundColor = "#ff9f0a";
                 bubble.style.boxShadow = "0 0 15px rgba(255, 159, 10, 0.8)";
             }
         }
 
-        btn.addEventListener('click', () => {
-            // Request permission for iOS 13+ devices
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission()
-                    .then(permissionState => {
-                        if (permissionState === 'granted') {
-                            window.addEventListener('deviceorientation', handleOrientation);
-                            startApp();
-                        } else {
-                            alert('Permission denied. Cannot access the device level.');
-                        }
-                    })
-                    .catch(console.error);
+        // --- View 2: Distance ---
+        document.getElementById('btn-dist-minus').addEventListener('click', () => {
+            if (puttDistance > 1) puttDistance--;
+            distanceValEl.innerText = puttDistance;
+        });
+        document.getElementById('btn-dist-plus').addEventListener('click', () => {
+            if (puttDistance < 100) puttDistance++;
+            distanceValEl.innerText = puttDistance;
+        });
+        document.getElementById('btn-confirm-dist').addEventListener('click', () => {
+            currentStage = 1;
+            setupCaptureView();
+            showView('view-capture');
+        });
+
+        // --- Views 3 & 4: Capture Logic ---
+        function setupCaptureView() {
+            if (currentStage === 1) {
+                captureTitle.innerText = "Measure 1/3 Distance";
+                captureInst.innerText = `Place phone on the green at approx ${(puttDistance * 0.33).toFixed(1)} ft, pointing at the hole.`;
+                progressBar2.classList.remove('bg-green-500');
+                progressBar2.classList.add('bg-gray-700');
             } else {
-                // Fallback for older iOS versions or standard Android/Desktop browsers
-                window.addEventListener('deviceorientation', handleOrientation);
-                startApp();
+                captureTitle.innerText = "Measure 2/3 Distance";
+                captureInst.innerText = `Place phone on the green at approx ${(puttDistance * 0.66).toFixed(1)} ft, pointing at the hole.`;
+                progressBar2.classList.remove('bg-gray-700');
+                progressBar2.classList.add('bg-green-500');
+            }
+        }
+
+        document.getElementById('btn-capture').addEventListener('click', () => {
+            if (currentStage === 1) {
+                read1 = { x: liveX, y: liveY };
+                currentStage = 2;
+                setupCaptureView();
+            } else {
+                read2 = { x: liveX, y: liveY };
+                calculatePutt();
+                showView('view-results');
             }
         });
 
-        function startApp() {
-            btn.style.display = 'none';
-            levelContainer.style.display = 'block';
-            readout.style.display = 'block';
+        // --- View 5: Math & Canvas ---
+        function calculatePutt() {
+            let weightedX = (read1.x * 0.4) + (read2.x * 0.6); 
+            let weightedY = (read1.y * 0.4) + (read2.y * 0.6); 
+
+            let rawBreakInches = puttDistance * (Math.abs(weightedX) * 1.75);
+
+            let speedModifier = 1 - (weightedY * 0.1);
+            speedModifier = Math.max(0.5, Math.min(speedModifier, 1.5)); 
+
+            let totalBreakInches = Math.round(rawBreakInches * speedModifier);
+
+            let direction = weightedX > 0 ? "Left" : "Right";
+            let aimDir = weightedX > 0 ? "Right" : "Left";
+
+            if (totalBreakInches < 1) {
+                resultAim.innerText = "Aim Dead Center";
+                resultAim.className = "text-3xl font-bold mb-1 text-white";
+                totalBreakInches = 0;
+            } else {
+                resultAim.innerText = `Aim ${totalBreakInches}" ${aimDir}`;
+                resultAim.className = aimDir === "Right" ? "text-3xl font-bold mb-1 text-blue-400" : "text-3xl font-bold mb-1 text-red-400";
+            }
+
+            let desc = "";
+            if (weightedY > 1) desc += "Uphill putt, hit it firm. ";
+            else if (weightedY < -1) desc += "Downhill putt, delicate speed. ";
+            else desc += "Relatively flat speed. ";
+            resultDesc.innerText = desc;
+
+            drawVisualization(totalBreakInches, aimDir);
         }
+
+        function drawVisualization(breakAmt, aimDir) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const W = canvas.width;
+            const H = canvas.height;
+            const holeY = 40;
+            const ballY = H - 40;
+            const centerX = W / 2;
+
+            const maxVisualBreak = W / 2 - 20; 
+            let pixelBreak = breakAmt * 3; 
+            if (pixelBreak > maxVisualBreak) pixelBreak = maxVisualBreak;
+            
+            let curveDir = aimDir === "Right" ? -1 : 1; 
+
+            // 1. Draw Hole
+            ctx.beginPath();
+            ctx.arc(centerX, holeY, 12, 0, Math.PI * 2);
+            ctx.fillStyle = '#000';
+            ctx.fill();
+            ctx.closePath();
+
+            // 2. Draw Straight Reference Line
+            ctx.beginPath();
+            ctx.setLineDash([5, 5]);
+            ctx.moveTo(centerX, ballY);
+            ctx.lineTo(centerX, holeY);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            if (breakAmt > 0) {
+                // 3. Draw Aim Point Line
+                let targetX = centerX + (pixelBreak * -curveDir);
+                ctx.beginPath();
+                ctx.setLineDash([2, 4]);
+                ctx.moveTo(centerX, ballY);
+                ctx.lineTo(targetX, holeY);
+                ctx.strokeStyle = aimDir === "Right" ? 'rgba(96, 165, 250, 0.5)' : 'rgba(248, 113, 113, 0.5)';
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Draw X
+                ctx.beginPath();
+                ctx.moveTo(targetX - 5, holeY - 5);
+                ctx.lineTo(targetX + 5, holeY + 5);
+                ctx.moveTo(targetX + 5, holeY - 5);
+                ctx.lineTo(targetX - 5, holeY + 5);
+                ctx.strokeStyle = aimDir === "Right" ? '#60A5FA' : '#F87171';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // 4. Draw Break Curve
+                ctx.beginPath();
+                ctx.moveTo(centerX, ballY);
+                ctx.quadraticCurveTo(targetX, H / 2, centerX, holeY);
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+
+            // 5. Draw Ball
+            ctx.beginPath();
+            ctx.arc(centerX, ballY, 6, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff';
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 4;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        // --- Reset ---
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            currentStage = 1;
+            showView('view-distance');
+        });
+
     </script>
 </body>
 </html>
+
+
