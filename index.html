@@ -47,7 +47,7 @@
         .btn-purple { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4); }
         .btn-green:active, .btn-blue:active, .btn-purple:active { transform: scale(0.95); }
 
-        /* Green Reader Bubble UI */
+        /* Level UI */
         #level-container { width: 220px; height: 220px; border-radius: 50%; background-color: #1e293b; border: 6px solid #334155; position: relative; margin: 0 auto; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
         #level-container::before { content: ''; position: absolute; background-color: rgba(255,255,255,0.15); top: 50%; left: 5%; right: 5%; height: 2px; transform: translateY(-50%); }
         #level-container::after { content: ''; position: absolute; background-color: rgba(255,255,255,0.15); left: 50%; top: 5%; bottom: 5%; width: 2px; transform: translateX(-50%); }
@@ -88,13 +88,13 @@
                     <p class="text-slate-400 text-[11px]">Read slopes and calculate putt breaks.</p>
                 </div>
 
-                <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-xl relative overflow-hidden" onclick="startAppMode('sim')">
+                <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-xl relative overflow-hidden" onclick="startAppMode('hole')">
                     <div class="absolute top-0 right-0 w-20 h-20 bg-blue-500 opacity-10 rounded-bl-full"></div>
                     <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(59,130,246,0.5)]">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     </div>
-                    <h3 class="text-lg font-bold text-white mb-1">Full Swing Sim</h3>
-                    <p class="text-slate-400 text-[11px]">Track speed, face angle, and distance.</p>
+                    <h3 class="text-lg font-bold text-white mb-1">Play a Hole</h3>
+                    <p class="text-slate-400 text-[11px]">Play from tee to green using your phone.</p>
                 </div>
 
                 <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-xl relative overflow-hidden border-2 border-purple-500" onclick="startAppMode('putt')">
@@ -150,19 +150,22 @@
         </div>
 
         <!-- ============================================== -->
-        <!-- 2. FULL SWING SIMULATOR                        -->
+        <!-- 2. PLAY A HOLE (FULL SWING)                    -->
         <!-- ============================================== -->
         <div id="sim-view-setup" class="view-section">
-            <div class="text-blue-400 uppercase tracking-widest text-xs font-bold mb-1">Scenario</div>
-            <h2 class="text-5xl font-black mb-4" id="sim-scen-dist">210 Yards</h2>
+            <div class="flex justify-between w-full max-w-xs mb-1">
+                <div class="text-blue-400 uppercase tracking-widest text-xs font-bold">Shot <span id="sim-shot-num">1</span></div>
+                <div class="text-slate-400 uppercase tracking-widest text-xs font-bold">Hole: <span id="sim-hole-len">400</span>y</div>
+            </div>
+            <h2 class="text-5xl font-black mb-4"><span id="sim-scen-dist">400</span> <span class="text-2xl text-slate-300">Yards</span></h2>
             
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 w-full max-w-xs mb-6">
                 <div class="text-sm text-slate-400 mb-2">Select Club</div>
                 <div class="flex items-center justify-between bg-slate-900 rounded-lg p-2 border border-slate-600">
                     <button onclick="simUpdateClub(-1)" class="w-10 h-10 bg-slate-700 rounded-md text-xl font-bold">&larr;</button>
                     <div class="text-xl font-bold text-white text-center w-32">
-                        <div id="sim-club-name">7 Iron</div>
-                        <div class="text-[10px] text-slate-400 font-normal">Max: <span id="sim-club-max">165</span>y</div>
+                        <div id="sim-club-name">Driver</div>
+                        <div class="text-[10px] text-slate-400 font-normal">Max: <span id="sim-club-max">280</span>y</div>
                     </div>
                     <button onclick="simUpdateClub(1)" class="w-10 h-10 bg-slate-700 rounded-md text-xl font-bold">&rarr;</button>
                 </div>
@@ -184,7 +187,7 @@
                 </div>
             </div>
             <button onclick="simSetAddress()" class="btn-blue text-white font-bold py-3 px-10 rounded-full text-lg w-full max-w-xs mb-3">Lock Address</button>
-            <button onclick="showView('sim-view-setup')" class="text-slate-400 py-2 w-full max-w-xs active:text-white">Back to Setup</button>
+            <button onclick="showView('sim-view-setup')" class="text-slate-400 py-2 w-full max-w-xs active:text-white">Back</button>
         </div>
 
         <div id="sim-view-swing" class="view-section">
@@ -206,7 +209,7 @@
                     </div>
                 </div>
                 
-                <canvas id="simCanvas" width="280" height="200" class="solid-canvas mb-3 w-full"></canvas>
+                <canvas id="simCanvas" width="280" height="180" class="solid-canvas mb-3 w-full"></canvas>
                 
                 <div class="grid grid-cols-2 gap-3 mb-4">
                     <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 text-center">
@@ -222,7 +225,7 @@
                     </div>
                 </div>
 
-                <button onclick="simGenerateScenario()" class="btn-blue text-white font-bold py-3 px-10 rounded-full text-lg w-full mb-2">Next Shot</button>
+                <button id="sim-btn-next" class="btn-blue text-white font-bold py-3 px-10 rounded-full text-lg w-full mb-2">Next Shot</button>
                 <button onclick="exitToMenu()" class="text-slate-400 py-2 w-full active:text-white">Menu</button>
             </div>
         </div>
@@ -232,8 +235,10 @@
         <!-- ============================================== -->
         <div id="pg-view-setup" class="view-section">
             <div class="bg-slate-900 bg-opacity-80 p-4 rounded-xl border border-slate-700 w-full max-w-xs mb-4 backdrop-blur-sm mt-2">
-                <div class="text-purple-400 uppercase tracking-widest text-xs font-bold mb-1">Hole Distance</div>
-                <h2 class="text-4xl font-bold mb-1" id="pg-scen-dist">15 ft</h2>
+                <div class="flex justify-between items-center mb-1">
+                    <div class="text-purple-400 uppercase tracking-widest text-xs font-bold" id="pg-context-title">Putting Practice</div>
+                </div>
+                <h2 class="text-4xl font-bold mb-1"><span id="pg-scen-dist">15</span> ft</h2>
                 <p class="text-white mb-2 text-lg drop-shadow-md" id="pg-scen-break">Break: 4" Right</p>
                 <div class="text-sm text-slate-300 mt-3 mb-1">Adjust Aim Offset</div>
                 <div class="flex items-center justify-between bg-slate-800 rounded-lg p-2">
@@ -260,13 +265,14 @@
                 <h2 class="text-2xl font-bold text-white drop-shadow-md" id="pg-roll-result">Rolling...</h2>
             </div>
             <canvas id="pgRollCanvas" width="300" height="350" class="ar-canvas mb-4 backdrop-blur-none"></canvas>
-            <button id="pg-btn-next" style="display:none;" onclick="pgGenerateScenario()" class="btn-purple text-white font-bold py-3 px-10 rounded-full text-lg w-full max-w-xs mb-2 shadow-[0_0_20px_rgba(139,92,246,0.6)]">Next Hole</button>
+            <button id="pg-btn-next" style="display:none;" onclick="pgHandleNextHole()" class="btn-purple text-white font-bold py-3 px-10 rounded-full text-lg w-full max-w-xs mb-2 shadow-[0_0_20px_rgba(139,92,246,0.6)]">Next Hole</button>
             <button onclick="exitToMenu()" class="text-white bg-slate-800 bg-opacity-80 py-2 w-full max-w-xs rounded-full backdrop-blur-sm">Exit AR</button>
         </div>
     </div>
 
     <script>
         let appMode = 'menu'; 
+        let playingFullHole = false; // Tracks if we are playing a full hole vs standalone practice
         let sensorListenerAdded = false;
         let cameraStream = null;
 
@@ -291,11 +297,12 @@
         function exitToMenu() { 
             stopCamera();
             appMode = 'menu'; 
+            playingFullHole = false;
             uiLayer.className = ''; 
             showView('view-main'); 
         }
 
-        async function startAppMode(mode) {
+        async function startAppMode(mode, params = null) {
             if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
                 showMessage("HTTPS Required for Gyroscope/Camera access!"); return;
             }
@@ -306,11 +313,11 @@
                 if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                     try {
                         const perm = await DeviceOrientationEvent.requestPermission();
-                        if (perm === 'granted') attachSensors();
+                        if (perm === 'granted') attachSensors(params);
                         else { showMessage('Motion permission denied.'); exitToMenu(); return; }
                     } catch (e) { showMessage('Error requesting motion. Open directly in Safari.'); exitToMenu(); return; }
-                } else attachSensors();
-            } else routeToFirstView();
+                } else attachSensors(params);
+            } else routeToFirstView(params);
         }
 
         async function startCamera() {
@@ -333,22 +340,22 @@
             }
         }
 
-        function attachSensors() {
+        function attachSensors(params) {
             window.addEventListener('deviceorientation', globalSensorHandler);
             sensorListenerAdded = true;
-            setTimeout(() => routeToFirstView(), 300);
+            setTimeout(() => routeToFirstView(params), 300);
         }
 
-        function routeToFirstView() {
+        function routeToFirstView(params) {
             if (appMode === 'reader') { grReset(); showView('gr-view-calibrate'); } 
-            else if (appMode === 'sim') { simGenerateScenario(); }
-            else if (appMode === 'putt') { pgGenerateScenario(); }
+            else if (appMode === 'hole') { playingFullHole = true; simStartNewHole(); }
+            else if (appMode === 'putt') { pgGenerateScenario(params); } // params = distance in feet
         }
 
         function globalSensorHandler(e) {
             if (e.alpha === null) return;
             if (appMode === 'reader') grHandleSensor(e);
-            else if (appMode === 'sim') simHandleSensor(e);
+            else if (appMode === 'hole') simHandleSensor(e);
             else if (appMode === 'putt') pgHandleSensor(e);
         }
 
@@ -409,7 +416,7 @@
         }
 
         // ==========================================
-        // 2. FULL SWING SIM LOGIC (Updated with Speed/Distance)
+        // 2. PLAY A HOLE (FULL SWING LOGIC)
         // ==========================================
         const clubs = [
             { name: "Driver", max: 280 }, { name: "3 Wood", max: 240 }, { name: "3 Iron", max: 215 },
@@ -418,19 +425,25 @@
 
         const sim = { 
             base: {a:0, b:0, g:0}, state: 'IDLE', minDev: 999, faceLock: 0,
-            distToHole: 200, clubIdx: 0, maxBack: 0, dsStart: 0, dsDist: 0
+            holeLen: 400, distToHole: 400, clubIdx: 0, maxBack: 0, dsStart: 0, dsDist: 0, shotCount: 1
         };
         const simCanvas = document.getElementById('simCanvas'); const simCtx = simCanvas.getContext('2d');
 
-        function simGenerateScenario() {
-            sim.distToHole = Math.floor(Math.random() * (500 - 100 + 1)) + 100;
-            document.getElementById('sim-scen-dist').innerText = sim.distToHole + " Yards";
-            
+        function simStartNewHole() {
+            sim.holeLen = Math.floor(Math.random() * (550 - 320 + 1)) + 320; // 320 to 550 yds
+            sim.distToHole = sim.holeLen;
+            sim.shotCount = 1;
+            document.getElementById('sim-hole-len').innerText = sim.holeLen;
+            simShowSetup();
+        }
+
+        function simShowSetup() {
+            document.getElementById('sim-scen-dist').innerText = sim.distToHole;
+            document.getElementById('sim-shot-num').innerText = sim.shotCount;
             // Auto-select best club
             sim.clubIdx = clubs.findIndex(c => c.max <= sim.distToHole);
-            if(sim.clubIdx === -1) sim.clubIdx = clubs.length - 1; // Shortest club
-            if(sim.distToHole > clubs[0].max) sim.clubIdx = 0; // Driver
-
+            if(sim.clubIdx === -1) sim.clubIdx = clubs.length - 1; 
+            if(sim.distToHole > clubs[0].max) sim.clubIdx = 0; 
             simUpdateClubUI();
             showView('sim-view-setup');
         }
@@ -473,24 +486,17 @@
                 if (arcDev < sim.minDev) sim.minDev = arcDev;
                 if (arcDev < 30 && arcDev < (sim.minDev + 15)) { 
                     sim.state = 'DOWNSWING'; sim.minDev = arcDev; 
-                    sim.dsStart = Date.now(); sim.dsDist = sim.maxBack; // Track time & angle for speed
+                    sim.dsStart = Date.now(); sim.dsDist = sim.maxBack; 
                     status.innerText = "DOWNSWING"; status.className = "text-orange-400 mb-2 text-3xl font-bold uppercase"; 
                 }
             } else if (sim.state === 'DOWNSWING') {
                 if (arcDev < sim.minDev) { sim.minDev = arcDev; sim.faceLock = dG; }
                 if (arcDev < 15 || (arcDev > sim.minDev + 15)) { 
                     sim.state = 'IMPACT'; 
-                    
                     let dt = (Date.now() - sim.dsStart) / 1000;
-                    if (dt < 0.05) dt = 0.05; // Prevent inf
-                    
-                    // Calc Speed: 400 deg/sec = ~120 mph (fast swing)
-                    let degPerSec = sim.dsDist / dt;
-                    let speedMph = (degPerSec / 400) * 120;
-                    
-                    // Sanity limits
+                    if (dt < 0.05) dt = 0.05; 
+                    let speedMph = ((sim.dsDist / dt) / 400) * 120;
                     speedMph = Math.max(20, Math.min(speedMph, 140)); 
-                    
                     simDrawImpact(sim.faceLock, speedMph); 
                 }
             }
@@ -498,33 +504,49 @@
 
         function simDrawImpact(faceAngle, speedMph) {
             let ang = Math.round(faceAngle);
+            sim.shotCount++;
             
-            // Calc Speed % (relative to 120mph)
+            // Calc Speed
             let speedPct = Math.round((speedMph / 120) * 100);
             document.getElementById('sim-res-mph').innerText = Math.round(speedMph);
             document.getElementById('sim-res-pct').innerText = speedPct;
             document.getElementById('sim-speed-bar').style.width = Math.min(100, speedPct) + '%';
             
-            // Calc Distance (Club Max * Effort * Face Penalty)
+            // Calc Distance
             let club = clubs[sim.clubIdx];
-            // Normalize: 100 mph = Club Max. (120mph goes 1.2x further)
             let effortRatio = speedMph / 100; 
             let rawDist = club.max * effortRatio;
-            
-            // Penalty: lose roughly 1% dist per degree offline
             let facePenalty = Math.max(0.5, 1 - (Math.abs(ang) * 0.01));
             let hitDist = Math.round(rawDist * facePenalty);
-            
-            // Offline dispersion
             let offlineYards = Math.round(hitDist * Math.tan(ang * Math.PI / 180));
             
-            // Update UI 
             document.getElementById('sim-res-dist').innerText = hitDist;
             
+            // Calculate Remaining
             let remDist = Math.abs(sim.distToHole - hitDist);
-            if (remDist < 3) document.getElementById('sim-res-rem').innerText = "In the Hole!";
-            else document.getElementById('sim-res-rem').innerText = remDist + " yds";
+            sim.distToHole = remDist;
+            
+            const btnNext = document.getElementById('sim-btn-next');
+            const resRem = document.getElementById('sim-res-rem');
+            
+            if (remDist <= 20) {
+                resRem.innerText = "On the Green!";
+                resRem.className = "text-xl font-bold text-green-400";
+                btnNext.innerText = "To the Green!";
+                btnNext.className = "btn-green text-white font-bold py-3 px-10 rounded-full text-lg w-full mb-2";
+                btnNext.onclick = () => {
+                    let puttFeet = Math.max(3, Math.round(remDist * 3));
+                    startAppMode('putt', puttFeet);
+                };
+            } else {
+                resRem.innerText = remDist + " yds";
+                resRem.className = "text-xl font-bold text-blue-400";
+                btnNext.innerText = "Next Shot";
+                btnNext.className = "btn-blue text-white font-bold py-3 px-10 rounded-full text-lg w-full mb-2";
+                btnNext.onclick = () => { simShowSetup(); };
+            }
 
+            // Draw Face
             const resF = document.getElementById('sim-res-face');
             const resO = document.getElementById('sim-res-offline');
             if (Math.abs(ang) <= 1) { 
@@ -538,8 +560,7 @@
                 resO.innerText = `${Math.abs(offlineYards)} yds Left`; resO.className = "text-[10px] font-bold mt-1 text-blue-400";
             }
 
-            // Draw Face Canvas
-            simCtx.clearRect(0,0,simCanvas.width,simCanvas.height); const cx = simCanvas.width/2, cy = 100;
+            simCtx.clearRect(0,0,simCanvas.width,simCanvas.height); const cx = simCanvas.width/2, cy = 90;
             simCtx.save(); simCtx.translate(cx, cy); simCtx.rotate((Math.max(-45, Math.min(45, ang)) * Math.PI) / 180);
             simCtx.beginPath(); simCtx.roundRect(-40, 5, 80, 16, 8); simCtx.fillStyle = '#94a3b8'; simCtx.fill();
             simCtx.beginPath(); simCtx.moveTo(0, 5); simCtx.lineTo(0, -100); simCtx.strokeStyle = Math.abs(ang) <= 1 ? '#34d399' : (ang > 0 ? '#f87171' : '#60a5fa'); simCtx.lineWidth = 3; simCtx.stroke();
@@ -559,11 +580,20 @@
 
         const BALL_RADIUS = 10; const HOLE_RADIUS = BALL_RADIUS * 3;
 
-        function pgGenerateScenario() {
-            pg.dist = Math.floor(Math.random() * 25) + 5; 
+        function pgGenerateScenario(forcedDist = null) {
+            if (forcedDist !== null) {
+                pg.dist = forcedDist;
+                document.getElementById('pg-context-title').innerText = "On the Green!";
+                document.getElementById('pg-context-title').className = "text-green-400 uppercase tracking-widest text-xs font-bold";
+            } else {
+                pg.dist = Math.floor(Math.random() * 25) + 5; 
+                document.getElementById('pg-context-title').innerText = "Putting Practice";
+                document.getElementById('pg-context-title').className = "text-purple-400 uppercase tracking-widest text-xs font-bold";
+            }
+            
             pg.breakAmt = Math.floor(Math.random() * 21) - 10; 
             pg.aim = 0; document.getElementById('pg-aim-val').innerText = pg.aim;
-            document.getElementById('pg-scen-dist').innerText = `${pg.dist} ft`;
+            document.getElementById('pg-scen-dist').innerText = `${pg.dist}`;
             let brkStr = pg.breakAmt === 0 ? "Straight" : (pg.breakAmt > 0 ? `${pg.breakAmt}" Right` : `${Math.abs(pg.breakAmt)}" Left`);
             document.getElementById('pg-scen-break').innerText = `Break: ${brkStr}`;
             document.getElementById('pg-btn-next').style.display = 'none';
@@ -581,10 +611,8 @@
         function pgHandleSensor(e) {
             if (document.getElementById('pg-view-swing').classList.contains('active')) {
                 if (pg.captureNext) { pg.base = { b: e.beta, g: e.gamma }; pg.captureNext = false; return; }
-
                 let strokePitch = -getShortestAngle(e.beta, pg.base.b);
                 let dGamma = getShortestAngle(e.gamma, pg.base.g);
-                
                 pgDrawLivePutterAR(strokePitch, dGamma);
 
                 if (pg.state === 'IDLE') {
@@ -595,9 +623,7 @@
                     if (strokePitch < pg.maxBack - 1) pg.state = 'DOWNSWING';
                 } 
                 else if (pg.state === 'DOWNSWING') {
-                    if (strokePitch < 2) { 
-                        pg.state = 'IMPACT'; pg.faceLock = dGamma; pgExecutePuttAR();
-                    }
+                    if (strokePitch < 2) { pg.state = 'IMPACT'; pg.faceLock = dGamma; pgExecutePuttAR(); }
                 }
             }
         }
@@ -685,8 +711,17 @@
             document.getElementById('pg-roll-result').className = resClass;
             document.getElementById('pg-btn-next').style.display = 'block';
         }
+
+        function pgHandleNextHole() {
+            if (playingFullHole) {
+                // Return to fairway for a new hole
+                stopCamera();
+                startAppMode('hole');
+            } else {
+                // Just generate another practice putt
+                pgGenerateScenario();
+            }
+        }
     </script>
 </body>
 </html>
-
-
