@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pocket Caddie AR</title>
+    <title>Pocket Caddie Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body, html {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -25,7 +26,6 @@
             object-fit: cover; z-index: 0; display: none;
         }
 
-        /* Container for UI to sit above AR */
         #ui-layer {
             position: relative; z-index: 10;
             width: 100vw; height: 100%;
@@ -39,15 +39,17 @@
             overflow-y: auto;
         }
         .view-section.active { display: flex; }
-        .ar-mode .view-section { background-color: rgba(0, 0, 0, 0.4); }
+        .ar-mode .view-section { background-color: rgba(0, 0, 0, 0.5); }
+        .transparent-mode .view-section { background-color: transparent !important; }
 
         /* Buttons */
         .btn-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); }
         .btn-blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); }
         .btn-purple { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4); }
-        .btn-green:active, .btn-blue:active, .btn-purple:active { transform: scale(0.95); }
+        .btn-orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4); }
+        .btn-green:active, .btn-blue:active, .btn-purple:active, .btn-orange:active { transform: scale(0.95); }
 
-        /* Level UI */
+        /* Green Reader Bubble UI */
         #level-container { width: 220px; height: 220px; border-radius: 50%; background-color: #1e293b; border: 6px solid #334155; position: relative; margin: 0 auto; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
         #level-container::before { content: ''; position: absolute; background-color: rgba(255,255,255,0.15); top: 50%; left: 5%; right: 5%; height: 2px; transform: translateY(-50%); }
         #level-container::after { content: ''; position: absolute; background-color: rgba(255,255,255,0.15); left: 50%; top: 5%; bottom: 5%; width: 2px; transform: translateX(-50%); }
@@ -55,16 +57,20 @@
         #bubble { width: 34px; height: 34px; background-color: #10b981; border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); transition: transform 0.05s linear; box-shadow: 0 0 15px rgba(16, 185, 129, 0.8); z-index: 2; }
 
         /* Canvas Styles */
-        canvas { max-width: 100%; max-height: 35vh; object-fit: contain; }
-        .solid-canvas { background-color: #1e293b; border-radius: 16px; border: 2px solid #334155; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
-        .ar-canvas { background-color: transparent !important; border: 2px dashed rgba(255,255,255,0.3); border-radius: 16px; }
+        .solid-canvas { background-color: #1e293b; border-radius: 16px; border: 2px solid #334155; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); max-width: 100%; max-height: 35vh; object-fit: contain; }
+        .ar-canvas { background-color: transparent !important; border: 2px dashed rgba(255,255,255,0.3); border-radius: 16px; max-width: 100%; max-height: 40vh; object-fit: contain;}
+        
+        /* 3D Container */
+        #flick-3d-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
     </style>
 </head>
 <body>
 
+    <!-- AR Camera Background -->
     <video id="ar-video" autoplay playsinline muted></video>
 
     <div id="ui-layer">
+        
         <!-- Toast Notification -->
         <div id="toast" class="absolute top-5 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hidden z-50 text-center w-11/12 max-w-sm border border-red-400 transition-all">
             <span id="toast-msg">Message</span>
@@ -79,33 +85,65 @@
             </div>
 
             <div class="grid grid-cols-1 gap-3 w-full max-w-xs pb-4">
+                
+                <!-- Green Reader -->
                 <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-xl relative overflow-hidden" onclick="startAppMode('reader')">
-                    <div class="absolute top-0 right-0 w-20 h-20 bg-green-500 opacity-10 rounded-bl-full"></div>
-                    <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(16,185,129,0.5)]">
-                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    <div class="absolute top-0 right-0 w-16 h-16 bg-green-500 opacity-10 rounded-bl-full"></div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.5)]">
+                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                        </div>
+                        <div class="text-left">
+                            <h3 class="text-lg font-bold text-white mb-0">Green Reader</h3>
+                            <p class="text-slate-400 text-[10px]">Read slopes & breaks.</p>
+                        </div>
                     </div>
-                    <h3 class="text-lg font-bold text-white mb-1">Green Reader</h3>
-                    <p class="text-slate-400 text-[11px]">Read slopes and calculate putt breaks.</p>
                 </div>
 
-                <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-xl relative overflow-hidden" onclick="startAppMode('hole')">
-                    <div class="absolute top-0 right-0 w-20 h-20 bg-blue-500 opacity-10 rounded-bl-full"></div>
-                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(59,130,246,0.5)]">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <!-- 2D Sim (Play a Hole) -->
+                <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-xl relative overflow-hidden" onclick="startAppMode('hole2d')">
+                    <div class="absolute top-0 right-0 w-16 h-16 bg-blue-500 opacity-10 rounded-bl-full"></div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        </div>
+                        <div class="text-left">
+                            <h3 class="text-lg font-bold text-white mb-0">2D Swing Analyzer</h3>
+                            <p class="text-slate-400 text-[10px]">Top-down swing path trainer.</p>
+                        </div>
                     </div>
-                    <h3 class="text-lg font-bold text-white mb-1">Play a Hole</h3>
-                    <p class="text-slate-400 text-[11px]">Play from tee to green using your phone.</p>
                 </div>
 
+                <!-- 3D Flick Sim -->
+                <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-xl relative overflow-hidden border-2 border-orange-500" onclick="startAppMode('flick3d')">
+                    <div class="absolute top-0 right-0 w-16 h-16 bg-orange-500 opacity-20 rounded-bl-full"></div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.8)]">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                        </div>
+                        <div class="text-left">
+                            <h3 class="text-lg font-bold text-white mb-0">3D Flick Golf</h3>
+                            <p class="text-orange-200 text-[10px] font-bold">New!</p>
+                            <p class="text-slate-400 text-[10px]">1st-person 3D swing mechanic.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AR Putting Game -->
                 <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-xl relative overflow-hidden border-2 border-purple-500" onclick="startAppMode('putt')">
-                    <div class="absolute top-0 right-0 w-20 h-20 bg-purple-500 opacity-20 rounded-bl-full"></div>
-                    <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(139,92,246,0.8)]">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="4"/></svg>
+                    <div class="absolute top-0 right-0 w-16 h-16 bg-purple-500 opacity-20 rounded-bl-full"></div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(139,92,246,0.8)]">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="13" r="4"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>
+                        </div>
+                        <div class="text-left">
+                            <h3 class="text-lg font-bold text-white mb-0">AR Putting Sim</h3>
+                            <p class="text-purple-200 text-[10px] font-bold">Camera Required</p>
+                            <p class="text-slate-400 text-[10px]">Overlay the hole on your floor.</p>
+                        </div>
                     </div>
-                    <h3 class="text-lg font-bold text-white mb-1">AR Putting Sim</h3>
-                    <p class="text-purple-200 text-[10px] font-bold mb-1">Camera Required</p>
-                    <p class="text-slate-400 text-[11px]">Overlay the ball & putter on your floor.</p>
                 </div>
+
             </div>
         </div>
 
@@ -150,88 +188,157 @@
         </div>
 
         <!-- ============================================== -->
-        <!-- 2. PLAY A HOLE (FULL SWING)                    -->
+        <!-- 2. 2D TOP DOWN SWING SIMULATOR                 -->
         <!-- ============================================== -->
-        <div id="sim-view-setup" class="view-section">
+        <div id="sim2d-view-setup" class="view-section">
             <div class="flex justify-between w-full max-w-xs mb-1">
-                <div class="text-blue-400 uppercase tracking-widest text-xs font-bold">Shot <span id="sim-shot-num">1</span></div>
-                <div class="text-slate-400 uppercase tracking-widest text-xs font-bold">Hole: <span id="sim-hole-len">400</span>y</div>
+                <div class="text-blue-400 uppercase tracking-widest text-xs font-bold">Shot <span id="sim2d-shot-num">1</span></div>
+                <div class="text-slate-400 uppercase tracking-widest text-xs font-bold">Hole: <span id="sim2d-hole-len">400</span>y</div>
             </div>
-            <h2 class="text-5xl font-black mb-4"><span id="sim-scen-dist">400</span> <span class="text-2xl text-slate-300">Yards</span></h2>
+            <h2 class="text-5xl font-black mb-4"><span id="sim2d-scen-dist">400</span> <span class="text-2xl text-slate-300">Yards</span></h2>
             
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 w-full max-w-xs mb-6">
                 <div class="text-sm text-slate-400 mb-2">Select Club</div>
                 <div class="flex items-center justify-between bg-slate-900 rounded-lg p-2 border border-slate-600">
-                    <button onclick="simUpdateClub(-1)" class="w-10 h-10 bg-slate-700 rounded-md text-xl font-bold">&larr;</button>
+                    <button onclick="sim2dUpdateClub(-1)" class="w-10 h-10 bg-slate-700 rounded-md text-xl font-bold">&larr;</button>
                     <div class="text-xl font-bold text-white text-center w-32">
-                        <div id="sim-club-name">Driver</div>
-                        <div class="text-[10px] text-slate-400 font-normal">Max: <span id="sim-club-max">280</span>y</div>
+                        <div id="sim2d-club-name">Driver</div>
+                        <div class="text-[10px] text-slate-400 font-normal">Max: <span id="sim2d-club-max">280</span>y</div>
                     </div>
-                    <button onclick="simUpdateClub(1)" class="w-10 h-10 bg-slate-700 rounded-md text-xl font-bold">&rarr;</button>
+                    <button onclick="sim2dUpdateClub(1)" class="w-10 h-10 bg-slate-700 rounded-md text-xl font-bold">&rarr;</button>
                 </div>
             </div>
 
-            <button onclick="showView('sim-view-address')" class="btn-blue text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs mb-3">Address Ball</button>
+            <button onclick="showView('sim2d-view-address')" class="btn-blue text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs mb-3">Address Ball</button>
             <button onclick="exitToMenu()" class="text-slate-400 py-2 w-full max-w-xs active:text-white">Menu</button>
         </div>
 
-        <div id="sim-view-address" class="view-section">
+        <div id="sim2d-view-address" class="view-section">
             <h2 class="text-2xl font-bold mb-2">The Address</h2>
             <p class="text-slate-400 text-sm max-w-xs mb-2">Grip phone like a club. Screen facing you.</p>
             <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 w-full max-w-xs mb-6 mt-2">
                 <div class="text-xs text-slate-400 mb-2 uppercase tracking-wider">Live Sensor Data</div>
                 <div class="grid grid-cols-3 gap-1 text-center">
-                    <div><div class="text-[10px] text-slate-500">ROT</div><div class="text-lg font-mono font-bold text-blue-400" id="sim-live-a">0&deg;</div></div>
-                    <div><div class="text-[10px] text-slate-500">TILT</div><div class="text-lg font-mono font-bold text-blue-400" id="sim-live-b">0&deg;</div></div>
-                    <div><div class="text-[10px] text-slate-500">FACE</div><div class="text-lg font-mono font-bold text-blue-400" id="sim-live-g">0&deg;</div></div>
+                    <div><div class="text-[10px] text-slate-500">ROT</div><div class="text-lg font-mono font-bold text-blue-400" id="sim2d-live-a">0&deg;</div></div>
+                    <div><div class="text-[10px] text-slate-500">TILT</div><div class="text-lg font-mono font-bold text-blue-400" id="sim2d-live-b">0&deg;</div></div>
+                    <div><div class="text-[10px] text-slate-500">FACE</div><div class="text-lg font-mono font-bold text-blue-400" id="sim2d-live-g">0&deg;</div></div>
                 </div>
             </div>
-            <button onclick="simSetAddress()" class="btn-blue text-white font-bold py-3 px-10 rounded-full text-lg w-full max-w-xs mb-3">Lock Address</button>
-            <button onclick="showView('sim-view-setup')" class="text-slate-400 py-2 w-full max-w-xs active:text-white">Back</button>
+            <button onclick="sim2dSetAddress()" class="btn-blue text-white font-bold py-3 px-10 rounded-full text-lg w-full max-w-xs mb-3">Lock Address</button>
+            <button onclick="showView('sim2d-view-setup')" class="text-slate-400 py-2 w-full max-w-xs active:text-white">Back</button>
         </div>
 
-        <div id="sim-view-swing" class="view-section">
-            <h2 id="sim-status" class="text-blue-400 mb-2 text-3xl font-bold uppercase">Ready</h2>
+        <div id="sim2d-view-swing" class="view-section">
+            <h2 id="sim2d-status" class="text-blue-400 mb-2 text-3xl font-bold uppercase">Ready</h2>
             <p class="text-slate-400 text-sm max-w-xs mb-8">Take your swing! Tracking speed and face angle...</p>
-            <button onclick="showView('sim-view-address')" class="text-slate-500 py-2 px-6 border border-slate-700 rounded-full">Cancel</button>
+            <button onclick="showView('sim2d-view-address')" class="text-slate-500 py-2 px-6 border border-slate-700 rounded-full">Cancel</button>
         </div>
 
-        <div id="sim-view-results" class="view-section">
+        <div id="sim2d-view-results" class="view-section">
             <div class="w-full max-w-sm">
                 <div class="flex justify-between items-end mb-2">
                     <div class="text-left">
                         <div class="text-[10px] text-slate-400 uppercase tracking-widest">Hit Distance</div>
-                        <div class="text-3xl font-black text-white"><span id="sim-res-dist">0</span> <span class="text-lg text-slate-400 font-bold">Yards</span></div>
+                        <div class="text-3xl font-black text-white"><span id="sim2d-res-dist">0</span> <span class="text-lg text-slate-400 font-bold">Yards</span></div>
                     </div>
                     <div class="text-right">
                         <div class="text-[10px] text-slate-400 uppercase tracking-widest">Remaining</div>
-                        <div class="text-xl font-bold text-blue-400" id="sim-res-rem">0 yds</div>
+                        <div class="text-xl font-bold text-blue-400" id="sim2d-res-rem">0 yds</div>
                     </div>
                 </div>
                 
-                <canvas id="simCanvas" width="280" height="180" class="solid-canvas mb-3 w-full"></canvas>
+                <canvas id="sim2dCanvas" width="280" height="180" class="solid-canvas mb-3 w-full"></canvas>
                 
                 <div class="grid grid-cols-2 gap-3 mb-4">
                     <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 text-center">
                         <div class="text-[10px] text-slate-400 uppercase">Face Angle</div>
-                        <div class="text-xl font-bold" id="sim-res-face">0&deg; Sq</div>
-                        <div class="text-[10px] font-bold mt-1" id="sim-res-offline">On Target</div>
+                        <div class="text-xl font-bold" id="sim2d-res-face">0&deg; Sq</div>
+                        <div class="text-[10px] font-bold mt-1" id="sim2d-res-offline">On Target</div>
                     </div>
                     <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 text-center relative overflow-hidden">
-                        <div class="absolute bottom-0 left-0 h-1 bg-blue-500" id="sim-speed-bar" style="width: 50%;"></div>
+                        <div class="absolute bottom-0 left-0 h-1 bg-blue-500" id="sim2d-speed-bar" style="width: 50%;"></div>
                         <div class="text-[10px] text-slate-400 uppercase">Swing Speed</div>
-                        <div class="text-xl font-bold"><span id="sim-res-mph">0</span> <span class="text-xs text-slate-400 font-normal">mph</span></div>
-                        <div class="text-[10px] font-bold text-blue-300 mt-1"><span id="sim-res-pct">0</span>% Effort</div>
+                        <div class="text-xl font-bold"><span id="sim2d-res-mph">0</span> <span class="text-xs text-slate-400 font-normal">mph</span></div>
+                        <div class="text-[10px] font-bold text-blue-300 mt-1"><span id="sim2d-res-pct">0</span>% Effort</div>
                     </div>
                 </div>
 
-                <button id="sim-btn-next" class="btn-blue text-white font-bold py-3 px-10 rounded-full text-lg w-full mb-2">Next Shot</button>
+                <button id="sim2d-btn-next" class="btn-blue text-white font-bold py-3 px-10 rounded-full text-lg w-full mb-2">Next Shot</button>
                 <button onclick="exitToMenu()" class="text-slate-400 py-2 w-full active:text-white">Menu</button>
             </div>
         </div>
 
         <!-- ============================================== -->
-        <!-- 3. AR PUTTING SIMULATOR                        -->
+        <!-- 3. NEW 3D FLICK GOLF SIMULATOR                 -->
+        <!-- ============================================== -->
+        <div id="flick3d-view-setup" class="view-section">
+            <div class="flex justify-between w-full max-w-xs mb-1">
+                <div class="text-orange-400 uppercase tracking-widest text-xs font-bold">Shot <span id="flick3d-shot-num">1</span></div>
+                <div class="text-slate-400 uppercase tracking-widest text-xs font-bold">Hole: <span id="flick3d-hole-len">400</span>y</div>
+            </div>
+            <h2 class="text-5xl font-black mb-4"><span id="flick3d-scen-dist">400</span> <span class="text-2xl text-slate-300">Yards</span></h2>
+            
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 w-full max-w-xs mb-6">
+                <div class="text-sm text-slate-400 mb-2">Select Club</div>
+                <div class="flex items-center justify-between bg-slate-900 rounded-lg p-2 border border-slate-600">
+                    <button onclick="flick3dUpdateClub(-1)" class="w-10 h-10 bg-slate-700 rounded-md text-xl font-bold">&larr;</button>
+                    <div class="text-xl font-bold text-white text-center w-32">
+                        <div id="flick3d-club-name">Driver</div>
+                        <div class="text-[10px] text-slate-400 font-normal">Max: <span id="flick3d-club-max">280</span>y</div>
+                    </div>
+                    <button onclick="flick3dUpdateClub(1)" class="w-10 h-10 bg-slate-700 rounded-md text-xl font-bold">&rarr;</button>
+                </div>
+            </div>
+
+            <button onclick="flick3dSetAddress()" class="btn-orange text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs mb-3">Address & Swing</button>
+            <button onclick="exitToMenu()" class="text-slate-400 py-2 w-full max-w-xs active:text-white">Menu</button>
+        </div>
+
+        <div id="flick3d-view-play" class="view-section p-0 m-0">
+            <!-- 3D Canvas sits behind this UI -->
+            <div id="flick-3d-container"></div>
+            
+            <div class="absolute top-10 left-0 w-full flex justify-between px-6 z-20 pointer-events-none">
+                <div class="bg-black bg-opacity-50 p-2 rounded-lg backdrop-blur-sm text-left">
+                    <div class="text-[10px] text-orange-400 uppercase tracking-widest">Target</div>
+                    <div class="text-2xl font-bold text-white"><span id="flick3d-hud-dist">0</span>y</div>
+                </div>
+                <div class="bg-black bg-opacity-50 p-2 rounded-lg backdrop-blur-sm text-right">
+                    <div class="text-[10px] text-slate-300 uppercase tracking-widest">Club</div>
+                    <div class="text-lg font-bold text-white" id="flick3d-hud-club">Drv</div>
+                </div>
+            </div>
+
+            <div class="absolute bottom-20 left-0 w-full flex flex-col items-center z-20">
+                <h2 id="flick3d-status" class="text-white drop-shadow-md mb-2 text-2xl font-bold uppercase">Ready</h2>
+                <p class="text-white text-xs drop-shadow-md bg-black bg-opacity-40 px-4 py-1 rounded-full mb-6">Tilt top of phone towards you, then flick forward!</p>
+                <button onclick="showView('flick3d-view-setup')" class="bg-slate-800 bg-opacity-80 border border-slate-600 text-white py-2 px-8 rounded-full backdrop-blur-md active:bg-slate-700">Cancel</button>
+            </div>
+        </div>
+
+        <div id="flick3d-view-results" class="view-section">
+            <div class="w-full max-w-sm bg-slate-900 p-6 rounded-2xl border border-slate-700 shadow-2xl">
+                <div class="text-orange-400 uppercase tracking-widest text-xs font-bold mb-1">Shot Result</div>
+                <h2 class="text-5xl font-black text-white mb-2"><span id="flick3d-res-dist">0</span> <span class="text-xl text-slate-400">Yards</span></h2>
+                
+                <div class="grid grid-cols-2 gap-4 my-6">
+                    <div>
+                        <div class="text-[10px] text-slate-500 uppercase">Offline</div>
+                        <div class="text-lg font-bold" id="flick3d-res-offline">On Target</div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-slate-500 uppercase">Remaining</div>
+                        <div class="text-lg font-bold text-orange-400" id="flick3d-res-rem">0 yds</div>
+                    </div>
+                </div>
+                
+                <button id="flick3d-btn-next" class="btn-orange text-white font-bold py-3 px-10 rounded-full text-lg w-full mb-2">Next Shot</button>
+                <button onclick="exitToMenu()" class="text-slate-400 py-2 w-full active:text-white">Menu</button>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- 4. AR PUTTING SIMULATOR                        -->
         <!-- ============================================== -->
         <div id="pg-view-setup" class="view-section">
             <div class="bg-slate-900 bg-opacity-80 p-4 rounded-xl border border-slate-700 w-full max-w-xs mb-4 backdrop-blur-sm mt-2">
@@ -271,8 +378,9 @@
     </div>
 
     <script>
+        // --- Core Global Routing & Permissions ---
         let appMode = 'menu'; 
-        let playingFullHole = false; // Tracks if we are playing a full hole vs standalone practice
+        let playingFullHole = false; 
         let sensorListenerAdded = false;
         let cameraStream = null;
 
@@ -291,7 +399,7 @@
             toastMsg.innerText = msg;
             toast.className = `absolute top-5 left-1/2 transform -translate-x-1/2 px-6 py-4 rounded-xl font-semibold shadow-lg z-50 text-center w-11/12 max-w-sm border transition-all ${isError ? 'bg-red-600 text-white border-red-400' : 'bg-green-600 text-white border-green-400'}`;
             toast.classList.remove('hidden');
-            if(!isError) setTimeout(() => toast.classList.add('hidden'), 2500);
+            if(!isError) setTimeout(() => toast.classList.add('hidden'), 3000);
         }
 
         function exitToMenu() { 
@@ -302,22 +410,48 @@
             showView('view-main'); 
         }
 
+        // PERMISSION FIX: Motion MUST be requested directly on click, before any other async await.
         async function startAppMode(mode, params = null) {
             if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
                 showMessage("HTTPS Required for Gyroscope/Camera access!"); return;
             }
             appMode = mode;
-            if (mode === 'putt') await startCamera();
 
+            // 1. Synchronous request for Motion Sensors (Apple Requirement)
             if (!sensorListenerAdded) {
                 if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                     try {
                         const perm = await DeviceOrientationEvent.requestPermission();
-                        if (perm === 'granted') attachSensors(params);
-                        else { showMessage('Motion permission denied.'); exitToMenu(); return; }
-                    } catch (e) { showMessage('Error requesting motion. Open directly in Safari.'); exitToMenu(); return; }
-                } else attachSensors(params);
-            } else routeToFirstView(params);
+                        if (perm === 'granted') {
+                            window.addEventListener('deviceorientation', globalSensorHandler);
+                            sensorListenerAdded = true;
+                        } else { 
+                            showMessage('Motion permission denied. Cannot play.'); exitToMenu(); return; 
+                        }
+                    } catch (e) { 
+                        showMessage('Error requesting motion. Open directly in Safari.'); exitToMenu(); return; 
+                    }
+                } else {
+                    window.addEventListener('deviceorientation', globalSensorHandler);
+                    sensorListenerAdded = true;
+                }
+            }
+
+            // 2. Now handle Camera (for AR putt only)
+            if (mode === 'putt') {
+                await startCamera();
+            } else {
+                stopCamera();
+                uiLayer.className = ''; 
+            }
+
+            // 3. Special initialization for 3D engine
+            if (mode === 'flick3d' && !flick3d.initialized) {
+                initThreeJS();
+            }
+
+            // 4. Route
+            setTimeout(() => routeToFirstView(params), 100);
         }
 
         async function startCamera() {
@@ -340,22 +474,18 @@
             }
         }
 
-        function attachSensors(params) {
-            window.addEventListener('deviceorientation', globalSensorHandler);
-            sensorListenerAdded = true;
-            setTimeout(() => routeToFirstView(params), 300);
-        }
-
         function routeToFirstView(params) {
             if (appMode === 'reader') { grReset(); showView('gr-view-calibrate'); } 
-            else if (appMode === 'hole') { playingFullHole = true; simStartNewHole(); }
-            else if (appMode === 'putt') { pgGenerateScenario(params); } // params = distance in feet
+            else if (appMode === 'hole2d') { playingFullHole = true; sim2dStartNewHole(); }
+            else if (appMode === 'flick3d') { playingFullHole = true; flick3dStartNewHole(); uiLayer.className='transparent-mode'; }
+            else if (appMode === 'putt') { pgGenerateScenario(params); } 
         }
 
         function globalSensorHandler(e) {
             if (e.alpha === null) return;
             if (appMode === 'reader') grHandleSensor(e);
-            else if (appMode === 'hole') simHandleSensor(e);
+            else if (appMode === 'hole2d') sim2dHandleSensor(e);
+            else if (appMode === 'flick3d') flick3dHandleSensor(e);
             else if (appMode === 'putt') pgHandleSensor(e);
         }
 
@@ -366,8 +496,16 @@
             return diff;
         }
 
+        // Shared Clubs Data
+        const golfClubs = [
+            { name: "Driver", max: 280, loft: 10 }, { name: "3 Wood", max: 240, loft: 15 }, { name: "5 Wood", max: 220, loft: 18 },
+            { name: "4 Iron", max: 200, loft: 24 }, { name: "5 Iron", max: 190, loft: 27 }, { name: "6 Iron", max: 180, loft: 31 },
+            { name: "7 Iron", max: 165, loft: 35 }, { name: "8 Iron", max: 150, loft: 39 }, { name: "9 Iron", max: 135, loft: 43 }, 
+            { name: "P Wedge", max: 120, loft: 47 }, { name: "G Wedge", max: 105, loft: 52 }, { name: "S Wedge", max: 90, loft: 56 }, { name: "L Wedge", max: 75, loft: 60 }
+        ];
+
         // ==========================================
-        // 1. GREEN READER LOGIC 
+        // 1. GREEN READER LOGIC
         // ==========================================
         const gr = { dist: 10, stage: 1, rawX: 0, rawY: 0, offX: 0, offY: 0, liveX: 0, liveY: 0, read1: {x:0,y:0}, read2: {x:0,y:0} };
         const bubble = document.getElementById('bubble'); const grCanvas = document.getElementById('grCanvas'); const grCtx = grCanvas.getContext('2d');
@@ -400,185 +538,392 @@
             const resAim = document.getElementById('gr-result-aim');
             if (totInches < 1) { resAim.innerText = "Aim Dead Center"; resAim.className = "text-2xl font-bold mb-1 text-white"; totInches = 0; } 
             else { resAim.innerText = `Aim ${totInches}" ${aimDir}`; resAim.className = aimDir === "Right" ? "text-2xl font-bold mb-1 text-blue-400" : "text-2xl font-bold mb-1 text-red-400"; }
-            grDrawCanvas(totInches, aimDir);
-        }
-        function grDrawCanvas(breakAmt, aimDir) {
+            
             grCtx.clearRect(0, 0, grCanvas.width, grCanvas.height);
             const W = grCanvas.width, H = grCanvas.height, holeY = 40, ballY = H - 40, cx = W / 2;
-            let pixBrk = Math.min(breakAmt * 3, W/2 - 20); let dir = aimDir === "Right" ? -1 : 1; 
+            let pixBrk = Math.min(totInches * 3, W/2 - 20); let dir = aimDir === "Right" ? -1 : 1; 
             grCtx.beginPath(); grCtx.arc(cx, holeY, 12, 0, Math.PI * 2); grCtx.fillStyle = '#000'; grCtx.fill();
             grCtx.beginPath(); grCtx.setLineDash([5, 5]); grCtx.moveTo(cx, ballY); grCtx.lineTo(cx, holeY); grCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; grCtx.stroke(); grCtx.setLineDash([]);
-            if (breakAmt > 0) {
+            if (totInches > 0) {
                 let tx = cx + (pixBrk * -dir);
                 grCtx.beginPath(); grCtx.moveTo(cx, ballY); grCtx.quadraticCurveTo(tx, H / 2, cx, holeY); grCtx.strokeStyle = '#fff'; grCtx.lineWidth = 3; grCtx.stroke();
             }
             grCtx.beginPath(); grCtx.arc(cx, ballY, 6, 0, Math.PI * 2); grCtx.fillStyle = '#fff'; grCtx.fill();
+            showView('gr-view-results');
         }
 
         // ==========================================
-        // 2. PLAY A HOLE (FULL SWING LOGIC)
+        // 2. 2D TOP DOWN SWING SIM (Legacy 'Play a Hole')
         // ==========================================
-        const clubs = [
-            { name: "Driver", max: 280 }, { name: "3 Wood", max: 240 }, { name: "3 Iron", max: 215 },
-            { name: "5 Iron", max: 190 }, { name: "7 Iron", max: 165 }, { name: "9 Iron", max: 140 }, { name: "Wedge", max: 110 }
-        ];
+        const sim2d = { base: {a:0, b:0, g:0}, state: 'IDLE', minDev: 999, faceLock: 0, holeLen: 400, distToHole: 400, clubIdx: 0, maxBack: 0, dsStart: 0, dsDist: 0, shotCount: 1 };
+        const sim2dCanvas = document.getElementById('sim2dCanvas'); const sim2dCtx = sim2dCanvas.getContext('2d');
 
-        const sim = { 
-            base: {a:0, b:0, g:0}, state: 'IDLE', minDev: 999, faceLock: 0,
-            holeLen: 400, distToHole: 400, clubIdx: 0, maxBack: 0, dsStart: 0, dsDist: 0, shotCount: 1
-        };
-        const simCanvas = document.getElementById('simCanvas'); const simCtx = simCanvas.getContext('2d');
-
-        function simStartNewHole() {
-            sim.holeLen = Math.floor(Math.random() * (550 - 320 + 1)) + 320; // 320 to 550 yds
-            sim.distToHole = sim.holeLen;
-            sim.shotCount = 1;
-            document.getElementById('sim-hole-len').innerText = sim.holeLen;
-            simShowSetup();
+        function sim2dStartNewHole() {
+            sim2d.holeLen = Math.floor(Math.random() * (550 - 320 + 1)) + 320; sim2d.distToHole = sim2d.holeLen; sim2d.shotCount = 1;
+            document.getElementById('sim2d-hole-len').innerText = sim2d.holeLen;
+            sim2dShowSetup();
         }
-
-        function simShowSetup() {
-            document.getElementById('sim-scen-dist').innerText = sim.distToHole;
-            document.getElementById('sim-shot-num').innerText = sim.shotCount;
-            // Auto-select best club
-            sim.clubIdx = clubs.findIndex(c => c.max <= sim.distToHole);
-            if(sim.clubIdx === -1) sim.clubIdx = clubs.length - 1; 
-            if(sim.distToHole > clubs[0].max) sim.clubIdx = 0; 
-            simUpdateClubUI();
-            showView('sim-view-setup');
+        function sim2dShowSetup() {
+            document.getElementById('sim2d-scen-dist').innerText = sim2d.distToHole; document.getElementById('sim2d-shot-num').innerText = sim2d.shotCount;
+            sim2d.clubIdx = golfClubs.findIndex(c => c.max <= sim2d.distToHole);
+            if(sim2d.clubIdx === -1) sim2d.clubIdx = golfClubs.length - 1; if(sim2d.distToHole > golfClubs[0].max) sim2d.clubIdx = 0; 
+            sim2dUpdateClubUI(); showView('sim2d-view-setup');
         }
+        function sim2dUpdateClub(dir) { sim2d.clubIdx = Math.max(0, Math.min(golfClubs.length - 1, sim2d.clubIdx + dir)); sim2dUpdateClubUI(); }
+        function sim2dUpdateClubUI() { document.getElementById('sim2d-club-name').innerText = golfClubs[sim2d.clubIdx].name; document.getElementById('sim2d-club-max').innerText = golfClubs[sim2d.clubIdx].max; }
 
-        function simUpdateClub(dir) {
-            sim.clubIdx = Math.max(0, Math.min(clubs.length - 1, sim.clubIdx + dir));
-            simUpdateClubUI();
-        }
-
-        function simUpdateClubUI() {
-            document.getElementById('sim-club-name').innerText = clubs[sim.clubIdx].name;
-            document.getElementById('sim-club-max').innerText = clubs[sim.clubIdx].max;
-        }
-
-        function simHandleSensor(e) {
-            if (document.getElementById('sim-view-address').classList.contains('active')) {
-                document.getElementById('sim-live-a').innerText = Math.round(e.alpha) + '°'; 
-                document.getElementById('sim-live-b').innerText = Math.round(e.beta) + '°'; 
-                document.getElementById('sim-live-g').innerText = Math.round(e.gamma) + '°';
+        function sim2dHandleSensor(e) {
+            if (document.getElementById('sim2d-view-address').classList.contains('active')) {
+                document.getElementById('sim2d-live-a').innerText = Math.round(e.alpha) + '°'; document.getElementById('sim2d-live-b').innerText = Math.round(e.beta) + '°'; document.getElementById('sim2d-live-g').innerText = Math.round(e.gamma) + '°';
             }
-            if (document.getElementById('sim-view-swing').classList.contains('active')) simProcessArc(e);
-        }
-
-        function simSetAddress() {
-            sim.base = {a: parseFloat(document.getElementById('sim-live-a').innerText), b: parseFloat(document.getElementById('sim-live-b').innerText), g: parseFloat(document.getElementById('sim-live-g').innerText)};
-            sim.state = 'IDLE'; sim.minDev = 999; sim.faceLock = 0; sim.maxBack = 0;
-            document.getElementById('sim-status').innerText = "READY"; document.getElementById('sim-status').className = "text-blue-400 mb-2 text-3xl font-bold uppercase";
-            showView('sim-view-swing');
-        }
-
-        function simProcessArc(e) {
-            let dA = getShortestAngle(e.alpha, sim.base.a), dB = getShortestAngle(e.beta, sim.base.b), dG = getShortestAngle(e.gamma, sim.base.g);
-            let arcDev = Math.sqrt(dA*dA + dB*dB); const status = document.getElementById('sim-status');
-            
-            if (sim.state === 'IDLE' && arcDev > 20) { 
-                sim.state = 'BACKSWING'; status.innerText = "BACKSWING"; status.className = "text-yellow-400 mb-2 text-3xl font-bold uppercase"; 
-            } 
-            else if (sim.state === 'BACKSWING') {
-                sim.maxBack = Math.max(sim.maxBack, arcDev);
-                if (arcDev < sim.minDev) sim.minDev = arcDev;
-                if (arcDev < 30 && arcDev < (sim.minDev + 15)) { 
-                    sim.state = 'DOWNSWING'; sim.minDev = arcDev; 
-                    sim.dsStart = Date.now(); sim.dsDist = sim.maxBack; 
-                    status.innerText = "DOWNSWING"; status.className = "text-orange-400 mb-2 text-3xl font-bold uppercase"; 
-                }
-            } else if (sim.state === 'DOWNSWING') {
-                if (arcDev < sim.minDev) { sim.minDev = arcDev; sim.faceLock = dG; }
-                if (arcDev < 15 || (arcDev > sim.minDev + 15)) { 
-                    sim.state = 'IMPACT'; 
-                    let dt = (Date.now() - sim.dsStart) / 1000;
-                    if (dt < 0.05) dt = 0.05; 
-                    let speedMph = ((sim.dsDist / dt) / 400) * 120;
-                    speedMph = Math.max(20, Math.min(speedMph, 140)); 
-                    simDrawImpact(sim.faceLock, speedMph); 
+            if (document.getElementById('sim2d-view-swing').classList.contains('active')) {
+                let dA = getShortestAngle(e.alpha, sim2d.base.a), dB = getShortestAngle(e.beta, sim2d.base.b), dG = getShortestAngle(e.gamma, sim2d.base.g);
+                let arcDev = Math.sqrt(dA*dA + dB*dB); const status = document.getElementById('sim2d-status');
+                
+                if (sim2d.state === 'IDLE' && arcDev > 20) { sim2d.state = 'BACKSWING'; status.innerText = "BACKSWING"; status.className = "text-yellow-400 mb-2 text-3xl font-bold uppercase"; } 
+                else if (sim2d.state === 'BACKSWING') {
+                    sim2d.maxBack = Math.max(sim2d.maxBack, arcDev);
+                    if (arcDev < sim2d.minDev) sim2d.minDev = arcDev;
+                    if (arcDev < 30 && arcDev < (sim2d.minDev + 15)) { sim2d.state = 'DOWNSWING'; sim2d.minDev = arcDev; sim2d.dsStart = Date.now(); sim2d.dsDist = sim2d.maxBack; status.innerText = "DOWNSWING"; status.className = "text-orange-400 mb-2 text-3xl font-bold uppercase"; }
+                } else if (sim2d.state === 'DOWNSWING') {
+                    if (arcDev < sim2d.minDev) { sim2d.minDev = arcDev; sim2d.faceLock = dG; }
+                    if (arcDev < 15 || (arcDev > sim2d.minDev + 15)) { 
+                        sim2d.state = 'IMPACT'; 
+                        let dt = Math.max(0.05, (Date.now() - sim2d.dsStart) / 1000); 
+                        sim2dDrawImpact(sim2d.faceLock, Math.max(20, Math.min(((sim2d.dsDist / dt) / 400) * 120, 140))); 
+                    }
                 }
             }
         }
 
-        function simDrawImpact(faceAngle, speedMph) {
-            let ang = Math.round(faceAngle);
-            sim.shotCount++;
-            
-            // Calc Speed
+        function sim2dSetAddress() {
+            sim2d.base = {a: parseFloat(document.getElementById('sim2d-live-a').innerText), b: parseFloat(document.getElementById('sim2d-live-b').innerText), g: parseFloat(document.getElementById('sim2d-live-g').innerText)};
+            sim2d.state = 'IDLE'; sim2d.minDev = 999; sim2d.faceLock = 0; sim2d.maxBack = 0;
+            document.getElementById('sim2d-status').innerText = "READY"; document.getElementById('sim2d-status').className = "text-blue-400 mb-2 text-3xl font-bold uppercase";
+            showView('sim2d-view-swing');
+        }
+
+        function sim2dDrawImpact(faceAngle, speedMph) {
+            let ang = Math.round(faceAngle); sim2d.shotCount++;
             let speedPct = Math.round((speedMph / 120) * 100);
-            document.getElementById('sim-res-mph').innerText = Math.round(speedMph);
-            document.getElementById('sim-res-pct').innerText = speedPct;
-            document.getElementById('sim-speed-bar').style.width = Math.min(100, speedPct) + '%';
+            document.getElementById('sim2d-res-mph').innerText = Math.round(speedMph);
+            document.getElementById('sim2d-res-pct').innerText = speedPct;
+            document.getElementById('sim2d-speed-bar').style.width = Math.min(100, speedPct) + '%';
             
-            // Calc Distance
-            let club = clubs[sim.clubIdx];
-            let effortRatio = speedMph / 100; 
-            let rawDist = club.max * effortRatio;
+            let club = golfClubs[sim2d.clubIdx];
+            let rawDist = club.max * (speedMph / 100);
             let facePenalty = Math.max(0.5, 1 - (Math.abs(ang) * 0.01));
             let hitDist = Math.round(rawDist * facePenalty);
             let offlineYards = Math.round(hitDist * Math.tan(ang * Math.PI / 180));
+            document.getElementById('sim2d-res-dist').innerText = hitDist;
             
-            document.getElementById('sim-res-dist').innerText = hitDist;
+            let remDist = Math.abs(sim2d.distToHole - hitDist);
+            sim2d.distToHole = remDist;
             
-            // Calculate Remaining
-            let remDist = Math.abs(sim.distToHole - hitDist);
-            sim.distToHole = remDist;
-            
-            const btnNext = document.getElementById('sim-btn-next');
-            const resRem = document.getElementById('sim-res-rem');
+            const btnNext = document.getElementById('sim2d-btn-next');
+            const resRem = document.getElementById('sim2d-res-rem');
             
             if (remDist <= 20) {
-                resRem.innerText = "On the Green!";
-                resRem.className = "text-xl font-bold text-green-400";
-                btnNext.innerText = "To the Green!";
-                btnNext.className = "btn-green text-white font-bold py-3 px-10 rounded-full text-lg w-full mb-2";
-                btnNext.onclick = () => {
-                    let puttFeet = Math.max(3, Math.round(remDist * 3));
-                    startAppMode('putt', puttFeet);
-                };
+                resRem.innerText = "On the Green!"; resRem.className = "text-xl font-bold text-green-400";
+                btnNext.innerText = "To the Green!"; btnNext.className = "btn-green text-white font-bold py-3 px-10 rounded-full text-lg w-full mb-2";
+                btnNext.onclick = () => { startAppMode('putt', Math.max(3, Math.round(remDist * 3))); };
             } else {
-                resRem.innerText = remDist + " yds";
-                resRem.className = "text-xl font-bold text-blue-400";
-                btnNext.innerText = "Next Shot";
-                btnNext.className = "btn-blue text-white font-bold py-3 px-10 rounded-full text-lg w-full mb-2";
-                btnNext.onclick = () => { simShowSetup(); };
+                resRem.innerText = remDist + " yds"; resRem.className = "text-xl font-bold text-blue-400";
+                btnNext.innerText = "Next Shot"; btnNext.className = "btn-blue text-white font-bold py-3 px-10 rounded-full text-lg w-full mb-2";
+                btnNext.onclick = () => { sim2dShowSetup(); };
             }
 
-            // Draw Face
-            const resF = document.getElementById('sim-res-face');
-            const resO = document.getElementById('sim-res-offline');
-            if (Math.abs(ang) <= 1) { 
-                resF.innerText = "0° Square"; resF.className = "text-xl font-bold text-green-400"; 
-                resO.innerText = "On Target"; resO.className = "text-[10px] font-bold mt-1 text-green-400";
-            } else if (ang > 0) { 
-                resF.innerText = `+${ang}° Open`; resF.className = "text-xl font-bold text-red-400"; 
-                resO.innerText = `${Math.abs(offlineYards)} yds Right`; resO.className = "text-[10px] font-bold mt-1 text-red-400";
-            } else { 
-                resF.innerText = `${Math.abs(ang)}° Closed`; resF.className = "text-xl font-bold text-blue-400"; 
-                resO.innerText = `${Math.abs(offlineYards)} yds Left`; resO.className = "text-[10px] font-bold mt-1 text-blue-400";
-            }
+            const resF = document.getElementById('sim2d-res-face'); const resO = document.getElementById('sim2d-res-offline');
+            if (Math.abs(ang) <= 1) { resF.innerText = "0° Square"; resF.className = "text-xl font-bold text-green-400"; resO.innerText = "On Target"; resO.className = "text-[10px] font-bold mt-1 text-green-400"; } 
+            else if (ang > 0) { resF.innerText = `+${ang}° Open`; resF.className = "text-xl font-bold text-red-400"; resO.innerText = `${Math.abs(offlineYards)} yds Right`; resO.className = "text-[10px] font-bold mt-1 text-red-400"; } 
+            else { resF.innerText = `${Math.abs(ang)}° Closed`; resF.className = "text-xl font-bold text-blue-400"; resO.innerText = `${Math.abs(offlineYards)} yds Left`; resO.className = "text-[10px] font-bold mt-1 text-blue-400"; }
 
-            simCtx.clearRect(0,0,simCanvas.width,simCanvas.height); const cx = simCanvas.width/2, cy = 90;
-            simCtx.save(); simCtx.translate(cx, cy); simCtx.rotate((Math.max(-45, Math.min(45, ang)) * Math.PI) / 180);
-            simCtx.beginPath(); simCtx.roundRect(-40, 5, 80, 16, 8); simCtx.fillStyle = '#94a3b8'; simCtx.fill();
-            simCtx.beginPath(); simCtx.moveTo(0, 5); simCtx.lineTo(0, -100); simCtx.strokeStyle = Math.abs(ang) <= 1 ? '#34d399' : (ang > 0 ? '#f87171' : '#60a5fa'); simCtx.lineWidth = 3; simCtx.stroke();
-            simCtx.restore();
-            simCtx.beginPath(); simCtx.arc(cx, cy-15, 12, 0, Math.PI*2); simCtx.fillStyle='#fff'; simCtx.fill();
-
-            showView('sim-view-results'); 
+            sim2dCtx.clearRect(0,0,sim2dCanvas.width,sim2dCanvas.height); const cx = sim2dCanvas.width/2, cy = 90;
+            sim2dCtx.save(); sim2dCtx.translate(cx, cy); sim2dCtx.rotate((Math.max(-45, Math.min(45, ang)) * Math.PI) / 180);
+            sim2dCtx.beginPath(); sim2dCtx.roundRect(-40, 5, 80, 16, 8); sim2dCtx.fillStyle = '#94a3b8'; sim2dCtx.fill();
+            sim2dCtx.beginPath(); sim2dCtx.moveTo(0, 5); sim2dCtx.lineTo(0, -100); sim2dCtx.strokeStyle = Math.abs(ang) <= 1 ? '#34d399' : (ang > 0 ? '#f87171' : '#60a5fa'); sim2dCtx.lineWidth = 3; sim2dCtx.stroke();
+            sim2dCtx.restore(); sim2dCtx.beginPath(); sim2dCtx.arc(cx, cy-15, 12, 0, Math.PI*2); sim2dCtx.fillStyle='#fff'; sim2dCtx.fill();
+            showView('sim2d-view-results'); 
         }
 
+
         // ==========================================
-        // 3. AR PUTTING GAME LOGIC 
+        // 3. NEW 3D FLICK GOLF SIMULATOR
+        // ==========================================
+        const flick3d = { 
+            initialized: false, scene: null, camera: null, renderer: null, ball: null, clubGroup: null, targetFlag: null,
+            state: 'IDLE', baseBeta: 0, baseGamma: 0, maxBack: 0, startTime: 0,
+            holeLen: 400, distToHole: 400, clubIdx: 0, shotCount: 1,
+            velocity: new THREE.Vector3(), inFlight: false, flightFace: 0
+        };
+
+        function initThreeJS() {
+            flick3d.initialized = true;
+            const container = document.getElementById('flick-3d-container');
+            
+            flick3d.scene = new THREE.Scene();
+            flick3d.scene.background = new THREE.Color(0x87CEEB); // Sky blue
+            
+            flick3d.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            
+            flick3d.renderer = new THREE.WebGLRenderer({ antialias: true });
+            flick3d.renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(flick3d.renderer.domElement);
+
+            // Light
+            const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+            flick3d.scene.add(ambient);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            dirLight.position.set(10, 20, 10);
+            flick3d.scene.add(dirLight);
+
+            // Ground (Green Plane)
+            const groundGeo = new THREE.PlaneGeometry(1000, 1000);
+            const groundMat = new THREE.MeshLambertMaterial({ color: 0x228B22 });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            flick3d.scene.add(ground);
+
+            // Ball
+            const ballGeo = new THREE.SphereGeometry(0.2, 16, 16);
+            const ballMat = new THREE.MeshPhongMaterial({ color: 0xffffff });
+            flick3d.ball = new THREE.Mesh(ballGeo, ballMat);
+            flick3d.ball.position.set(0, 0.2, 0);
+            flick3d.scene.add(flick3d.ball);
+
+            // Target Flag
+            const flagGeo = new THREE.CylinderGeometry(0.1, 0.1, 5);
+            const flagMat = new THREE.MeshBasicMaterial({color: 0xff0000});
+            flick3d.targetFlag = new THREE.Mesh(flagGeo, flagMat);
+            flick3d.scene.add(flick3d.targetFlag);
+
+            // The Club
+            flick3d.clubGroup = new THREE.Group();
+            
+            const shaftGeo = new THREE.CylinderGeometry(0.05, 0.05, 3);
+            const shaftMat = new THREE.MeshStandardMaterial({color: 0x999999, metalness: 0.8});
+            const shaft = new THREE.Mesh(shaftGeo, shaftMat);
+            shaft.position.y = -1.5; // push down from pivot
+            
+            const headGeo = new THREE.BoxGeometry(0.6, 0.3, 0.4);
+            const headMat = new THREE.MeshStandardMaterial({color: 0x555555});
+            const head = new THREE.Mesh(headGeo, headMat);
+            head.position.set(0.3, -3, 0);
+
+            flick3d.clubGroup.add(shaft);
+            flick3d.clubGroup.add(head);
+            
+            // Start club at camera position (held by player)
+            flick3d.clubGroup.position.set(0.5, 2.5, 2);
+            flick3d.scene.add(flick3d.clubGroup);
+
+            // Initial Camera Position (behind ball)
+            flick3d.camera.position.set(0, 3, 5);
+            flick3d.camera.lookAt(flick3d.ball.position);
+
+            window.addEventListener('resize', () => {
+                flick3d.camera.aspect = window.innerWidth / window.innerHeight;
+                flick3d.camera.updateProjectionMatrix();
+                flick3d.renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            animateThreeJS();
+        }
+
+        function animateThreeJS() {
+            requestAnimationFrame(animateThreeJS);
+            
+            if (flick3d.inFlight) {
+                // Physics
+                flick3d.ball.position.add(flick3d.velocity);
+                flick3d.velocity.y -= 0.06; // Gravity
+                
+                // Spin/Curve (Face angle deviation causes X drift)
+                flick3d.velocity.x += (flick3d.flightFace * 0.002);
+                
+                // Follow Camera
+                flick3d.camera.position.z = flick3d.ball.position.z + 5;
+                flick3d.camera.position.x = flick3d.ball.position.x * 0.5; // Soft follow X
+                flick3d.camera.position.y = Math.max(2, flick3d.ball.position.y + 2);
+                flick3d.camera.lookAt(flick3d.ball.position);
+
+                if (flick3d.ball.position.y <= 0.2) {
+                    flick3d.ball.position.y = 0.2;
+                    flick3d.inFlight = false;
+                    
+                    // Shot is over
+                    let zDist = Math.abs(flick3d.ball.position.z);
+                    let xOff = flick3d.ball.position.x;
+                    let totalHit = Math.round(Math.sqrt(zDist*zDist + xOff*xOff));
+                    
+                    setTimeout(() => flick3dFinishShot(totalHit, xOff), 1000);
+                }
+            }
+            
+            if (flick3d.renderer && flick3d.scene && flick3d.camera) {
+                flick3d.renderer.render(flick3d.scene, flick3d.camera);
+            }
+        }
+
+        function flick3dStartNewHole() {
+            flick3d.holeLen = Math.floor(Math.random() * (550 - 320 + 1)) + 320; 
+            flick3d.distToHole = flick3d.holeLen; 
+            flick3d.shotCount = 1;
+            document.getElementById('flick3d-hole-len').innerText = flick3d.holeLen;
+            flick3dShowSetup();
+        }
+
+        function flick3dShowSetup() {
+            document.getElementById('flick3d-scen-dist').innerText = flick3d.distToHole;
+            document.getElementById('flick3d-shot-num').innerText = flick3d.shotCount;
+            
+            flick3d.clubIdx = golfClubs.findIndex(c => c.max <= flick3d.distToHole);
+            if(flick3d.clubIdx === -1) flick3d.clubIdx = golfClubs.length - 1; 
+            if(flick3d.distToHole > golfClubs[0].max) flick3d.clubIdx = 0; 
+            
+            flick3dUpdateClubUI();
+            showView('flick3d-view-setup');
+        }
+
+        function flick3dUpdateClub(dir) {
+            flick3d.clubIdx = Math.max(0, Math.min(golfClubs.length - 1, flick3d.clubIdx + dir));
+            flick3dUpdateClubUI();
+        }
+
+        function flick3dUpdateClubUI() {
+            document.getElementById('flick3d-club-name').innerText = golfClubs[flick3d.clubIdx].name;
+            document.getElementById('flick3d-club-max').innerText = golfClubs[flick3d.clubIdx].max;
+        }
+
+        function flick3dSetAddress() {
+            // Need a tiny timeout to ensure view is visible before grabbing sensor baseline, though global tracks it.
+            // Using a flag to capture next frame
+            flick3d.captureNext = true;
+            
+            document.getElementById('flick3d-hud-dist').innerText = flick3d.distToHole;
+            document.getElementById('flick3d-hud-club').innerText = golfClubs[flick3d.clubIdx].name;
+            
+            flick3d.state = 'IDLE'; flick3d.maxBack = 0; flick3d.inFlight = false;
+            
+            // Reset 3D pieces
+            if(flick3d.ball) {
+                flick3d.ball.position.set(0, 0.2, 0);
+                flick3d.camera.position.set(0, 3, 5);
+                flick3d.camera.lookAt(flick3d.ball.position);
+                flick3d.clubGroup.position.set(0.5, 2.5, 2);
+                flick3d.clubGroup.rotation.set(0,0,0);
+                flick3d.targetFlag.position.set(0, 2.5, -flick3d.distToHole);
+            }
+            
+            document.getElementById('flick3d-status').innerText = "READY";
+            showView('flick3d-view-play');
+        }
+
+        function flick3dHandleSensor(e) {
+            if (document.getElementById('flick3d-view-play').classList.contains('active') && !flick3d.inFlight) {
+                if (flick3d.captureNext) { 
+                    flick3d.baseBeta = e.beta; flick3d.baseGamma = e.gamma; 
+                    flick3d.captureNext = false; return; 
+                }
+
+                // Tilting top of phone TOWARDS you = Backswing. Depending on phone, this increases or decreases beta.
+                // Let's assume standard portrait: top towards you = beta decreases.
+                let dBeta = -(getShortestAngle(e.beta, flick3d.baseBeta)); 
+                let dGamma = getShortestAngle(e.gamma, flick3d.baseGamma);
+                
+                // Animate Club in 3D
+                if(flick3d.clubGroup) flick3d.clubGroup.rotation.x = THREE.MathUtils.degToRad(dBeta);
+
+                const status = document.getElementById('flick3d-status');
+                
+                if (flick3d.state === 'IDLE' && dBeta > 15) { 
+                    flick3d.state = 'BACKSWING'; status.innerText = "BACKSWING"; 
+                } 
+                else if (flick3d.state === 'BACKSWING') {
+                    if (dBeta > flick3d.maxBack) flick3d.maxBack = dBeta;
+                    // Start downswing if we drop 10 degrees from max
+                    if (dBeta < flick3d.maxBack - 10) { 
+                        flick3d.state = 'DOWNSWING'; 
+                        flick3d.startTime = Date.now(); 
+                        status.innerText = "DOWNSWING"; 
+                    }
+                } 
+                else if (flick3d.state === 'DOWNSWING') {
+                    if (dBeta <= 0) { // Cross Address = IMPACT
+                        let dt = Math.max(0.05, (Date.now() - flick3d.startTime) / 1000);
+                        let speedDegSec = flick3d.maxBack / dt;
+                        status.innerText = "IMPACT!";
+                        flick3dExecuteShot(speedDegSec, dGamma);
+                    }
+                }
+            }
+        }
+
+        function flick3dExecuteShot(speed, faceAngle) {
+            flick3d.state = 'FLIGHT';
+            flick3d.flightFace = faceAngle;
+            
+            let club = golfClubs[flick3d.clubIdx];
+            
+            // Speed logic: 400 deg/sec = 100% effort
+            let effortRatio = Math.min(speed / 400, 1.2);
+            let rawYards = club.max * effortRatio;
+            
+            // Convert to 3D velocity (1 unit = 1 yard)
+            // V = sqrt(Dist * roughly 0.6 gravity factor) to make it look okay
+            let vMag = Math.sqrt(rawYards * 0.6);
+            
+            let loftRad = THREE.MathUtils.degToRad(club.loft);
+            let faceRad = THREE.MathUtils.degToRad(faceAngle);
+            
+            flick3d.velocity.y = Math.sin(loftRad) * vMag;
+            flick3d.velocity.z = -Math.cos(loftRad) * vMag;
+            flick3d.velocity.x = Math.sin(faceRad) * (vMag * 0.3); // Initial push/pull
+            
+            flick3d.inFlight = true;
+        }
+
+        function flick3dFinishShot(hitDist, xOff) {
+            flick3d.shotCount++;
+            document.getElementById('flick3d-res-dist').innerText = hitDist;
+            
+            let offYards = Math.round(xOff);
+            let offUI = document.getElementById('flick3d-res-offline');
+            if(Math.abs(offYards) <= 2) { offUI.innerText = "On Target"; offUI.className = "text-lg font-bold text-green-400"; }
+            else if (offYards > 0) { offUI.innerText = `${offYards}y Right`; offUI.className = "text-lg font-bold text-red-400"; }
+            else { offUI.innerText = `${Math.abs(offYards)}y Left`; offUI.className = "text-lg font-bold text-blue-400"; }
+
+            let remDist = Math.abs(flick3d.distToHole - hitDist);
+            flick3d.distToHole = remDist;
+            
+            const btnNext = document.getElementById('flick3d-btn-next');
+            const resRem = document.getElementById('flick3d-res-rem');
+            
+            if (remDist <= 20) {
+                resRem.innerText = "On the Green!"; resRem.className = "text-xl font-bold text-green-400";
+                btnNext.innerText = "To the Green!"; btnNext.className = "btn-green text-white font-bold py-3 px-10 rounded-full text-lg w-full mb-2";
+                btnNext.onclick = () => { startAppMode('putt', Math.max(3, Math.round(remDist * 3))); };
+            } else {
+                resRem.innerText = remDist + " yds"; resRem.className = "text-xl font-bold text-orange-400";
+                btnNext.innerText = "Next Shot"; btnNext.className = "btn-orange text-white font-bold py-3 px-10 rounded-full text-lg w-full mb-2";
+                btnNext.onclick = () => { flick3dShowSetup(); };
+            }
+
+            uiLayer.className = ''; // Remove transparent mode for results
+            showView('flick3d-view-results');
+        }
+
+
+        // ==========================================
+        // 4. AR PUTTING GAME LOGIC 
         // ==========================================
         const pg = { dist: 10, breakAmt: 0, aim: 0, base: {b:0, g:0}, state: 'IDLE', maxBack: 0, faceLock: 0 };
         const pgSwingCanvas = document.getElementById('pgSwingCanvas'); const pgSctx = pgSwingCanvas.getContext('2d');
         const pgRollCanvas = document.getElementById('pgRollCanvas'); const pgRctx = pgRollCanvas.getContext('2d');
         let pgAnimId;
 
-        const BALL_RADIUS = 10; const HOLE_RADIUS = BALL_RADIUS * 3;
+        const BALL_RADIUS = 10; 
+        const HOLE_RADIUS = BALL_RADIUS * 3.5; // Generously wide hole visually and for collisions
 
         function pgGenerateScenario(forcedDist = null) {
             if (forcedDist !== null) {
@@ -654,9 +999,12 @@
             let distHitFt = pg.maxBack * 1.2; 
             let launchAngle = pg.aim + pg.faceLock; 
             const W = pgRollCanvas.width, H = pgRollCanvas.height;
-            const holeX = W/2, holeY = 50, startY = H - 50;
+            const holeX = W/2, holeY = 60, startY = H - 50;
             const pxPerFt = (startY - holeY) / pg.dist; 
-            const friction = 0.95; const frictionFactor = 1 - friction; 
+            
+            const friction = 0.90; // INCREASED FRICTION so it stops faster
+            const frictionFactor = 1 - friction; 
+            
             let totalDistPx = distHitFt * pxPerFt;
             let speed = totalDistPx * frictionFactor; 
             
@@ -679,11 +1027,12 @@
                 pgRctx.beginPath(); pgRctx.arc(bX, bY, BALL_RADIUS, 0, Math.PI*2); pgRctx.fillStyle='#fff'; 
                 pgRctx.shadowColor='rgba(0,0,0,0.8)'; pgRctx.shadowBlur=6; pgRctx.fill(); pgRctx.shadowBlur=0;
 
+                // GENEROUS SINK CHECK: If inside wide hole bounds and not rocketing past
                 let distToHole = Math.hypot(bX - holeX, bY - holeY);
-                if (distToHole < HOLE_RADIUS && curSpeed < (speed * 0.8)) {
+                if (distToHole < HOLE_RADIUS && curSpeed < (speed * 0.95)) {
                     pgFinishRoll(bX, bY, holeX, holeY, distHitFt, true); return;
                 }
-                if (curSpeed < 0.3 || bY < -20 || bX < -20 || bX > W + 20) {
+                if (curSpeed < 0.2 || bY < -20 || bX < -20 || bX > W + 20) {
                     pgFinishRoll(bX, bY, holeX, holeY, distHitFt, false); return;
                 }
                 pgAnimId = requestAnimationFrame(animLoop);
@@ -694,7 +1043,8 @@
         function pgFinishRoll(bX, bY, hX, hY, distHitFt, isSink) {
             let resultText = "", resClass = "";
             if (isSink) { 
-                resultText = "SINK!"; resClass = "text-4xl font-black mb-2 text-green-400 drop-shadow-[0_0_10px_rgba(74,222,128,0.8)]";
+                resultText = "SINK!"; resClass = "text-5xl font-black mb-2 text-green-400 drop-shadow-[0_0_10px_rgba(74,222,128,0.8)]";
+                // REDRAW WITHOUT THE BALL!
                 const W = pgRollCanvas.width, H = pgRollCanvas.height;
                 pgRctx.clearRect(0,0,W,H);
                 pgRctx.beginPath(); pgRctx.arc(hX, hY, HOLE_RADIUS, 0, Math.PI*2); 
@@ -714,11 +1064,15 @@
 
         function pgHandleNextHole() {
             if (playingFullHole) {
-                // Return to fairway for a new hole
                 stopCamera();
-                startAppMode('hole');
+                uiLayer.className = '';
+                // The user could have been playing the 2D sim or the 3D flick sim. Route back to whatever started it.
+                if (appMode === 'flick3d') {
+                    startAppMode('flick3d'); // Triggers a new hole there
+                } else {
+                    startAppMode('hole2d'); 
+                }
             } else {
-                // Just generate another practice putt
                 pgGenerateScenario();
             }
         }
