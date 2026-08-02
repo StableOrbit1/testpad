@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Green Reader</title>
+    <title>Golf Companion</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -14,51 +14,7 @@
             touch-action: none;
         }
         
-        #level-container {
-            width: 240px;
-            height: 240px;
-            border-radius: 50%;
-            background-color: #2c2c2e;
-            border: 6px solid #48484a;
-            position: relative;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
-            margin: 0 auto;
-        }
-        #level-container::before {
-            content: '';
-            position: absolute;
-            top: 50%; left: 5%; right: 5%; height: 2px;
-            background-color: rgba(255,255,255,0.15);
-            transform: translateY(-50%);
-        }
-        #level-container::after {
-            content: '';
-            position: absolute;
-            left: 50%; top: 5%; bottom: 5%; width: 2px;
-            background-color: rgba(255,255,255,0.15);
-            transform: translateX(-50%);
-        }
-        .target {
-            width: 50px; height: 50px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1;
-        }
-        #bubble {
-            width: 40px; height: 40px;
-            background-color: #32d74b;
-            border-radius: 50%;
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            transition: transform 0.05s linear;
-            box-shadow: 0 0 15px rgba(50, 215, 75, 0.8);
-            z-index: 2;
-        }
-
+        /* Views */
         .view-section {
             display: none;
             flex-direction: column;
@@ -68,26 +24,72 @@
             width: 100vw;
             padding: 20px;
             box-sizing: border-box;
+            position: absolute;
+            top: 0; left: 0;
+            background-color: #1c1c1e;
         }
         .view-section.active {
             display: flex;
         }
 
-        canvas {
-            background-color: #243524;
-            border-radius: 16px;
-            border: 2px solid #3a5a3a;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-            max-width: 100%;
-        }
-        
+        /* Simulator Theme Overrides */
+        .sim-bg { background: linear-gradient(180deg, #1e3a1e 0%, #112211 100%); }
+
+        /* Shared Buttons */
         .golf-btn {
             background: linear-gradient(135deg, #32d74b 0%, #28a73c 100%);
             box-shadow: 0 4px 15px rgba(50, 215, 75, 0.4);
             transition: transform 0.1s;
         }
-        .golf-btn:active {
-            transform: scale(0.95);
+        .golf-btn:active { transform: scale(0.95); }
+        .alt-btn {
+            background: linear-gradient(135deg, #0a84ff 0%, #006ee6 100%);
+            box-shadow: 0 4px 15px rgba(10, 132, 255, 0.4);
+        }
+
+        /* Green Reader Level UI */
+        #level-container {
+            width: 240px; height: 240px; border-radius: 50%;
+            background-color: #2c2c2e; border: 6px solid #48484a;
+            position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            margin: 0 auto;
+        }
+        #level-container::before {
+            content: ''; position: absolute; top: 50%; left: 5%; right: 5%; height: 2px;
+            background-color: rgba(255,255,255,0.15); transform: translateY(-50%);
+        }
+        #level-container::after {
+            content: ''; position: absolute; left: 50%; top: 5%; bottom: 5%; width: 2px;
+            background-color: rgba(255,255,255,0.15); transform: translateX(-50%);
+        }
+        .target {
+            width: 50px; height: 50px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1;
+        }
+        #bubble {
+            width: 40px; height: 40px; background-color: #32d74b; border-radius: 50%;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            transition: transform 0.05s linear; box-shadow: 0 0 15px rgba(50, 215, 75, 0.8); z-index: 2;
+        }
+
+        canvas {
+            background-color: #243524; border-radius: 16px; border: 2px solid #3a5a3a;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5); max-width: 100%;
+        }
+
+        /* Swing Radar Animation */
+        .radar {
+            width: 150px; height: 150px; border-radius: 50%; border: 4px solid #32d74b;
+            position: relative; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 30px rgba(50, 215, 75, 0.5);
+        }
+        .radar-ping {
+            position: absolute; width: 100%; height: 100%; border-radius: 50%;
+            background-color: rgba(50, 215, 75, 0.4);
+            animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        @keyframes ping {
+            75%, 100% { transform: scale(1.5); opacity: 0; }
         }
     </style>
 </head>
@@ -99,50 +101,57 @@
         <button id="close-toast" class="mt-3 block w-full bg-red-800 rounded py-2 text-sm">Dismiss</button>
     </div>
 
-    <!-- View 1: Intro / Permission -->
-    <div id="view-intro" class="view-section active text-center">
-        <div class="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(50,215,75,0.5)]">
-            <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+    <!-- VIEW: Home Screen -->
+    <div id="view-home" class="view-section active text-center">
+        <div class="mb-10">
+            <h1 class="text-4xl font-bold mb-2 tracking-tight">Golf Companion</h1>
+            <p class="text-gray-400 text-sm">Select a tool to get started</p>
         </div>
-        <h1 class="text-3xl font-bold mb-2">Green Reader</h1>
-        <p class="text-gray-400 mb-8 max-w-xs text-sm">We need access to your device's motion sensors to read the green.</p>
         
-        <button id="btn-start" class="golf-btn text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs flex items-center justify-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"/></svg>
-            Grant Access & Start
-        </button>
-        <p class="text-xs text-gray-600 mt-6 max-w-xs">Must be opened in Safari via HTTPS. Previews or embedded browsers will block sensor access.</p>
+        <div class="flex flex-col gap-6 w-full max-w-xs">
+            <button onclick="requestPermissions('reader')" class="golf-btn text-white font-bold py-6 px-6 rounded-2xl text-xl flex flex-col items-center gap-2">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                Green Reader
+                <span class="text-xs font-normal opacity-80">Measure putts using gyroscope</span>
+            </button>
+
+            <button onclick="requestPermissions('sim')" class="alt-btn text-white font-bold py-6 px-6 rounded-2xl text-xl flex flex-col items-center gap-2">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Simulator
+                <span class="text-xs font-normal opacity-80">Play 3 holes using motion swing</span>
+            </button>
+        </div>
+        <p class="text-xs text-gray-600 mt-10 max-w-xs">Requires HTTPS and Safari on iOS for sensor access.</p>
     </div>
 
-    <!-- View 2: Distance Input -->
+    <!-- ========================================== -->
+    <!--          GREEN READER VIEWS                -->
+    <!-- ========================================== -->
+
     <div id="view-distance" class="view-section text-center">
         <h2 class="text-2xl font-bold mb-2">Putt Distance</h2>
         <p class="text-gray-400 mb-8">How long is the putt in feet?</p>
         
         <div class="flex items-center justify-center gap-4 mb-10">
-            <button id="btn-dist-minus" class="w-14 h-14 bg-gray-800 rounded-full text-2xl font-bold flex items-center justify-center border border-gray-600 active:bg-gray-700">-</button>
+            <button onclick="changeDist(-1)" class="w-14 h-14 bg-gray-800 rounded-full text-2xl font-bold flex items-center justify-center border border-gray-600 active:bg-gray-700">-</button>
             <div class="text-5xl font-bold w-24 text-center" id="distance-val">10</div>
-            <button id="btn-dist-plus" class="w-14 h-14 bg-gray-800 rounded-full text-2xl font-bold flex items-center justify-center border border-gray-600 active:bg-gray-700">+</button>
+            <button onclick="changeDist(1)" class="w-14 h-14 bg-gray-800 rounded-full text-2xl font-bold flex items-center justify-center border border-gray-600 active:bg-gray-700">+</button>
         </div>
 
-        <button id="btn-confirm-dist" class="golf-btn text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs">
-            Next Step
-        </button>
+        <button onclick="startCaptureFlow()" class="golf-btn text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs mb-4">Next Step</button>
+        <button onclick="goHome()" class="text-gray-400 text-sm py-2">Cancel</button>
     </div>
 
-    <!-- View 3 & 4: Level Capture -->
     <div id="view-capture" class="view-section text-center">
         <div class="flex justify-between w-full max-w-xs mb-6 px-4">
             <div class="h-2 flex-1 bg-green-500 rounded-l-full"></div>
             <div id="progress-bar-2" class="h-2 flex-1 bg-gray-700 rounded-r-full ml-1 transition-colors duration-300"></div>
         </div>
-
         <h2 class="text-2xl font-bold mb-2" id="capture-title">Step 1: 1/3 Distance</h2>
-        <p class="text-gray-400 mb-8 text-sm max-w-xs" id="capture-inst">Place your phone flat on the green at the 1/3 mark, pointing toward the hole.</p>
+        <p class="text-gray-400 mb-8 text-sm max-w-xs" id="capture-inst">Place phone flat on green.</p>
         
         <div id="level-container" class="mb-8">
-            <div class="target"></div>
-            <div id="bubble"></div>
+            <div class="target"></div><div id="bubble"></div>
         </div>
 
         <div class="grid grid-cols-2 gap-4 w-full max-w-xs mb-8">
@@ -155,295 +164,506 @@
                 <div class="text-xl font-bold"><span id="val-y">0.0</span>&deg;</div>
             </div>
         </div>
-
-        <button id="btn-capture" class="golf-btn text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs">
-            Capture Reading
-        </button>
+        <button onclick="captureReading()" class="golf-btn text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs mb-4">Capture Reading</button>
+        <button onclick="goHome()" class="text-gray-400 text-sm py-2">Cancel</button>
     </div>
 
-    <!-- View 5: Results -->
     <div id="view-results" class="view-section text-center">
         <h2 class="text-3xl font-bold mb-1 text-green-400" id="result-aim">Aim 4" Right</h2>
         <p class="text-gray-400 mb-6" id="result-desc">Uphill putt, medium break.</p>
+        <canvas id="puttCanvas" width="300" height="350" class="mb-8"></canvas>
+        <button onclick="showView('view-distance')" class="golf-btn text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs mb-4">Read Another Putt</button>
+        <button onclick="goHome()" class="text-gray-400 text-sm py-2">Home Menu</button>
+    </div>
+
+    <!-- ========================================== -->
+    <!--            GOLF SIMULATOR VIEWS            -->
+    <!-- ========================================== -->
+
+    <div id="view-sim-hole" class="view-section sim-bg text-center">
+        <div class="bg-black/40 rounded-3xl p-6 w-full max-w-sm mb-10 border border-white/10 shadow-2xl">
+            <div class="text-green-400 font-bold uppercase tracking-widest text-sm mb-1" id="sim-hole-num">Hole 1</div>
+            <div class="text-gray-300 mb-6" id="sim-par-info">Par 4 - 420 yds</div>
+            
+            <div class="flex justify-between items-end mb-2">
+                <div class="text-left">
+                    <div class="text-xs text-gray-400 uppercase tracking-wider mb-1">Distance</div>
+                    <div class="text-5xl font-black" id="sim-dist-left">420<span class="text-2xl text-gray-400 font-bold">y</span></div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs text-gray-400 uppercase tracking-wider mb-1">Strokes</div>
+                    <div class="text-3xl font-bold" id="sim-strokes">0</div>
+                </div>
+            </div>
+        </div>
+
+        <button onclick="startSwing()" class="alt-btn text-white font-bold py-6 px-10 rounded-full text-2xl w-full max-w-xs shadow-[0_0_30px_rgba(10,132,255,0.6)] mb-6">
+            START SWING
+        </button>
+        <p class="text-xs text-gray-400 max-w-xs mb-6">Grip your phone tightly. Press button, then swing like a club.</p>
         
-        <canvas id="puttCanvas" width="300" height="400" class="mb-8"></canvas>
+        <button onclick="goHome()" class="text-gray-400 text-sm py-2">Quit Round</button>
+    </div>
+
+    <div id="view-sim-swinging" class="view-section sim-bg text-center">
+        <h2 class="text-4xl font-black mb-10 text-white drop-shadow-lg" id="swing-timer">SWING NOW!</h2>
         
-        <button id="btn-reset" class="bg-gray-800 border border-gray-600 text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs active:bg-gray-700">
-            Read Another Putt
+        <div class="radar mb-16">
+            <div class="radar-ping"></div>
+            <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4 w-full max-w-xs text-left">
+            <div>
+                <div class="text-xs text-gray-400">Club Speed</div>
+                <div class="text-xl font-bold font-mono" id="live-speed">0 <span class="text-sm">mph</span></div>
+            </div>
+            <div>
+                <div class="text-xs text-gray-400">Face Angle</div>
+                <div class="text-xl font-bold font-mono" id="live-face">0&deg;</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-sim-result" class="view-section sim-bg text-center">
+        <h2 class="text-3xl font-bold mb-2 text-white" id="shot-title">Great Shot!</h2>
+        <p class="text-lg text-gray-300 mb-8" id="shot-desc">Right down the middle.</p>
+        
+        <div class="bg-black/40 rounded-2xl p-6 w-full max-w-xs mb-8 border border-white/10">
+            <div class="flex justify-between border-b border-white/10 pb-3 mb-3">
+                <span class="text-gray-400">Distance</span>
+                <span class="font-bold text-xl" id="res-dist">250 yds</span>
+            </div>
+            <div class="flex justify-between border-b border-white/10 pb-3 mb-3">
+                <span class="text-gray-400">Offline</span>
+                <span class="font-bold text-xl" id="res-offline">5y Right</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-400">Remaining</span>
+                <span class="font-bold text-xl text-green-400" id="res-remaining">170 yds</span>
+            </div>
+        </div>
+
+        <button onclick="nextSimAction()" id="btn-next-action" class="golf-btn text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs">
+            Next Shot
+        </button>
+    </div>
+
+    <div id="view-sim-end" class="view-section sim-bg text-center">
+        <div class="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(50,215,75,0.5)]">
+            <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <h2 class="text-4xl font-bold mb-2">Round Over</h2>
+        <p class="text-gray-300 mb-8">3 Hole Course Completed</p>
+        
+        <div class="text-7xl font-black mb-2" id="final-score">E</div>
+        <div class="text-gray-400 uppercase tracking-widest text-sm mb-12">Total Score</div>
+
+        <button onclick="goHome()" class="alt-btn text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs">
+            Back to Home
         </button>
     </div>
 
     <script>
-        // DOM Elements
+        // --- GLOBAL STATE ---
         const views = document.querySelectorAll('.view-section');
         const toast = document.getElementById('error-toast');
         const errorMsg = document.getElementById('error-msg');
-        const closeToastBtn = document.getElementById('close-toast');
         
-        const distanceValEl = document.getElementById('distance-val');
-        const bubble = document.getElementById('bubble');
-        const valX = document.getElementById('val-x');
-        const valY = document.getElementById('val-y');
+        let appMode = null; // 'reader' or 'sim'
+        let hasPermissions = false;
         
-        const captureTitle = document.getElementById('capture-title');
-        const captureInst = document.getElementById('capture-inst');
-        const progressBar2 = document.getElementById('progress-bar-2');
-        
-        const resultAim = document.getElementById('result-aim');
-        const resultDesc = document.getElementById('result-desc');
-        const canvas = document.getElementById('puttCanvas');
-        const ctx = canvas.getContext('2d');
-
-        // State Variables
-        let puttDistance = 10;
-        let currentStage = 1; 
-        let liveX = 0; 
-        let liveY = 0; 
+        // Sensor Data
+        let liveX = 0, liveY = 0, liveGamma = 0;
+        let peakAccel = 0;
+        let impactFaceAngle = 0;
         let sensorDataReceived = false;
-        
-        let read1 = { x: 0, y: 0 };
-        let read2 = { x: 0, y: 0 };
 
-        const maxMove = 100;
-
-        // Helpers
+        // Routing
         function showView(id) {
             views.forEach(v => v.classList.remove('active'));
             document.getElementById(id).classList.add('active');
         }
-
+        function goHome() {
+            showView('view-home');
+            appMode = null;
+        }
         function showError(msg) {
             errorMsg.innerText = msg;
             toast.classList.remove('hidden');
         }
-        
-        closeToastBtn.addEventListener('click', () => {
-            toast.classList.add('hidden');
-        });
+        document.getElementById('close-toast').addEventListener('click', () => toast.classList.add('hidden'));
 
-        // --- Permission & Sensor Init ---
-        document.getElementById('btn-start').addEventListener('click', async () => {
-            // Check if we are in a secure context (HTTPS)
+        // --- SENSORS & PERMISSIONS ---
+        async function requestPermissions(targetMode) {
+            appMode = targetMode;
+            
             if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-                showError("HTTPS Required! Apple blocks sensors on HTTP connections. Please host this securely.");
+                showError("HTTPS Required! Apple blocks sensors on HTTP connections.");
                 return;
             }
 
-            // iOS 13+ Strict Permission Request
+            // Need both Orientation (tilt) and Motion (acceleration)
+            let permsGranted = true;
+
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 try {
-                    const permissionState = await DeviceOrientationEvent.requestPermission();
-                    if (permissionState === 'granted') {
-                        startListening();
-                    } else {
-                        showError('Permission was denied. We cannot access the gyroscope without it.');
+                    const orPerm = await DeviceOrientationEvent.requestPermission();
+                    if (orPerm !== 'granted') permsGranted = false;
+                    
+                    // Request Motion (accelerometer) for Simulator
+                    if (permsGranted && typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                        const moPerm = await DeviceMotionEvent.requestPermission();
+                        if (moPerm !== 'granted') permsGranted = false;
                     }
                 } catch (error) {
-                    showError(`Error requesting permission: ${error.message}. This usually happens if you are in an embedded browser or iframe.`);
+                    showError("Permission error. Must be opened directly in Safari, not an embedded browser.");
+                    return;
                 }
-            } else {
-                // Non iOS 13+ fallback
-                startListening();
             }
-        });
 
-        function startListening() {
-            window.addEventListener('deviceorientation', handleOrientation);
-            
-            // Wait 500ms to see if we actually get real data. 
-            // If it stays false, the browser is blocking it or device has no sensors.
-            setTimeout(() => {
-                if (sensorDataReceived) {
-                    showView('view-distance');
-                } else {
-                    showError("Listening for sensors, but no data is coming through. If you are in a preview window or an in-app browser, please open directly in Safari.");
-                }
-            }, 600);
+            if (permsGranted) {
+                hasPermissions = true;
+                window.addEventListener('deviceorientation', handleOrientation);
+                window.addEventListener('devicemotion', handleMotion);
+                
+                // Verify data
+                setTimeout(() => {
+                    if (sensorDataReceived) {
+                        if (appMode === 'reader') showView('view-distance');
+                        if (appMode === 'sim') startSimulator();
+                    } else {
+                        showError("Sensors connected but no data received. Are you using an embedded browser?");
+                        // For testing on desktop without sensors, allow fallback logic
+                        if (appMode === 'reader') showView('view-distance');
+                        if (appMode === 'sim') startSimulator();
+                    }
+                }, 600);
+            } else {
+                showError('Permissions denied. App cannot function.');
+            }
         }
 
         function handleOrientation(event) {
-            let x = event.gamma; 
-            let y = event.beta;  
-
-            // If we get nulls, we aren't getting valid data
-            if (x === null || y === null) return;
-            
+            if (event.gamma === null) return;
             sensorDataReceived = true;
-            liveX = x; 
-            liveY = y;
+            liveX = event.gamma; // L/R
+            liveY = event.beta;  // F/B
+            liveGamma = event.alpha; // Rotation
 
-            const maxAngle = 20; 
-            let cappedX = Math.max(-maxAngle, Math.min(maxAngle, x));
-            let cappedY = Math.max(-maxAngle, Math.min(maxAngle, y));
-
-            let moveX = (cappedX / maxAngle) * maxMove;
-            let moveY = (cappedY / maxAngle) * maxMove;
-
-            bubble.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px))`;
-            valX.innerText = x.toFixed(1);
-            valY.innerText = y.toFixed(1);
-
-            if (Math.abs(x) < 0.5 && Math.abs(y) < 0.5) {
-                bubble.style.backgroundColor = "#32d74b";
-                bubble.style.boxShadow = "0 0 15px rgba(50, 215, 75, 0.8)";
-            } else {
-                bubble.style.backgroundColor = "#ff9f0a";
-                bubble.style.boxShadow = "0 0 15px rgba(255, 159, 10, 0.8)";
+            // Update Reader Bubble UI if active
+            if (appMode === 'reader' && (document.getElementById('view-capture').classList.contains('active'))) {
+                const maxMove = 100, maxAngle = 20; 
+                let cX = Math.max(-maxAngle, Math.min(maxAngle, liveX));
+                let cY = Math.max(-maxAngle, Math.min(maxAngle, liveY));
+                
+                const bubble = document.getElementById('bubble');
+                bubble.style.transform = `translate(calc(-50% + ${(cX/maxAngle)*maxMove}px), calc(-50% + ${(cY/maxAngle)*maxMove}px))`;
+                document.getElementById('val-x').innerText = liveX.toFixed(1);
+                document.getElementById('val-y').innerText = liveY.toFixed(1);
+                
+                if (Math.abs(liveX) < 0.5 && Math.abs(liveY) < 0.5) {
+                    bubble.style.backgroundColor = "#32d74b";
+                    bubble.style.boxShadow = "0 0 15px rgba(50, 215, 75, 0.8)";
+                } else {
+                    bubble.style.backgroundColor = "#ff9f0a";
+                    bubble.style.boxShadow = "0 0 15px rgba(255, 159, 10, 0.8)";
+                }
             }
         }
 
-        // --- View 2: Distance ---
-        document.getElementById('btn-dist-minus').addEventListener('click', () => {
-            if (puttDistance > 1) puttDistance--;
-            distanceValEl.innerText = puttDistance;
-        });
-        document.getElementById('btn-dist-plus').addEventListener('click', () => {
-            if (puttDistance < 100) puttDistance++;
-            distanceValEl.innerText = puttDistance;
-        });
-        document.getElementById('btn-confirm-dist').addEventListener('click', () => {
-            currentStage = 1;
-            setupCaptureView();
+        function handleMotion(event) {
+            if (!event.accelerationIncludingGravity) return;
+            const acc = event.accelerationIncludingGravity;
+            
+            // Calculate magnitude of acceleration (subtract 9.8g approx resting gravity)
+            let magnitude = Math.sqrt(acc.x*acc.x + acc.y*acc.y + acc.z*acc.z);
+            let netAccel = Math.abs(magnitude - 9.81);
+
+            // If we are actively swinging in the simulator, track the peak
+            if (simState.isSwinging) {
+                if (netAccel > peakAccel) {
+                    peakAccel = netAccel;
+                    impactFaceAngle = liveX; // Use side tilt as a proxy for face angle at impact
+                }
+                
+                // Update live UI
+                let fakeSpeed = Math.min(130, Math.round(peakAccel * 3.5)); // visual only
+                document.getElementById('live-speed').innerText = `${fakeSpeed} mph`;
+                document.getElementById('live-face').innerText = `${impactFaceAngle.toFixed(0)}\xB0`;
+            }
+        }
+
+        // ==========================================
+        //          GREEN READER LOGIC
+        // ==========================================
+        let readerDist = 10;
+        let readerStage = 1;
+        let read1 = {x:0, y:0}, read2 = {x:0, y:0};
+
+        function changeDist(amt) {
+            readerDist = Math.max(1, Math.min(100, readerDist + amt));
+            document.getElementById('distance-val').innerText = readerDist;
+        }
+
+        function startCaptureFlow() {
+            readerStage = 1;
+            updateCaptureUI();
             showView('view-capture');
-        });
+        }
 
-        // --- Views 3 & 4: Capture Logic ---
-        function setupCaptureView() {
-            if (currentStage === 1) {
-                captureTitle.innerText = "Measure 1/3 Distance";
-                captureInst.innerText = `Place phone on the green at approx ${(puttDistance * 0.33).toFixed(1)} ft, pointing at the hole.`;
-                progressBar2.classList.remove('bg-green-500');
-                progressBar2.classList.add('bg-gray-700');
+        function updateCaptureUI() {
+            const pb2 = document.getElementById('progress-bar-2');
+            if (readerStage === 1) {
+                document.getElementById('capture-title').innerText = "Measure 1/3 Distance";
+                document.getElementById('capture-inst').innerText = `Place phone on the green at approx ${(readerDist * 0.33).toFixed(1)} ft, pointing at the hole.`;
+                pb2.classList.replace('bg-green-500', 'bg-gray-700');
             } else {
-                captureTitle.innerText = "Measure 2/3 Distance";
-                captureInst.innerText = `Place phone on the green at approx ${(puttDistance * 0.66).toFixed(1)} ft, pointing at the hole.`;
-                progressBar2.classList.remove('bg-gray-700');
-                progressBar2.classList.add('bg-green-500');
+                document.getElementById('capture-title').innerText = "Measure 2/3 Distance";
+                document.getElementById('capture-inst').innerText = `Place phone on the green at approx ${(readerDist * 0.66).toFixed(1)} ft.`;
+                pb2.classList.replace('bg-gray-700', 'bg-green-500');
             }
         }
 
-        document.getElementById('btn-capture').addEventListener('click', () => {
-            if (currentStage === 1) {
+        function captureReading() {
+            if (readerStage === 1) {
                 read1 = { x: liveX, y: liveY };
-                currentStage = 2;
-                setupCaptureView();
+                readerStage = 2;
+                updateCaptureUI();
             } else {
                 read2 = { x: liveX, y: liveY };
-                calculatePutt();
+                calcReaderResult();
                 showView('view-results');
             }
-        });
-
-        // --- View 5: Math & Canvas ---
-        function calculatePutt() {
-            let weightedX = (read1.x * 0.4) + (read2.x * 0.6); 
-            let weightedY = (read1.y * 0.4) + (read2.y * 0.6); 
-
-            let rawBreakInches = puttDistance * (Math.abs(weightedX) * 1.75);
-
-            let speedModifier = 1 - (weightedY * 0.1);
-            speedModifier = Math.max(0.5, Math.min(speedModifier, 1.5)); 
-
-            let totalBreakInches = Math.round(rawBreakInches * speedModifier);
-
-            let direction = weightedX > 0 ? "Left" : "Right";
-            let aimDir = weightedX > 0 ? "Right" : "Left";
-
-            if (totalBreakInches < 1) {
-                resultAim.innerText = "Aim Dead Center";
-                resultAim.className = "text-3xl font-bold mb-1 text-white";
-                totalBreakInches = 0;
-            } else {
-                resultAim.innerText = `Aim ${totalBreakInches}" ${aimDir}`;
-                resultAim.className = aimDir === "Right" ? "text-3xl font-bold mb-1 text-blue-400" : "text-3xl font-bold mb-1 text-red-400";
-            }
-
-            let desc = "";
-            if (weightedY > 1) desc += "Uphill putt, hit it firm. ";
-            else if (weightedY < -1) desc += "Downhill putt, delicate speed. ";
-            else desc += "Relatively flat speed. ";
-            resultDesc.innerText = desc;
-
-            drawVisualization(totalBreakInches, aimDir);
         }
 
-        function drawVisualization(breakAmt, aimDir) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            const W = canvas.width;
-            const H = canvas.height;
-            const holeY = 40;
-            const ballY = H - 40;
-            const centerX = W / 2;
-
-            const maxVisualBreak = W / 2 - 20; 
-            let pixelBreak = breakAmt * 3; 
-            if (pixelBreak > maxVisualBreak) pixelBreak = maxVisualBreak;
+        function calcReaderResult() {
+            let wX = (read1.x * 0.4) + (read2.x * 0.6); 
+            let wY = (read1.y * 0.4) + (read2.y * 0.6); 
+            let rawInches = readerDist * (Math.abs(wX) * 1.75);
+            let spdMod = Math.max(0.5, Math.min(1 - (wY * 0.1), 1.5)); 
+            let totInches = Math.round(rawInches * spdMod);
+            let aimDir = wX > 0 ? "Right" : "Left";
             
-            let curveDir = aimDir === "Right" ? -1 : 1; 
-
-            // 1. Draw Hole
-            ctx.beginPath();
-            ctx.arc(centerX, holeY, 12, 0, Math.PI * 2);
-            ctx.fillStyle = '#000';
-            ctx.fill();
-            ctx.closePath();
-
-            // 2. Draw Straight Reference Line
-            ctx.beginPath();
-            ctx.setLineDash([5, 5]);
-            ctx.moveTo(centerX, ballY);
-            ctx.lineTo(centerX, holeY);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            ctx.setLineDash([]);
-
-            if (breakAmt > 0) {
-                // 3. Draw Aim Point Line
-                let targetX = centerX + (pixelBreak * -curveDir);
-                ctx.beginPath();
-                ctx.setLineDash([2, 4]);
-                ctx.moveTo(centerX, ballY);
-                ctx.lineTo(targetX, holeY);
-                ctx.strokeStyle = aimDir === "Right" ? 'rgba(96, 165, 250, 0.5)' : 'rgba(248, 113, 113, 0.5)';
-                ctx.stroke();
-                ctx.setLineDash([]);
-
-                // Draw X
-                ctx.beginPath();
-                ctx.moveTo(targetX - 5, holeY - 5);
-                ctx.lineTo(targetX + 5, holeY + 5);
-                ctx.moveTo(targetX + 5, holeY - 5);
-                ctx.lineTo(targetX - 5, holeY + 5);
-                ctx.strokeStyle = aimDir === "Right" ? '#60A5FA' : '#F87171';
-                ctx.lineWidth = 3;
-                ctx.stroke();
-
-                // 4. Draw Break Curve
-                ctx.beginPath();
-                ctx.moveTo(centerX, ballY);
-                ctx.quadraticCurveTo(targetX, H / 2, centerX, holeY);
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 3;
-                ctx.stroke();
+            const rAim = document.getElementById('result-aim');
+            if (totInches < 1 || isNaN(totInches)) {
+                rAim.innerText = "Aim Dead Center";
+                rAim.className = "text-3xl font-bold mb-1 text-white";
+                totInches = 0;
+            } else {
+                rAim.innerText = `Aim ${totInches}" ${aimDir}`;
+                rAim.className = aimDir === "Right" ? "text-3xl font-bold mb-1 text-blue-400" : "text-3xl font-bold mb-1 text-red-400";
             }
-
-            // 5. Draw Ball
-            ctx.beginPath();
-            ctx.arc(centerX, ballY, 6, 0, Math.PI * 2);
-            ctx.fillStyle = '#fff';
-            ctx.shadowColor = 'rgba(0,0,0,0.5)';
-            ctx.shadowBlur = 4;
-            ctx.fill();
-            ctx.shadowBlur = 0;
+            
+            let desc = (wY > 1) ? "Uphill putt, hit it firm. " : (wY < -1) ? "Downhill putt, delicate speed. " : "Relatively flat speed. ";
+            document.getElementById('result-desc').innerText = desc;
+            
+            drawReaderCanvas(totInches, aimDir);
         }
 
-        // --- Reset ---
-        document.getElementById('btn-reset').addEventListener('click', () => {
-            currentStage = 1;
-            showView('view-distance');
-        });
+        function drawReaderCanvas(brk, dir) {
+            const ctx = document.getElementById('puttCanvas').getContext('2d');
+            const W = 300, H = 350, hY = 40, bY = H - 40, cX = W / 2;
+            ctx.clearRect(0,0,W,H);
+            
+            let pB = Math.min(brk * 3, W/2 - 20); 
+            let cD = dir === "Right" ? -1 : 1; 
+
+            // Hole
+            ctx.beginPath(); ctx.arc(cX, hY, 12, 0, Math.PI*2); ctx.fillStyle='#000'; ctx.fill();
+            // Ref Line
+            ctx.beginPath(); ctx.setLineDash([5,5]); ctx.moveTo(cX,bY); ctx.lineTo(cX,hY); 
+            ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.lineWidth=2; ctx.stroke(); ctx.setLineDash([]);
+
+            if (brk > 0) {
+                let tX = cX + (pB * -cD);
+                ctx.beginPath(); ctx.setLineDash([2,4]); ctx.moveTo(cX,bY); ctx.lineTo(tX,hY);
+                ctx.strokeStyle = dir==="Right"?'rgba(96,165,250,0.5)':'rgba(248,113,113,0.5)'; ctx.stroke(); ctx.setLineDash([]);
+                // X
+                ctx.beginPath(); ctx.moveTo(tX-5,hY-5); ctx.lineTo(tX+5,hY+5); ctx.moveTo(tX+5,hY-5); ctx.lineTo(tX-5,hY+5);
+                ctx.strokeStyle = dir==="Right"?'#60A5FA':'#F87171'; ctx.lineWidth=3; ctx.stroke();
+                // Path
+                ctx.beginPath(); ctx.moveTo(cX,bY); ctx.quadraticCurveTo(tX, H/2, cX, hY);
+                ctx.strokeStyle='#fff'; ctx.stroke();
+            }
+            // Ball
+            ctx.beginPath(); ctx.arc(cX, bY, 6, 0, Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+        }
+
+        // ==========================================
+        //          GOLF SIMULATOR LOGIC
+        // ==========================================
+        const holes = [
+            { par: 4, dist: 420 },
+            { par: 3, dist: 160 },
+            { par: 5, dist: 517 }
+        ];
+
+        let simState = {
+            holeIdx: 0,
+            strokes: 0,
+            distLeft: 0,
+            totalScore: 0,
+            isSwinging: false
+        };
+
+        function startSimulator() {
+            simState.holeIdx = 0;
+            simState.totalScore = 0;
+            loadHole(0);
+        }
+
+        function loadHole(idx) {
+            simState.strokes = 0;
+            simState.distLeft = holes[idx].dist;
+            updateSimHoleUI();
+            showView('view-sim-hole');
+        }
+
+        function updateSimHoleUI() {
+            document.getElementById('sim-hole-num').innerText = `Hole ${simState.holeIdx + 1}`;
+            document.getElementById('sim-par-info').innerText = `Par ${holes[simState.holeIdx].par} - ${holes[simState.holeIdx].dist} yds`;
+            document.getElementById('sim-dist-left').innerHTML = `${simState.distLeft}<span class="text-2xl text-gray-400 font-bold">y</span>`;
+            document.getElementById('sim-strokes').innerText = simState.strokes;
+        }
+
+        function startSwing() {
+            showView('view-sim-swinging');
+            simState.isSwinging = true;
+            peakAccel = 0;
+            impactFaceAngle = 0;
+            document.getElementById('live-speed').innerText = `0 mph`;
+            document.getElementById('live-face').innerText = `0\xB0`;
+            
+            const timerEl = document.getElementById('swing-timer');
+            timerEl.innerText = "SWING NOW!";
+            timerEl.classList.remove('text-red-500');
+            timerEl.classList.add('text-white');
+
+            // Record swing for 3.5 seconds
+            let timeLeft = 3;
+            const interval = setInterval(() => {
+                if (timeLeft <= 0) {
+                    clearInterval(interval);
+                    timerEl.innerText = "CALCULATING...";
+                    timerEl.classList.add('text-red-500');
+                    setTimeout(processSwing, 500); // Short delay for UX
+                } else {
+                    timeLeft--;
+                }
+            }, 1000);
+        }
+
+        function processSwing() {
+            simState.isSwinging = false;
+            simState.strokes++;
+
+            // Desktop Testing Fallback
+            if (peakAccel === 0 && !sensorDataReceived) {
+                peakAccel = Math.random() * 20 + 10; // Fake swing
+                impactFaceAngle = (Math.random() * 20) - 10;
+            }
+
+            // Swing Math Engine
+            // 1g of acceleration ~ roughly 8 yards (tuned for typical iPhone swinging motions)
+            let rawDistance = peakAccel * 8; 
+            
+            // Limit distance based on intended club selection (app assumes smart club)
+            let maxClubDist = 320; // Driver
+            if (simState.distLeft < 220) maxClubDist = simState.distLeft + 20; // Iron/Wedge
+            
+            let shotDist = Math.min(rawDistance, maxClubDist);
+            
+            // If the user barely moves it (putt/chip)
+            if (shotDist < 10) shotDist = Math.random() * 15 + 5; 
+
+            // Slice/Hook calculation
+            // impactFaceAngle (gamma tilt). Positive = right/slice, Negative = left/hook
+            // Normalize it: a 20 degree tilt = bad slice.
+            let faceError = impactFaceAngle / 15; // scalar
+            let offlineYards = shotDist * faceError * 0.2; // 20% offline severity
+
+            // Format results
+            shotDist = Math.round(shotDist);
+            offlineYards = Math.round(offlineYards);
+            
+            // Calculate Remaining
+            // simple pythagorean distance to pin
+            let remaining = Math.sqrt(
+                Math.pow(Math.abs(simState.distLeft - shotDist), 2) + 
+                Math.pow(offlineYards, 2)
+            );
+            remaining = Math.round(remaining);
+            simState.distLeft = remaining;
+
+            // Generate Title/Desc
+            const titleEl = document.getElementById('shot-title');
+            const descEl = document.getElementById('shot-desc');
+            
+            if (shotDist < 30) {
+                titleEl.innerText = "Duff!"; titleEl.className = "text-3xl font-bold mb-2 text-gray-500";
+                descEl.innerText = "You barely hit it. Need more speed.";
+            } else if (Math.abs(offlineYards) > 30) {
+                titleEl.innerText = "Fore!"; titleEl.className = "text-3xl font-bold mb-2 text-red-500";
+                descEl.innerText = offlineYards > 0 ? "Big slice to the right." : "Massive hook to the left.";
+            } else if (Math.abs(offlineYards) < 10 && shotDist > (maxClubDist * 0.8)) {
+                titleEl.innerText = "Crushed It!"; titleEl.className = "text-3xl font-bold mb-2 text-green-400";
+                descEl.innerText = "Beautiful strike down the middle.";
+            } else {
+                titleEl.innerText = "Solid Shot"; titleEl.className = "text-3xl font-bold mb-2 text-white";
+                descEl.innerText = "A decent swing.";
+            }
+
+            document.getElementById('res-dist').innerText = `${shotDist} yds`;
+            document.getElementById('res-offline').innerText = offlineYards === 0 ? "Center" : `${Math.abs(offlineYards)}y ${offlineYards > 0 ? 'Right' : 'Left'}`;
+            document.getElementById('res-remaining').innerText = `${simState.distLeft} yds`;
+            
+            // Check for Holing Out or On Green
+            const btnNext = document.getElementById('btn-next-action');
+            if (simState.distLeft === 0) {
+                titleEl.innerText = "HOLE IN ONE!";
+                descEl.innerText = "It went in the cup!";
+                btnNext.innerText = "Next Hole";
+            } else if (simState.distLeft <= 15) {
+                titleEl.innerText = "On the Green!";
+                let putts = simState.distLeft < 5 ? 1 : 2; // Auto-putt system
+                simState.strokes += putts;
+                descEl.innerText = `Auto-putt: ${putts} putts. Hole finished.`;
+                document.getElementById('res-remaining').innerText = "0 yds";
+                simState.distLeft = 0;
+                btnNext.innerText = "Next Hole";
+            } else {
+                btnNext.innerText = "Next Shot";
+            }
+
+            showView('view-sim-result');
+        }
+
+        function nextSimAction() {
+            if (simState.distLeft > 0) {
+                // Next shot on same hole
+                updateSimHoleUI();
+                showView('view-sim-hole');
+            } else {
+                // Hole finished
+                let par = holes[simState.holeIdx].par;
+                let scoreToPar = simState.strokes - par;
+                simState.totalScore += scoreToPar;
+
+                if (simState.holeIdx < 2) {
+                    simState.holeIdx++;
+                    loadHole(simState.holeIdx);
+                } else {
+                    // Round Over
+                    const finalScoreEl = document.getElementById('final-score');
+                    if (simState.totalScore === 0) finalScoreEl.innerText = "E";
+                    else if (simState.totalScore > 0) finalScoreEl.innerText = `+${simState.totalScore}`;
+                    else finalScoreEl.innerText = simState.totalScore;
+                    
+                    showView('view-sim-end');
+                }
+            }
+        }
 
     </script>
 </body>
