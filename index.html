@@ -2,850 +2,324 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pocket Caddie Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boyne Golf Trip - 2027 Summary</title>
+    
+    <!-- Loading Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <style>
-        body, html {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #0f172a; color: white;
-            overflow: hidden; touch-action: none; margin: 0; padding: 0;
-            height: 100vh; height: 100dvh; 
-        }
+    
+    <!-- Loading Google Fonts (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Loading FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-        /* Background Layers */
-        #ar-video { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; object-fit: cover; z-index: 1; display: none; }
-        #flick-3d-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; z-index: 1; display: none; }
-
-        /* UI Layer */
-        #ui-layer { position: relative; z-index: 10; width: 100vw; height: 100dvh; display: flex; flex-direction: column; transition: background-color 0.3s; background-color: #0f172a; }
-        
-        /* UI Background Modes */
-        #ui-layer.bg-mode-active { background-color: rgba(15, 23, 42, 0.85); }
-        #ui-layer.play-mode-active { background-color: transparent !important; }
-
-        .view-section { display: none; flex-direction: column; align-items: center; justify-content: center; flex: 1; width: 100%; padding: 15px; box-sizing: border-box; text-align: center; overflow-y: auto; }
-        .view-section.active { display: flex; }
-
-        /* Transparent Play Screens */
-        .play-mode-active .view-section { pointer-events: none; }
-        .play-mode-active .view-section .interactive-ui { pointer-events: auto; }
-
-        /* Buttons */
-        .btn-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); transition: transform 0.1s; }
-        .btn-blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4); transition: transform 0.1s; }
-        .btn-purple { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4); transition: transform 0.1s; }
-        .btn-orange { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4); transition: transform 0.1s; }
-        .btn-green:active, .btn-blue:active, .btn-purple:active, .btn-orange:active { transform: scale(0.95); }
-
-        .solid-canvas { background-color: #1e293b; border-radius: 16px; border: 2px solid #334155; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); max-width: 100%; max-height: 35vh; object-fit: contain; }
-        .ar-canvas { background-color: transparent !important; border: 2px dashed rgba(255,255,255,0.2); border-radius: 16px; max-width: 100%; max-height: 40vh; object-fit: contain; }
-        
-        #level-container { width: 220px; height: 220px; border-radius: 50%; background-color: #1e293b; border: 6px solid #334155; position: relative; margin: 0 auto; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
-        #level-container::before { content: ''; position: absolute; background-color: rgba(255,255,255,0.15); top: 50%; left: 5%; right: 5%; height: 2px; transform: translateY(-50%); }
-        #level-container::after { content: ''; position: absolute; background-color: rgba(255,255,255,0.15); left: 50%; top: 5%; bottom: 5%; width: 2px; transform: translateX(-50%); }
-        .target { width: 40px; height: 40px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1; }
-        #bubble { width: 34px; height: 34px; background-color: #10b981; border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); transition: transform 0.05s linear; box-shadow: 0 0 15px rgba(16, 185, 129, 0.8); z-index: 2; }
-    </style>
-</head>
-<body>
-
-    <!-- AR Camera Background -->
-    <video id="ar-video" autoplay playsinline muted></video>
-    <!-- 3D Simulator Background -->
-    <div id="flick-3d-container"></div>
-
-    <div id="ui-layer">
-        
-        <!-- Toast Notification -->
-        <div id="toast" class="absolute top-5 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hidden z-50 text-center w-11/12 max-w-sm border border-red-400 interactive-ui transition-all">
-            <span id="toast-msg">Message</span>
-            <button id="close-toast" class="mt-2 block w-full bg-black bg-opacity-20 rounded py-2 text-sm">Dismiss</button>
-        </div>
-
-        <!-- 0. MAIN MENU -->
-        <div id="view-main" class="view-section active interactive-ui">
-            <div class="mb-4 text-center mt-2">
-                <h1 class="text-4xl font-black tracking-tight text-white mb-1">Pocket Caddie</h1>
-                <p class="text-slate-400 text-sm">Select a tool to get started</p>
-            </div>
-            <div class="grid grid-cols-1 gap-3 w-full max-w-xs pb-4">
-                <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-xl relative overflow-hidden" onclick="triggerAppMode('reader')">
-                    <div class="absolute top-0 right-0 w-16 h-16 bg-green-500 opacity-10 rounded-bl-full"></div>
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.5)]">
-                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
-                        </div>
-                        <div class="text-left"><h3 class="text-lg font-bold text-white mb-0">Green Reader</h3><p class="text-slate-400 text-[10px]">Read slopes & breaks.</p></div>
-                    </div>
-                </div>
-                <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-xl relative overflow-hidden" onclick="triggerAppMode('hole2d')">
-                    <div class="absolute top-0 right-0 w-16 h-16 bg-blue-500 opacity-10 rounded-bl-full"></div>
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.5)]">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                        </div>
-                        <div class="text-left"><h3 class="text-lg font-bold text-white mb-0">2D Swing Analyzer</h3><p class="text-slate-400 text-[10px]">Top-down swing path trainer.</p></div>
-                    </div>
-                </div>
-                <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-xl relative overflow-hidden border-2 border-orange-500" onclick="triggerAppMode('flick3d')">
-                    <div class="absolute top-0 right-0 w-16 h-16 bg-orange-500 opacity-20 rounded-bl-full"></div>
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.8)]">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                        </div>
-                        <div class="text-left"><h3 class="text-lg font-bold text-white mb-0">3D Flick Golf</h3><p class="text-orange-200 text-[10px] font-bold">First Person!</p><p class="text-slate-400 text-[10px]">1st-person hole simulator.</p></div>
-                    </div>
-                </div>
-                <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-xl relative overflow-hidden border-2 border-purple-500" onclick="triggerAppMode('putt')">
-                    <div class="absolute top-0 right-0 w-16 h-16 bg-purple-500 opacity-20 rounded-bl-full"></div>
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(139,92,246,0.8)]">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="13" r="4"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/></svg>
-                        </div>
-                        <div class="text-left"><h3 class="text-lg font-bold text-white mb-0">AR Putting</h3><p class="text-purple-200 text-[10px] font-bold">Camera Required</p><p class="text-slate-400 text-[10px]">Putt on your real floor.</p></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 1. GREEN READER -->
-        <div id="gr-view-calibrate" class="view-section interactive-ui">
-            <h2 class="text-2xl font-bold mb-2">Zero Camera Bump</h2>
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 w-full max-w-xs mb-4"><div class="text-sm text-slate-400 mb-2">Raw Phone Tilt:</div><div class="flex justify-around"><div><div class="text-xs text-slate-500 mb-1">X-Axis</div><div class="text-2xl font-bold text-yellow-400"><span id="gr-cal-x">0.0</span>&deg;</div></div><div><div class="text-xs text-slate-500 mb-1">Y-Axis</div><div class="text-2xl font-bold text-yellow-400"><span id="gr-cal-y">0.0</span>&deg;</div></div></div></div>
-            <button onclick="grSetZero()" class="btn-green text-white font-bold py-3 px-10 rounded-full text-lg w-full max-w-xs mb-3">Set Zero Level</button>
-            <button onclick="grSkipZero()" class="text-slate-400 py-3 w-full max-w-xs active:text-white">Skip</button>
-        </div>
-        <div id="gr-view-distance" class="view-section interactive-ui">
-            <h2 class="text-2xl font-bold mb-2">Putt Distance</h2>
-            <div class="flex items-center justify-center gap-4 mb-8 mt-4"><button onclick="grUpdateDist(-1)" class="w-14 h-14 bg-slate-800 rounded-full text-2xl font-bold border border-slate-600">-</button><div class="text-5xl font-bold w-24 text-center" id="gr-dist-val">10</div><button onclick="grUpdateDist(1)" class="w-14 h-14 bg-slate-800 rounded-full text-2xl font-bold border border-slate-600">+</button></div>
-            <button onclick="grStartCapture()" class="btn-green text-white font-bold py-3 px-10 rounded-full text-lg w-full max-w-xs">Next Step</button>
-        </div>
-        <div id="gr-view-capture" class="view-section interactive-ui">
-            <h2 class="text-2xl font-bold mb-2" id="gr-capture-title">Step 1: 1/3 Distance</h2>
-            <div id="level-container" class="mb-6 mt-4"><div class="target"></div><div id="bubble"></div></div>
-            <button onclick="grCaptureData()" class="btn-green text-white font-bold py-3 px-10 rounded-full text-lg w-full max-w-xs">Capture Reading</button>
-        </div>
-        <div id="gr-view-results" class="view-section interactive-ui">
-            <div class="text-xs text-slate-400 uppercase tracking-widest mb-1 mt-2">Green Reading</div>
-            <h2 class="text-3xl font-bold mb-1 text-green-400" id="gr-result-aim">Aim 4" Right</h2>
-            <canvas id="grCanvas" width="300" height="300" class="solid-canvas mb-4 mt-2"></canvas>
-            <button onclick="grReset()" class="bg-slate-800 border border-slate-600 text-white font-bold py-3 px-10 rounded-full text-lg w-full max-w-xs mb-2">Read Another Putt</button>
-            <button onclick="exitToMenu()" class="text-slate-400 py-2 w-full max-w-xs active:text-white">Back to Menu</button>
-        </div>
-
-        <!-- 2. 2D TOP DOWN SWING SIMULATOR -->
-        <div id="sim2d-view-setup" class="view-section interactive-ui">
-            <div class="flex justify-between w-full max-w-xs mb-1"><div class="text-blue-400 uppercase tracking-widest text-xs font-bold">Shot <span id="sim2d-shot-num">1</span></div><div class="text-slate-400 uppercase tracking-widest text-xs font-bold">Hole: <span id="sim2d-hole-len">400</span>y</div></div>
-            <h2 class="text-5xl font-black mb-4"><span id="sim2d-scen-dist">400</span> <span class="text-2xl text-slate-300">Yards</span></h2>
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 w-full max-w-xs mb-6"><div class="text-sm text-slate-400 mb-2">Select Club</div><div class="flex items-center justify-between bg-slate-900 rounded-lg p-2 border border-slate-600"><button onclick="sim2dUpdateClub(-1)" class="w-10 h-10 bg-slate-700 rounded-md text-xl font-bold">&larr;</button><div class="text-xl font-bold text-white text-center w-32"><div id="sim2d-club-name">Driver</div><div class="text-[10px] text-slate-400 font-normal">Max: <span id="sim2d-club-max">280</span>y</div></div><button onclick="sim2dUpdateClub(1)" class="w-10 h-10 bg-slate-700 rounded-md text-xl font-bold">&rarr;</button></div></div>
-            <button onclick="showView('sim2d-view-address')" class="btn-blue text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs mb-3">Address Ball</button>
-            <button onclick="exitToMenu()" class="text-slate-400 py-2 w-full max-w-xs active:text-white">Menu</button>
-        </div>
-        <div id="sim2d-view-address" class="view-section interactive-ui">
-            <h2 class="text-2xl font-bold mb-2">The Address</h2><p class="text-slate-400 text-sm max-w-xs mb-2">Grip phone like a club. Screen facing you.</p>
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 w-full max-w-xs mb-6 mt-2"><div class="text-xs text-slate-400 mb-2 uppercase tracking-wider">Live Sensor Data</div><div class="grid grid-cols-3 gap-1 text-center"><div><div class="text-[10px] text-slate-500">ROT</div><div class="text-lg font-mono font-bold text-blue-400" id="sim2d-live-a">0&deg;</div></div><div><div class="text-[10px] text-slate-500">TILT</div><div class="text-lg font-mono font-bold text-blue-400" id="sim2d-live-b">0&deg;</div></div><div><div class="text-[10px] text-slate-500">FACE</div><div class="text-lg font-mono font-bold text-blue-400" id="sim2d-live-g">0&deg;</div></div></div></div>
-            <button onclick="sim2dSetAddress()" class="btn-blue text-white font-bold py-3 px-10 rounded-full text-lg w-full max-w-xs mb-3">Lock Address</button>
-            <button onclick="showView('sim2d-view-setup')" class="text-slate-400 py-2 w-full max-w-xs active:text-white">Back</button>
-        </div>
-        <div id="sim2d-view-swing" class="view-section interactive-ui">
-            <h2 id="sim2d-status" class="text-blue-400 mb-2 text-3xl font-bold uppercase">Ready</h2><p class="text-slate-400 text-sm max-w-xs mb-8">Take your swing! Tracking speed and face angle...</p>
-            <button onclick="showView('sim2d-view-address')" class="text-slate-500 py-2 px-6 border border-slate-700 rounded-full">Cancel</button>
-        </div>
-        <div id="sim2d-view-results" class="view-section interactive-ui">
-            <div class="w-full max-w-sm">
-                <div class="flex justify-between items-end mb-2"><div class="text-left"><div class="text-[10px] text-slate-400 uppercase tracking-widest">Hit Distance</div><div class="text-3xl font-black text-white"><span id="sim2d-res-dist">0</span> <span class="text-lg text-slate-400 font-bold">Yards</span></div></div><div class="text-right"><div class="text-[10px] text-slate-400 uppercase tracking-widest">Remaining</div><div class="text-xl font-bold text-blue-400" id="sim2d-res-rem">0 yds</div></div></div>
-                <canvas id="sim2dCanvas" width="280" height="180" class="solid-canvas mb-3 w-full"></canvas>
-                <div class="grid grid-cols-2 gap-3 mb-4"><div class="bg-slate-800 p-3 rounded-lg border border-slate-700 text-center"><div class="text-[10px] text-slate-400 uppercase">Face Angle</div><div class="text-xl font-bold" id="sim2d-res-face">0&deg; Sq</div><div class="text-[10px] font-bold mt-1" id="sim2d-res-offline">On Target</div></div><div class="bg-slate-800 p-3 rounded-lg border border-slate-700 text-center relative overflow-hidden"><div class="absolute bottom-0 left-0 h-1 bg-blue-500" id="sim2d-speed-bar" style="width: 50%;"></div><div class="text-[10px] text-slate-400 uppercase">Swing Speed</div><div class="text-xl font-bold"><span id="sim2d-res-mph">0</span> <span class="text-xs text-slate-400 font-normal">mph</span></div><div class="text-[10px] font-bold text-blue-300 mt-1"><span id="sim2d-res-pct">0</span>% Effort</div></div></div>
-                <button id="sim2d-btn-next" class="btn-blue text-white font-bold py-3 px-10 rounded-full text-lg w-full mb-2">Next Shot</button>
-                <button onclick="exitToMenu()" class="text-slate-400 py-2 w-full active:text-white">Menu</button>
-            </div>
-        </div>
-
-        <!-- 3. NEW 3D FLICK GOLF SIMULATOR -->
-        <div id="flick3d-view-setup" class="view-section interactive-ui">
-            <div class="flex justify-between w-full max-w-xs mb-1"><div class="text-orange-400 uppercase tracking-widest text-xs font-bold">Shot <span id="flick3d-shot-num">1</span></div><div class="text-slate-400 uppercase tracking-widest text-xs font-bold">Hole: <span id="flick3d-hole-len">400</span>y</div></div>
-            <h2 class="text-5xl font-black mb-4"><span id="flick3d-scen-dist">400</span> <span class="text-2xl text-slate-300">Yards</span></h2>
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 w-full max-w-xs mb-6"><div class="text-sm text-slate-400 mb-2">Select Club</div><div class="flex items-center justify-between bg-slate-900 rounded-lg p-2 border border-slate-600"><button onclick="flick3dUpdateClub(-1)" class="w-10 h-10 bg-slate-700 rounded-md text-xl font-bold">&larr;</button><div class="text-xl font-bold text-white text-center w-32"><div id="flick3d-club-name">Driver</div><div class="text-[10px] text-slate-400 font-normal">Max: <span id="flick3d-club-max">300</span>y</div></div><button onclick="flick3dUpdateClub(1)" class="w-10 h-10 bg-slate-700 rounded-md text-xl font-bold">&rarr;</button></div></div>
-            <button onclick="flick3dSetAddress()" class="btn-orange text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs mb-3">Address & Swing</button>
-            <button onclick="exitToMenu()" class="text-slate-400 py-2 w-full max-w-xs active:text-white">Menu</button>
-        </div>
-
-        <!-- Transparent Play View -->
-        <div id="flick3d-view-play" class="view-section p-0 m-0 play-screen relative">
-            <div class="absolute top-10 left-0 w-full flex justify-between px-6 z-20 pointer-events-none">
-                <div class="bg-black bg-opacity-70 p-2 rounded-lg backdrop-blur-md text-left border border-slate-600 shadow-xl">
-                    <div class="text-[10px] text-orange-400 uppercase tracking-widest font-bold">Target</div>
-                    <div class="text-2xl font-bold text-white"><span id="flick3d-hud-dist">0</span>y</div>
-                </div>
-                <div class="bg-black bg-opacity-70 p-2 rounded-lg backdrop-blur-md text-right border border-slate-600 shadow-xl">
-                    <div class="text-[10px] text-slate-300 uppercase tracking-widest font-bold">Club</div>
-                    <div class="text-xl font-bold text-white" id="flick3d-hud-club">Drv</div>
-                </div>
-            </div>
-            <div class="absolute bottom-12 left-0 w-full flex flex-col items-center z-20">
-                <div class="bg-black bg-opacity-70 px-8 py-3 rounded-full mb-6 border border-slate-500 backdrop-blur-md shadow-xl text-center mx-4">
-                    <h2 id="flick3d-status" class="text-white drop-shadow-lg text-3xl font-black uppercase tracking-widest mb-1">Ready</h2>
-                    <p class="text-orange-300 text-[11px] font-bold">Hold upright. Tilt top <b class="text-white">TOWARDS YOU</b> to draw back.</p>
-                </div>
-                <button onclick="showView('flick3d-view-setup')" class="bg-slate-800 bg-opacity-90 border border-slate-500 text-white py-3 px-10 rounded-full backdrop-blur-md active:bg-slate-700 interactive-ui shadow-xl font-bold">Cancel</button>
-            </div>
-        </div>
-
-        <div id="flick3d-view-results" class="view-section interactive-ui">
-            <div class="w-full max-w-sm bg-slate-900 p-6 rounded-2xl border border-slate-700 shadow-2xl">
-                <div class="text-orange-400 uppercase tracking-widest text-xs font-bold mb-1">Shot Result</div>
-                <h2 class="text-5xl font-black text-white mb-2"><span id="flick3d-res-dist">0</span> <span class="text-xl text-slate-400">Yards</span></h2>
-                <div class="grid grid-cols-2 gap-4 my-6">
-                    <div class="bg-slate-800 p-3 rounded-xl border border-slate-700"><div class="text-[10px] text-slate-500 uppercase">Offline</div><div class="text-lg font-bold" id="flick3d-res-offline">On Target</div></div>
-                    <div class="bg-slate-800 p-3 rounded-xl border border-slate-700"><div class="text-[10px] text-slate-500 uppercase">Remaining</div><div class="text-lg font-bold text-orange-400" id="flick3d-res-rem">0 yds</div></div>
-                </div>
-                <button id="flick3d-btn-next" class="btn-orange text-white font-bold py-3 px-10 rounded-full text-lg w-full mb-2">Next Shot</button>
-                <button onclick="exitToMenu()" class="text-slate-400 py-2 w-full active:text-white">Menu</button>
-            </div>
-        </div>
-
-        <!-- 4. AR PUTTING SIMULATOR -->
-        <div id="pg-view-setup" class="view-section interactive-ui">
-            <div class="bg-slate-900 bg-opacity-90 p-5 rounded-2xl border border-slate-700 w-full max-w-xs mb-6 backdrop-blur-md shadow-2xl mt-4">
-                <div class="flex justify-between items-center mb-1"><div class="text-purple-400 uppercase tracking-widest text-xs font-bold" id="pg-context-title">Putting Practice</div></div>
-                <h2 class="text-5xl font-black mb-2"><span id="pg-scen-dist">15</span> <span class="text-2xl text-slate-300 font-bold">ft</span></h2>
-                <p class="text-white mb-4 text-lg font-bold" id="pg-scen-break">Break: 4" Right</p>
-                
-                <div class="w-full h-px bg-slate-700 mb-4"></div>
-                
-                <div class="text-xs text-slate-400 uppercase tracking-widest font-bold mb-2">Adjust Aim Offset</div>
-                <div class="flex items-center justify-between bg-slate-800 rounded-xl p-2 border border-slate-600">
-                    <button onclick="pgUpdateAim(-1)" class="w-12 h-12 bg-slate-700 rounded-lg text-2xl font-bold border border-slate-600 active:bg-slate-600">&larr;</button>
-                    <div class="text-2xl font-black text-white"><span id="pg-aim-val">0</span>&deg;</div>
-                    <button onclick="pgUpdateAim(1)" class="w-12 h-12 bg-slate-700 rounded-lg text-2xl font-bold border border-slate-600 active:bg-slate-600">&rarr;</button>
-                </div>
-            </div>
-            <button onclick="pgSetAddress()" class="btn-purple text-white font-bold py-4 px-10 rounded-full text-lg w-full max-w-xs mb-3 shadow-[0_0_20px_rgba(139,92,246,0.5)]">Lock Putter & Play</button>
-            <button onclick="exitToMenu()" class="text-slate-300 py-2 w-full max-w-xs active:text-white bg-black bg-opacity-50 rounded-full">Exit AR Mode</button>
-        </div>
-
-        <div id="pg-view-swing" class="view-section play-screen relative">
-            <div class="absolute top-10 flex flex-col items-center z-20 w-full">
-                <div class="bg-black bg-opacity-70 px-8 py-3 rounded-full backdrop-blur-md border border-slate-500 shadow-xl">
-                    <h2 id="pg-status" class="text-purple-400 text-xl font-black uppercase tracking-widest drop-shadow-md">Make Your Putt</h2>
-                </div>
-            </div>
-
-            <!-- Live Power Meter -->
-            <div class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-70 p-3 rounded-full border border-slate-500 flex flex-col items-center z-20 backdrop-blur-md shadow-xl">
-                <div class="text-[10px] text-slate-300 uppercase font-bold tracking-widest mb-1">Power</div>
-                <div id="pg-live-power-container" class="text-xl font-black text-blue-400 drop-shadow-md"><span id="pg-live-power">0</span>'</div>
-                
-                <div class="h-32 w-3 bg-slate-800 rounded-full mt-2 relative overflow-hidden border border-slate-700">
-                    <div id="pg-power-bar" class="absolute bottom-0 left-0 w-full bg-blue-400 transition-all duration-75" style="height: 0%;"></div>
-                    <!-- Target line sits at 66% height -->
-                    <div id="pg-target-line" class="absolute left-0 w-full h-1 bg-white z-10 shadow-[0_0_5px_rgba(255,255,255,0.8)]" style="bottom: 66%;"></div>
-                </div>
-                
-                <div class="text-[10px] text-slate-300 mt-2 font-bold tracking-widest">Target<br><span id="pg-target-power-text" class="text-white text-sm font-black drop-shadow-md">15'</span></div>
-            </div>
-
-            <canvas id="pgSwingCanvas" width="300" height="350" class="ar-canvas mb-4 backdrop-blur-none pointer-events-none z-10"></canvas>
-            
-            <div class="absolute bottom-10 z-20 w-full flex justify-center">
-                <button onclick="showView('pg-view-setup')" class="text-white bg-slate-800 bg-opacity-90 py-3 px-10 border border-slate-500 rounded-full backdrop-blur-md interactive-ui shadow-xl font-bold">Reset Aim</button>
-            </div>
-        </div>
-
-        <div id="pg-view-roll" class="view-section play-screen relative">
-            <div class="absolute top-10 flex flex-col items-center z-20 w-full">
-                <div class="bg-black bg-opacity-70 px-8 py-3 rounded-full backdrop-blur-md border border-slate-500 shadow-xl">
-                    <h2 class="text-2xl font-black text-white uppercase tracking-widest drop-shadow-md" id="pg-roll-result">Rolling...</h2>
-                </div>
-            </div>
-            
-            <canvas id="pgRollCanvas" width="300" height="350" class="ar-canvas mb-4 backdrop-blur-none pointer-events-none z-10"></canvas>
-            
-            <div class="absolute bottom-10 z-20 w-full flex flex-col items-center gap-3">
-                <button id="pg-btn-next" style="display:none;" onclick="pgHandleNextHole()" class="btn-purple text-white font-bold py-4 px-10 rounded-full text-lg w-[250px] shadow-[0_0_20px_rgba(139,92,246,0.6)] interactive-ui">Next Hole</button>
-                <button onclick="exitToMenu()" class="text-white bg-slate-800 bg-opacity-90 py-2 w-[250px] rounded-full backdrop-blur-md border border-slate-500 interactive-ui font-bold">Exit AR</button>
-            </div>
-        </div>
-    </div>
-
+    <!-- Custom Tailwind Configuration for Theme Colors -->
     <script>
-        // ==========================================
-        // UI & ROUTING SYSTEM
-        // ==========================================
-        let appMode = 'menu'; 
-        let mainGameMode = 'menu'; 
-        let playingFullHole = false; 
-        let sensorListenerAdded = false;
-        let cameraStream = null;
-
-        const views = document.querySelectorAll('.view-section');
-        const uiLayer = document.getElementById('ui-layer');
-        const toast = document.getElementById('toast');
-        const toastMsg = document.getElementById('toast-msg');
-        document.getElementById('close-toast').addEventListener('click', () => toast.classList.add('hidden'));
-
-        function showView(id) {
-            views.forEach(v => v.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            
-            uiLayer.classList.remove('bg-mode-active', 'play-mode-active');
-            
-            if (id === 'flick3d-view-play' || id === 'pg-view-swing' || id === 'pg-view-roll') {
-                uiLayer.classList.add('play-mode-active'); 
-            } else if (appMode === 'flick3d' || appMode === 'putt') {
-                uiLayer.classList.add('bg-mode-active'); 
-            }
-        }
-
-        function showMessage(msg, isError = true) {
-            toastMsg.innerText = msg;
-            toast.className = `absolute top-5 left-1/2 transform -translate-x-1/2 px-6 py-4 rounded-xl font-semibold shadow-lg z-50 text-center w-11/12 max-w-sm border transition-all interactive-ui ${isError ? 'bg-red-600 text-white border-red-400' : 'bg-green-600 text-white border-green-400'}`;
-            toast.classList.remove('hidden');
-            if(!isError) setTimeout(() => toast.classList.add('hidden'), 3000);
-        }
-
-        function exitToMenu() { 
-            stopCamera();
-            if(flick3d.initialized) document.getElementById('flick-3d-container').style.display = 'none';
-            appMode = 'menu'; mainGameMode = 'menu'; playingFullHole = false;
-            uiLayer.classList.remove('bg-mode-active', 'play-mode-active');
-            showView('view-main'); 
-        }
-
-        function triggerAppMode(mode) {
-            mainGameMode = mode;
-            startAppMode(mode, null);
-        }
-
-        async function startAppMode(mode, params = null) {
-            if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-                showMessage("HTTPS Required for Sensors!"); return;
-            }
-            appMode = mode;
-
-            if (!sensorListenerAdded) {
-                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                    try {
-                        const perm = await DeviceOrientationEvent.requestPermission();
-                        if (perm === 'granted') {
-                            window.addEventListener('deviceorientation', globalSensorHandler);
-                            sensorListenerAdded = true;
-                        } else { 
-                            showMessage('Motion permission denied.'); exitToMenu(); return; 
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        golf: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
                         }
-                    } catch (e) { 
-                        showMessage('Error requesting motion. Open directly in Safari.'); exitToMenu(); return; 
-                    }
-                } else {
-                    window.addEventListener('deviceorientation', globalSensorHandler);
-                    sensorListenerAdded = true;
-                }
-            }
-
-            if (mode === 'putt') { await startCamera(); } else { stopCamera(); }
-
-            if (mode === 'flick3d') {
-                if(!flick3d.initialized) initThreeJS();
-                document.getElementById('flick-3d-container').style.display = 'block';
-            } else {
-                if(flick3d.initialized) document.getElementById('flick-3d-container').style.display = 'none';
-            }
-
-            setTimeout(() => routeToFirstView(params), 100);
-        }
-
-        async function startCamera() {
-            try {
-                cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                const videoEl = document.getElementById('ar-video');
-                videoEl.srcObject = cameraStream;
-                videoEl.style.display = 'block';
-            } catch (err) {
-                showMessage("Camera denied. AR disabled, but game works.", false);
-            }
-        }
-
-        function stopCamera() {
-            if (cameraStream) { cameraStream.getTracks().forEach(track => track.stop()); document.getElementById('ar-video').style.display = 'none'; }
-        }
-
-        function routeToFirstView(params) {
-            if (appMode === 'reader') { grReset(); showView('gr-view-calibrate'); } 
-            else if (appMode === 'hole2d') { playingFullHole = true; sim2dStartNewHole(); }
-            else if (appMode === 'flick3d') { playingFullHole = true; flick3dStartNewHole(); }
-            else if (appMode === 'putt') { pgGenerateScenario(params); } 
-        }
-
-        function globalSensorHandler(e) {
-            if (e.alpha === null) return;
-            if (appMode === 'reader') grHandleSensor(e);
-            else if (appMode === 'hole2d') sim2dHandleSensor(e);
-            else if (appMode === 'flick3d') flick3dHandleSensor(e);
-            else if (appMode === 'putt') pgHandleSensor(e);
-        }
-
-        function getShortestAngle(current, baseline) {
-            let diff = (current - baseline) % 360;
-            if (diff > 180) diff -= 360; if (diff < -180) diff += 360;
-            return diff;
-        }
-
-        const golfClubs = [
-            { name: "Driver", max: 300, loft: 10 }, { name: "3 Wood", max: 260, loft: 15 }, { name: "5 Wood", max: 235, loft: 18 },
-            { name: "4 Iron", max: 210, loft: 24 }, { name: "5 Iron", max: 195, loft: 27 }, { name: "6 Iron", max: 180, loft: 31 },
-            { name: "7 Iron", max: 165, loft: 35 }, { name: "8 Iron", max: 150, loft: 39 }, { name: "9 Iron", max: 135, loft: 43 }, 
-            { name: "P Wedge", max: 120, loft: 47 }, { name: "G Wedge", max: 105, loft: 52 }, { name: "S Wedge", max: 90, loft: 56 }, { name: "L Wedge", max: 75, loft: 60 }
-        ];
-
-        // ==========================================
-        // 1. GREEN READER 
-        // ==========================================
-        const gr = { dist: 10, stage: 1, rawX: 0, rawY: 0, offX: 0, offY: 0, liveX: 0, liveY: 0, read1: {x:0,y:0}, read2: {x:0,y:0} };
-        const bubble = document.getElementById('bubble'); const grCanvas = document.getElementById('grCanvas'); const grCtx = grCanvas.getContext('2d');
-        function grReset() { gr.stage = 1; gr.dist = 10; document.getElementById('gr-dist-val').innerText = gr.dist; }
-        function grHandleSensor(e) {
-            gr.rawX = e.gamma; gr.rawY = e.beta;
-            if (document.getElementById('gr-view-calibrate').classList.contains('active')) { document.getElementById('gr-cal-x').innerText = gr.rawX.toFixed(1); document.getElementById('gr-cal-y').innerText = gr.rawY.toFixed(1); }
-            gr.liveX = gr.rawX - gr.offX; gr.liveY = gr.rawY - gr.offY;
-            if (document.getElementById('gr-view-capture').classList.contains('active')) {
-                const maxA = 20, maxM = 90; let cX = Math.max(-maxA, Math.min(maxA, gr.liveX)), cY = Math.max(-maxA, Math.min(maxA, gr.liveY));
-                bubble.style.transform = `translate(calc(-50% + ${(cX/maxA)*maxM}px), calc(-50% + ${(cY/maxA)*maxM}px))`;
-                if (Math.abs(gr.liveX) < 0.5 && Math.abs(gr.liveY) < 0.5) { bubble.style.backgroundColor = "#10b981"; bubble.style.boxShadow = "0 0 15px rgba(16, 185, 129, 0.8)"; } else { bubble.style.backgroundColor = "#f59e0b"; bubble.style.boxShadow = "0 0 15px rgba(245, 158, 11, 0.8)"; }
-            }
-        }
-        function grSetZero() { gr.offX = gr.rawX; gr.offY = gr.rawY; showMessage("Zero set!", false); showView('gr-view-distance'); }
-        function grSkipZero() { gr.offX = 0; gr.offY = 0; showView('gr-view-distance'); }
-        function grUpdateDist(val) { gr.dist = Math.max(1, Math.min(100, gr.dist + val)); document.getElementById('gr-dist-val').innerText = gr.dist; }
-        function grStartCapture() { gr.stage = 1; document.getElementById('gr-capture-title').innerText = "Measure 1/3 Distance"; showView('gr-view-capture'); }
-        function grCaptureData() {
-            if (gr.stage === 1) { gr.read1 = { x: gr.liveX, y: gr.liveY }; gr.stage = 2; document.getElementById('gr-capture-title').innerText = "Measure 2/3 Distance"; } else { gr.read2 = { x: gr.liveX, y: gr.liveY }; grCalculate(); showView('gr-view-results'); }
-        }
-        function grCalculate() {
-            let wX = (gr.read1.x * 0.4) + (gr.read2.x * 0.6); let wY = (gr.read1.y * 0.4) + (gr.read2.y * 0.6); 
-            let rawInches = gr.dist * (Math.abs(wX) * 1.75); let speedMod = Math.max(0.5, Math.min(1 - (wY * 0.1), 1.5)); 
-            let totInches = Math.round(rawInches * speedMod); let aimDir = wX > 0 ? "Right" : "Left";
-            const resAim = document.getElementById('gr-result-aim');
-            if (totInches < 1) { resAim.innerText = "Aim Dead Center"; resAim.className = "text-2xl font-bold mb-1 text-white"; totInches = 0; } else { resAim.innerText = `Aim ${totInches}" ${aimDir}`; resAim.className = aimDir === "Right" ? "text-2xl font-bold mb-1 text-blue-400" : "text-2xl font-bold mb-1 text-red-400"; }
-            
-            grCtx.clearRect(0, 0, grCanvas.width, grCanvas.height); const W = grCanvas.width, H = grCanvas.height, holeY = 40, ballY = H - 40, cx = W / 2;
-            let pixBrk = Math.min(totInches * 3, W/2 - 20); let dir = aimDir === "Right" ? -1 : 1; 
-            grCtx.beginPath(); grCtx.arc(cx, holeY, 12, 0, Math.PI * 2); grCtx.fillStyle = '#000'; grCtx.fill();
-            grCtx.beginPath(); grCtx.setLineDash([5, 5]); grCtx.moveTo(cx, ballY); grCtx.lineTo(cx, holeY); grCtx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; grCtx.stroke(); grCtx.setLineDash([]);
-            if (totInches > 0) { let tx = cx + (pixBrk * -dir); grCtx.beginPath(); grCtx.moveTo(cx, ballY); grCtx.quadraticCurveTo(tx, H / 2, cx, holeY); grCtx.strokeStyle = '#fff'; grCtx.lineWidth = 3; grCtx.stroke(); }
-            grCtx.beginPath(); grCtx.arc(cx, ballY, 6, 0, Math.PI * 2); grCtx.fillStyle = '#fff'; grCtx.fill();
-            showView('gr-view-results');
-        }
-
-        // ==========================================
-        // 2. 2D TOP DOWN SWING SIMULATOR
-        // ==========================================
-        const sim2d = { base: {a:0, b:0, g:0}, state: 'IDLE', minDev: 999, faceLock: 0, holeLen: 400, distToHole: 400, clubIdx: 0, maxBack: 0, dsStart: 0, dsDist: 0, shotCount: 1 };
-        const sim2dCanvas = document.getElementById('sim2dCanvas'); const sim2dCtx = sim2dCanvas.getContext('2d');
-        function sim2dStartNewHole() { sim2d.holeLen = Math.floor(Math.random() * (550 - 320 + 1)) + 320; sim2d.distToHole = sim2d.holeLen; sim2d.shotCount = 1; document.getElementById('sim2d-hole-len').innerText = sim2d.holeLen; sim2dShowSetup(); }
-        function sim2dShowSetup() {
-            document.getElementById('sim2d-scen-dist').innerText = sim2d.distToHole; document.getElementById('sim2d-shot-num').innerText = sim2d.shotCount;
-            sim2d.clubIdx = golfClubs.findIndex(c => c.max <= sim2d.distToHole); if(sim2d.clubIdx === -1) sim2d.clubIdx = golfClubs.length - 1; if(sim2d.distToHole > golfClubs[0].max) sim2d.clubIdx = 0; 
-            sim2dUpdateClubUI(); showView('sim2d-view-setup');
-        }
-        function sim2dUpdateClub(dir) { sim2d.clubIdx = Math.max(0, Math.min(golfClubs.length - 1, sim2d.clubIdx + dir)); sim2dUpdateClubUI(); }
-        function sim2dUpdateClubUI() { document.getElementById('sim2d-club-name').innerText = golfClubs[sim2d.clubIdx].name; document.getElementById('sim2d-club-max').innerText = golfClubs[sim2d.clubIdx].max; }
-        function sim2dHandleSensor(e) {
-            if (document.getElementById('sim2d-view-address').classList.contains('active')) { document.getElementById('sim2d-live-a').innerText = Math.round(e.alpha) + '°'; document.getElementById('sim2d-live-b').innerText = Math.round(e.beta) + '°'; document.getElementById('sim2d-live-g').innerText = Math.round(e.gamma) + '°'; }
-            if (document.getElementById('sim2d-view-swing').classList.contains('active')) {
-                let dA = getShortestAngle(e.alpha, sim2d.base.a), dB = getShortestAngle(e.beta, sim2d.base.b), dG = getShortestAngle(e.gamma, sim2d.base.g); let arcDev = Math.sqrt(dA*dA + dB*dB); const status = document.getElementById('sim2d-status');
-                if (sim2d.state === 'IDLE' && arcDev > 20) { sim2d.state = 'BACKSWING'; status.innerText = "BACKSWING"; status.className = "text-yellow-400 mb-2 text-3xl font-bold uppercase"; } 
-                else if (sim2d.state === 'BACKSWING') {
-                    sim2d.maxBack = Math.max(sim2d.maxBack, arcDev); if (arcDev < sim2d.minDev) sim2d.minDev = arcDev;
-                    if (arcDev < 30 && arcDev < (sim2d.minDev + 15)) { sim2d.state = 'DOWNSWING'; sim2d.minDev = arcDev; sim2d.dsStart = Date.now(); sim2d.dsDist = sim2d.maxBack; status.innerText = "DOWNSWING"; status.className = "text-orange-400 mb-2 text-3xl font-bold uppercase"; }
-                } else if (sim2d.state === 'DOWNSWING') {
-                    if (arcDev < sim2d.minDev) { sim2d.minDev = arcDev; sim2d.faceLock = dG; }
-                    if (arcDev < 15 || (arcDev > sim2d.minDev + 15)) { sim2d.state = 'IMPACT'; let dt = Math.max(0.05, (Date.now() - sim2d.dsStart) / 1000); sim2dDrawImpact(sim2d.faceLock, Math.max(20, Math.min(((sim2d.dsDist / dt) / 400) * 120, 140))); }
-                }
-            }
-        }
-        function sim2dSetAddress() { sim2d.base = {a: parseFloat(document.getElementById('sim2d-live-a').innerText), b: parseFloat(document.getElementById('sim2d-live-b').innerText), g: parseFloat(document.getElementById('sim2d-live-g').innerText)}; sim2d.state = 'IDLE'; sim2d.minDev = 999; sim2d.faceLock = 0; sim2d.maxBack = 0; document.getElementById('sim2d-status').innerText = "READY"; document.getElementById('sim2d-status').className = "text-blue-400 mb-2 text-3xl font-bold uppercase"; showView('sim2d-view-swing'); }
-        function sim2dDrawImpact(faceAngle, speedMph) {
-            let ang = Math.round(faceAngle); sim2d.shotCount++; let speedPct = Math.round((speedMph / 120) * 100); document.getElementById('sim2d-res-mph').innerText = Math.round(speedMph); document.getElementById('sim2d-res-pct').innerText = speedPct; document.getElementById('sim2d-speed-bar').style.width = Math.min(100, speedPct) + '%';
-            let club = golfClubs[sim2d.clubIdx]; let rawDist = club.max * (speedMph / 100); let facePenalty = Math.max(0.5, 1 - (Math.abs(ang) * 0.01)); let hitDist = Math.round(rawDist * facePenalty); let offlineYards = Math.round(hitDist * Math.tan(ang * Math.PI / 180)); document.getElementById('sim2d-res-dist').innerText = hitDist;
-            let remDist = Math.abs(sim2d.distToHole - hitDist); sim2d.distToHole = remDist; const btnNext = document.getElementById('sim2d-btn-next'); const resRem = document.getElementById('sim2d-res-rem');
-            if (remDist <= 20) { resRem.innerText = "On the Green!"; resRem.className = "text-xl font-bold text-green-400"; btnNext.innerText = "To the Green!"; btnNext.className = "btn-green text-white font-bold py-3 px-10 rounded-full text-lg w-full mb-2"; btnNext.onclick = () => { startAppMode('putt', Math.max(3, Math.round(remDist * 3))); }; } else { resRem.innerText = remDist + " yds"; resRem.className = "text-xl font-bold text-blue-400"; btnNext.innerText = "Next Shot"; btnNext.className = "btn-blue text-white font-bold py-3 px-10 rounded-full text-lg w-full mb-2"; btnNext.onclick = () => { sim2dShowSetup(); }; }
-            const resF = document.getElementById('sim2d-res-face'); const resO = document.getElementById('sim2d-res-offline');
-            if (Math.abs(ang) <= 1) { resF.innerText = "0° Square"; resF.className = "text-xl font-bold text-green-400"; resO.innerText = "On Target"; resO.className = "text-[10px] font-bold mt-1 text-green-400"; } else if (ang > 0) { resF.innerText = `+${ang}° Open`; resF.className = "text-xl font-bold text-red-400"; resO.innerText = `${Math.abs(offlineYards)} yds Right`; resO.className = "text-[10px] font-bold mt-1 text-red-400"; } else { resF.innerText = `${Math.abs(ang)}° Closed`; resF.className = "text-xl font-bold text-blue-400"; resO.innerText = `${Math.abs(offlineYards)} yds Left`; resO.className = "text-[10px] font-bold mt-1 text-blue-400"; }
-            sim2dCtx.clearRect(0,0,sim2dCanvas.width,sim2dCanvas.height); const cx = sim2dCanvas.width/2, cy = 90; sim2dCtx.save(); sim2dCtx.translate(cx, cy); sim2dCtx.rotate((Math.max(-45, Math.min(45, ang)) * Math.PI) / 180); sim2dCtx.beginPath(); sim2dCtx.roundRect(-40, 5, 80, 16, 8); sim2dCtx.fillStyle = '#94a3b8'; sim2dCtx.fill(); sim2dCtx.beginPath(); sim2dCtx.moveTo(0, 5); sim2dCtx.lineTo(0, -100); sim2dCtx.strokeStyle = Math.abs(ang) <= 1 ? '#34d399' : (ang > 0 ? '#f87171' : '#60a5fa'); sim2dCtx.lineWidth = 3; sim2dCtx.stroke(); sim2dCtx.restore(); sim2dCtx.beginPath(); sim2dCtx.arc(cx, cy-15, 12, 0, Math.PI*2); sim2dCtx.fillStyle='#fff'; sim2dCtx.fill();
-            showView('sim2d-view-results'); 
-        }
-
-
-        // ==========================================
-        // 3. 3D FLICK GOLF SIMULATOR
-        // ==========================================
-        const flick3d = { 
-            initialized: false, scene: null, camera: null, renderer: null, ball: null, clubGroup: null, targetFlag: null, envGroup: null,
-            state: 'IDLE', baseBeta: 0, baseGamma: 0, maxBack: 0, startTime: 0, captureNext: false,
-            holeLen: 400, distToHole: 400, clubIdx: 0, shotCount: 1, velocity: null, inFlight: false, flightFace: 0
-        };
-
-        function initThreeJS() {
-            flick3d.initialized = true;
-            const container = document.getElementById('flick-3d-container');
-            flick3d.velocity = new THREE.Vector3();
-            
-            flick3d.scene = new THREE.Scene();
-            flick3d.scene.background = new THREE.Color(0x87CEEB); 
-            flick3d.scene.fog = new THREE.Fog(0x87CEEB, 100, 1200); 
-            
-            flick3d.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1500);
-            flick3d.renderer = new THREE.WebGLRenderer({ antialias: true });
-            flick3d.renderer.setSize(window.innerWidth, window.innerHeight);
-            container.appendChild(flick3d.renderer.domElement);
-
-            const ambient = new THREE.AmbientLight(0xffffff, 0.9); flick3d.scene.add(ambient);
-            const dirLight = new THREE.DirectionalLight(0xffffff, 1.0); dirLight.position.set(100, 200, 50); flick3d.scene.add(dirLight);
-
-            const groundGeo = new THREE.PlaneGeometry(3000, 3000);
-            const groundMat = new THREE.MeshLambertMaterial({ color: 0x2E8B57 }); 
-            const ground = new THREE.Mesh(groundGeo, groundMat);
-            ground.rotation.x = -Math.PI / 2;
-            flick3d.scene.add(ground);
-
-            const fwayGeo = new THREE.PlaneGeometry(50, 3000);
-            const fwayMat = new THREE.MeshLambertMaterial({ color: 0x3CB371 }); 
-            const fway = new THREE.Mesh(fwayGeo, fwayMat);
-            fway.rotation.x = -Math.PI / 2; fway.position.y = 0.01; 
-            flick3d.scene.add(fway);
-
-            flick3d.envGroup = new THREE.Group(); flick3d.scene.add(flick3d.envGroup);
-
-            const ballGeo = new THREE.SphereGeometry(0.3, 16, 16);
-            const ballMat = new THREE.MeshPhongMaterial({ color: 0xffffff });
-            flick3d.ball = new THREE.Mesh(ballGeo, ballMat); flick3d.scene.add(flick3d.ball);
-
-            const flagGeo = new THREE.CylinderGeometry(0.1, 0.1, 10);
-            const flagMat = new THREE.MeshBasicMaterial({color: 0xffffff});
-            flick3d.targetFlag = new THREE.Mesh(flagGeo, flagMat);
-            const pennantGeo = new THREE.PlaneGeometry(2, 1.5);
-            const pennantMat = new THREE.MeshBasicMaterial({color: 0xff0000, side: THREE.DoubleSide});
-            const pennant = new THREE.Mesh(pennantGeo, pennantMat);
-            pennant.position.set(1, 4, 0); flick3d.targetFlag.add(pennant);
-            flick3d.scene.add(flick3d.targetFlag);
-
-            // Club
-            flick3d.clubGroup = new THREE.Group();
-            const shaftGeo = new THREE.CylinderGeometry(0.03, 0.03, 3);
-            const shaftMat = new THREE.MeshStandardMaterial({color: 0xaaaaaa, metalness: 0.8});
-            const shaft = new THREE.Mesh(shaftGeo, shaftMat);
-            shaft.position.y = -1.5; 
-            const headGeo = new THREE.BoxGeometry(0.4, 0.2, 0.3);
-            const headMat = new THREE.MeshStandardMaterial({color: 0x444444});
-            const head = new THREE.Mesh(headGeo, headMat);
-            head.position.set(-0.1, -3, 0); 
-            flick3d.clubGroup.add(shaft); flick3d.clubGroup.add(head);
-            flick3d.scene.add(flick3d.clubGroup);
-
-            window.addEventListener('resize', () => {
-                flick3d.camera.aspect = window.innerWidth / window.innerHeight;
-                flick3d.camera.updateProjectionMatrix();
-                flick3d.renderer.setSize(window.innerWidth, window.innerHeight);
-            });
-
-            animateThreeJS();
-        }
-
-        function buildHoleEnvironment(distance) {
-            while(flick3d.envGroup.children.length > 0){ flick3d.envGroup.remove(flick3d.envGroup.children[0]); }
-            const greenGeo = new THREE.CircleGeometry(15, 32); const greenMat = new THREE.MeshLambertMaterial({color: 0x228B22});
-            const green = new THREE.Mesh(greenGeo, greenMat); green.rotation.x = -Math.PI / 2; green.position.set(0, 0.02, -distance);
-            flick3d.envGroup.add(green);
-
-            const trunkGeo = new THREE.CylinderGeometry(0.5, 0.8, 5); const trunkMat = new THREE.MeshLambertMaterial({color: 0x8B4513});
-            const leavesGeo = new THREE.ConeGeometry(4, 12, 8); const leavesMat = new THREE.MeshLambertMaterial({color: 0x006400});
-            const waterGeo = new THREE.PlaneGeometry(35, 50); const waterMat = new THREE.MeshLambertMaterial({color: 0x1E90FF});
-
-            for(let z = 20; z < distance + 100; z += 40) {
-                if(Math.random() > 0.3) { let t = new THREE.Group(); let tr = new THREE.Mesh(trunkGeo, trunkMat); tr.position.y = 2.5; t.add(tr); let l = new THREE.Mesh(leavesGeo, leavesMat); l.position.y = 8; t.add(l); t.position.set(-30 - Math.random()*30, 0, -z + Math.random()*20); flick3d.envGroup.add(t); }
-                if(Math.random() > 0.3) { let t = new THREE.Group(); let tr = new THREE.Mesh(trunkGeo, trunkMat); tr.position.y = 2.5; t.add(tr); let l = new THREE.Mesh(leavesGeo, leavesMat); l.position.y = 8; t.add(l); t.position.set(30 + Math.random()*30, 0, -z + Math.random()*20); flick3d.envGroup.add(t); }
-                if(Math.random() > 0.85) { let w = new THREE.Mesh(waterGeo, waterMat); w.rotation.x = -Math.PI / 2; w.position.set((Math.random() > 0.5 ? 45 : -45), 0.03, -z); flick3d.envGroup.add(w); }
-            }
-        }
-
-        function animateThreeJS() {
-            requestAnimationFrame(animateThreeJS);
-            if (flick3d.inFlight) {
-                flick3d.ball.position.add(flick3d.velocity);
-                flick3d.velocity.y -= 0.03; 
-                // Reduced spin/curve drift
-                flick3d.velocity.x += (flick3d.flightFace * 0.0001); 
-                
-                let targetZ = flick3d.ball.position.z + 12;
-                let targetX = flick3d.ball.position.x * 0.6;
-                let targetY = Math.max(3, flick3d.ball.position.y + 2);
-                flick3d.camera.position.z += (targetZ - flick3d.camera.position.z) * 0.1;
-                flick3d.camera.position.x += (targetX - flick3d.camera.position.x) * 0.1;
-                flick3d.camera.position.y += (targetY - flick3d.camera.position.y) * 0.1;
-                flick3d.camera.lookAt(flick3d.ball.position.x, flick3d.ball.position.y, flick3d.ball.position.z - 10);
-
-                if (flick3d.ball.position.y <= 0.3) {
-                    flick3d.ball.position.y = 0.3; flick3d.inFlight = false;
-                    let zDist = Math.abs(flick3d.ball.position.z);
-                    let xOff = flick3d.ball.position.x;
-                    let totalHit = Math.round(Math.sqrt(zDist*zDist + xOff*xOff));
-                    setTimeout(() => flick3dFinishShot(totalHit, xOff), 1200); 
-                }
-            }
-            if (flick3d.renderer && flick3d.scene && flick3d.camera) flick3d.renderer.render(flick3d.scene, flick3d.camera);
-        }
-
-        function flick3dStartNewHole() {
-            flick3d.holeLen = Math.floor(Math.random() * (550 - 320 + 1)) + 320; 
-            flick3d.distToHole = flick3d.holeLen; flick3d.shotCount = 1;
-            document.getElementById('flick3d-hole-len').innerText = flick3d.holeLen;
-            flick3dShowSetup();
-        }
-
-        function flick3dShowSetup() {
-            document.getElementById('flick3d-scen-dist').innerText = flick3d.distToHole;
-            document.getElementById('flick3d-shot-num').innerText = flick3d.shotCount;
-            flick3d.clubIdx = golfClubs.findIndex(c => c.max <= flick3d.distToHole);
-            if(flick3d.clubIdx === -1) flick3d.clubIdx = golfClubs.length - 1; 
-            if(flick3d.distToHole > golfClubs[0].max) flick3d.clubIdx = 0; 
-            flick3dUpdateClubUI(); showView('flick3d-view-setup');
-        }
-
-        function flick3dUpdateClub(dir) { flick3d.clubIdx = Math.max(0, Math.min(golfClubs.length - 1, flick3d.clubIdx + dir)); flick3dUpdateClubUI(); }
-        function flick3dUpdateClubUI() { document.getElementById('flick3d-club-name').innerText = golfClubs[flick3d.clubIdx].name; document.getElementById('flick3d-club-max').innerText = golfClubs[flick3d.clubIdx].max; }
-
-        function flick3dSetAddress() {
-            document.getElementById('flick3d-hud-dist').innerText = flick3d.distToHole; document.getElementById('flick3d-hud-club').innerText = golfClubs[flick3d.clubIdx].name;
-            flick3d.state = 'IDLE'; flick3d.maxBack = 0; flick3d.inFlight = false;
-            
-            buildHoleEnvironment(flick3d.distToHole);
-            flick3d.targetFlag.position.set(0, 5, -flick3d.distToHole);
-            flick3d.ball.position.set(0, 0.3, 0);
-            
-            flick3d.camera.position.set(0, 3.5, 8); 
-            flick3d.camera.lookAt(0, 3.5, -100); 
-            
-            flick3d.clubGroup.position.set(0.2, 3.5, 0); 
-            flick3d.clubGroup.rotation.set(0,0,0);
-            
-            document.getElementById('flick3d-status').innerText = "READY";
-            showView('flick3d-view-play'); flick3d.captureNext = true;
-        }
-
-        function flick3dHandleSensor(e) {
-            if (document.getElementById('flick3d-view-play').classList.contains('active') && !flick3d.inFlight) {
-                if (flick3d.captureNext) { flick3d.baseBeta = e.beta; flick3d.baseGamma = e.gamma; flick3d.captureNext = false; return; }
-
-                // Pulling phone towards you (face up) = negative pitch. We negate it to get a positive backswing value.
-                let rawPitch = getShortestAngle(e.beta, flick3d.baseBeta); 
-                let strokePitch = -rawPitch;
-                let dGamma = getShortestAngle(e.gamma, flick3d.baseGamma);
-                
-                // BACKSWING FIX: Positive X rotation pitches the top of the club towards the camera
-                if(flick3d.clubGroup) flick3d.clubGroup.rotation.x = THREE.MathUtils.degToRad(strokePitch);
-
-                const status = document.getElementById('flick3d-status');
-                
-                if (flick3d.state === 'IDLE' && strokePitch > 15) { 
-                    flick3d.state = 'BACKSWING'; status.innerText = "BACKSWING"; 
-                } 
-                else if (flick3d.state === 'BACKSWING') {
-                    if (strokePitch > flick3d.maxBack) flick3d.maxBack = strokePitch;
-                    if (strokePitch < flick3d.maxBack - 10) { 
-                        flick3d.state = 'DOWNSWING'; flick3d.startTime = Date.now(); status.innerText = "DOWNSWING"; 
-                    }
-                } 
-                else if (flick3d.state === 'DOWNSWING') {
-                    if (strokePitch <= 0) { 
-                        let dt = Math.max(0.05, (Date.now() - flick3d.startTime) / 1000);
-                        let speedDegSec = flick3d.maxBack / dt;
-                        status.innerText = "IMPACT!"; flick3d.clubGroup.rotation.x = 0; 
-                        flick3dExecuteShot(speedDegSec, dGamma);
                     }
                 }
             }
-        }
-
-        function flick3dExecuteShot(speed, faceAngle) {
-            flick3d.state = 'FLIGHT'; flick3d.flightFace = faceAngle;
-            let club = golfClubs[flick3d.clubIdx];
-            
-            // Reduced Sensitivity: Requires ~600 deg/sec flick. Capped at 1.20 (120%).
-            let effortRatio = Math.min(speed / 600, 1.20); 
-            
-            // Reduced Face Penalty
-            let facePenalty = Math.max(0.75, 1 - (Math.abs(faceAngle) * 0.005));
-            let targetDist = club.max * effortRatio * facePenalty;
-            
-            let loftRad = THREE.MathUtils.degToRad(club.loft);
-            let g = 0.03 * 2; 
-            let vMag = Math.sqrt((targetDist * g) / Math.sin(2 * loftRad));
-            
-            flick3d.velocity.y = Math.sin(loftRad) * vMag;
-            flick3d.velocity.z = -Math.cos(loftRad) * vMag;
-            
-            // Reduced Hook/Slice drift
-            let faceRad = THREE.MathUtils.degToRad(faceAngle);
-            flick3d.velocity.x = Math.sin(faceRad) * (vMag * 0.15); 
-            
-            flick3d.inFlight = true;
-        }
-
-        function flick3dFinishShot(hitDist, xOff) {
-            flick3d.shotCount++; document.getElementById('flick3d-res-dist').innerText = hitDist;
-            let offYards = Math.round(xOff); let offUI = document.getElementById('flick3d-res-offline');
-            if(Math.abs(offYards) <= 3) { offUI.innerText = "On Target"; offUI.className = "text-lg font-bold text-green-400"; }
-            else if (offYards > 0) { offUI.innerText = `${offYards}y Right`; offUI.className = "text-lg font-bold text-red-400"; }
-            else { offUI.innerText = `${Math.abs(offYards)}y Left`; offUI.className = "text-lg font-bold text-blue-400"; }
-
-            let remDist = Math.abs(flick3d.distToHole - hitDist); flick3d.distToHole = remDist;
-            const btnNext = document.getElementById('flick3d-btn-next'); const resRem = document.getElementById('flick3d-res-rem');
-            
-            if (remDist <= 20) {
-                resRem.innerText = "On the Green!"; resRem.className = "text-xl font-bold text-green-400";
-                btnNext.innerText = "To the Green!"; btnNext.className = "btn-green text-white font-bold py-3 px-10 rounded-full text-lg w-full mb-2";
-                btnNext.onclick = () => { startAppMode('putt', Math.max(3, Math.round(remDist * 3))); };
-            } else {
-                resRem.innerText = remDist + " yds"; resRem.className = "text-xl font-bold text-orange-400";
-                btnNext.innerText = "Next Shot"; btnNext.className = "btn-orange text-white font-bold py-3 px-10 rounded-full text-lg w-full mb-2";
-                btnNext.onclick = () => { flick3dShowSetup(); };
-            }
-
-            showView('flick3d-view-results');
-        }
-
-        // ==========================================
-        // 4. AR PUTTING GAME LOGIC 
-        // ==========================================
-        const pg = { dist: 10, breakAmt: 0, aim: 0, base: {b:0, g:0}, state: 'IDLE', maxBack: 0, faceLock: 0 };
-        const pgSwingCanvas = document.getElementById('pgSwingCanvas'); const pgSctx = pgSwingCanvas.getContext('2d');
-        const pgRollCanvas = document.getElementById('pgRollCanvas'); const pgRctx = pgRollCanvas.getContext('2d');
-        let pgAnimId;
-
-        const BALL_RADIUS = 10; const HOLE_RADIUS = BALL_RADIUS * 3.5; 
-
-        function pgGenerateScenario(forcedDist = null) {
-            if (forcedDist !== null) {
-                pg.dist = forcedDist; document.getElementById('pg-context-title').innerText = "On the Green!"; document.getElementById('pg-context-title').className = "text-green-400 uppercase tracking-widest text-xs font-bold drop-shadow-md";
-            } else {
-                pg.dist = Math.floor(Math.random() * 25) + 5; document.getElementById('pg-context-title').innerText = "Putting Practice"; document.getElementById('pg-context-title').className = "text-purple-400 uppercase tracking-widest text-xs font-bold drop-shadow-md";
-            }
-            // Reduced break severity
-            pg.breakAmt = Math.floor(Math.random() * 11) - 5; 
-            pg.aim = 0; document.getElementById('pg-aim-val').innerText = pg.aim;
-            document.getElementById('pg-scen-dist').innerText = `${pg.dist} ft`;
-            document.getElementById('pg-target-power-text').innerText = `${pg.dist}'`;
-            let brkStr = pg.breakAmt === 0 ? "Straight" : (pg.breakAmt > 0 ? `${pg.breakAmt}" Right` : `${Math.abs(pg.breakAmt)}" Left`);
-            document.getElementById('pg-scen-break').innerText = `Break: ${brkStr}`; document.getElementById('pg-btn-next').style.display = 'none';
-            showView('pg-view-setup');
-        }
-        function pgUpdateAim(dir) { pg.aim += dir; document.getElementById('pg-aim-val').innerText = pg.aim; }
-        function pgSetAddress() { 
-            pg.state = 'IDLE'; pg.maxBack = 0; pg.faceLock = 0; 
-            document.getElementById('pg-status').innerText = "MAKE YOUR PUTT"; 
-            document.getElementById('pg-live-power').innerText = "0";
-            document.getElementById('pg-power-bar').style.height = "0%";
-            showView('pg-view-swing'); pg.captureNext = true; 
-        }
-
-        function pgHandleSensor(e) {
-            if (document.getElementById('pg-view-swing').classList.contains('active')) {
-                if (pg.captureNext) { pg.base = { b: e.beta, g: e.gamma }; pg.captureNext = false; return; }
-                let strokePitch = -getShortestAngle(e.beta, pg.base.b); let dGamma = getShortestAngle(e.gamma, pg.base.g);
-                pgDrawLivePutterAR(strokePitch, dGamma);
-
-                if (pg.state === 'IDLE') { 
-                    if (strokePitch > 2) { pg.state = 'BACKSWING'; document.getElementById('pg-status').innerText = "SWINGING..."; } 
-                } 
-                else if (pg.state === 'BACKSWING') { 
-                    pg.maxBack = Math.max(pg.maxBack, strokePitch); 
-                    if (strokePitch < pg.maxBack - 1) pg.state = 'DOWNSWING'; 
-                } 
-                else if (pg.state === 'DOWNSWING') { 
-                    if (strokePitch < 2) { pg.state = 'IMPACT'; pg.faceLock = dGamma; pgExecutePuttAR(); } 
-                }
-            }
-        }
-
-        function pgDrawLivePutterAR(pitch, twist) {
-            // Update Live Power Meter
-            let estDist = Math.max(0, pitch * 1.2);
-            document.getElementById('pg-live-power').innerText = Math.round(estDist);
-            let pct = Math.min(100, (estDist / (pg.dist * 1.5)) * 100); 
-            let pBar = document.getElementById('pg-power-bar');
-            pBar.style.height = pct + '%';
-            if (Math.abs(estDist - pg.dist) < 2) {
-                pBar.className = "absolute bottom-0 left-0 w-full bg-purple-400 transition-all duration-75";
-                document.getElementById('pg-live-power-container').className = "text-2xl font-black text-purple-400 drop-shadow-md";
-            } else {
-                pBar.className = "absolute bottom-0 left-0 w-full bg-blue-400 transition-all duration-75";
-                document.getElementById('pg-live-power-container').className = "text-2xl font-black text-blue-400 drop-shadow-md";
-            }
-
-            // Draw Putter
-            pgSctx.clearRect(0,0,pgSwingCanvas.width,pgSwingCanvas.height); const cx = pgSwingCanvas.width/2, cy = 150; 
-            pgSctx.beginPath(); pgSctx.arc(cx, 30, HOLE_RADIUS, 0, Math.PI*2); pgSctx.strokeStyle = 'rgba(255,255,255,0.8)'; pgSctx.lineWidth=2; pgSctx.stroke();
-            pgSctx.beginPath(); pgSctx.moveTo(cx, 40); pgSctx.lineTo(cx, cy); pgSctx.strokeStyle = 'rgba(255,255,255,0.3)'; pgSctx.setLineDash([5,5]); pgSctx.stroke(); pgSctx.setLineDash([]);
-            pgSctx.beginPath(); pgSctx.arc(cx, cy, BALL_RADIUS, 0, Math.PI*2); pgSctx.fillStyle='#fff'; pgSctx.shadowColor='rgba(0,0,0,0.8)'; pgSctx.shadowBlur=6; pgSctx.fill(); pgSctx.shadowBlur=0;
-            let putterY = cy + 20 + (pitch * 4); pgSctx.save(); pgSctx.translate(cx, putterY); pgSctx.rotate((Math.max(-30, Math.min(30, twist)) * Math.PI) / 180);
-            pgSctx.beginPath(); pgSctx.roundRect(-40, 0, 80, 20, 6); pgSctx.fillStyle = 'rgba(148, 163, 184, 0.9)'; pgSctx.shadowColor='rgba(0,0,0,0.8)'; pgSctx.shadowBlur=8; pgSctx.fill(); pgSctx.shadowBlur=0;
-            pgSctx.beginPath(); pgSctx.moveTo(0,0); pgSctx.lineTo(0,20); pgSctx.strokeStyle='white'; pgSctx.lineWidth=2; pgSctx.stroke(); pgSctx.restore();
-        }
-
-        function pgExecutePuttAR() {
-            showView('pg-view-roll'); let distHitFt = pg.maxBack * 1.2; 
-            
-            // Substantially reduced face angle penalty to make it much easier to hit straight
-            let launchAngle = pg.aim + (pg.faceLock * 0.25); 
-            
-            const W = pgRollCanvas.width, H = pgRollCanvas.height; const holeX = W/2, holeY = 60, startY = H - 50; const pxPerFt = (startY - holeY) / pg.dist; 
-            const friction = 0.92; const frictionFactor = 1 - friction; 
-            let totalDistPx = distHitFt * pxPerFt; let speed = totalDistPx * frictionFactor; 
-            
-            let vx = Math.sin(launchAngle * Math.PI/180) * speed; let vy = -Math.cos(launchAngle * Math.PI/180) * speed; 
-            
-            // Reduced break pull
-            let breakPull = pg.breakAmt * 0.012; 
-            let bX = W/2, bY = startY;
-
-            function animLoop() {
-                vx += breakPull; vx *= friction; vy *= friction; bX += vx; bY += vy; let curSpeed = Math.sqrt(vx*vx + vy*vy);
-                pgRctx.clearRect(0,0,W,H);
-                pgRctx.beginPath(); pgRctx.arc(holeX, holeY, HOLE_RADIUS, 0, Math.PI*2); pgRctx.fillStyle='rgba(0,0,0,0.8)'; pgRctx.fill(); pgRctx.strokeStyle='rgba(255,255,255,0.8)'; pgRctx.lineWidth=2; pgRctx.stroke();
-                pgRctx.beginPath(); pgRctx.arc(bX, bY, BALL_RADIUS, 0, Math.PI*2); pgRctx.fillStyle='#fff'; pgRctx.shadowColor='rgba(0,0,0,0.8)'; pgRctx.shadowBlur=6; pgRctx.fill(); pgRctx.shadowBlur=0;
-                
-                let distToHole = Math.hypot(bX - holeX, bY - holeY);
-                if (distToHole < HOLE_RADIUS && curSpeed < (speed * 0.95)) { pgFinishRoll(bX, bY, holeX, holeY, distHitFt, true); return; }
-                if (curSpeed < 0.2 || bY < -20 || bX < -20 || bX > W + 20) { pgFinishRoll(bX, bY, holeX, holeY, distHitFt, false); return; }
-                pgAnimId = requestAnimationFrame(animLoop);
-            }
-            cancelAnimationFrame(pgAnimId); animLoop();
-        }
-
-        function pgFinishRoll(bX, bY, hX, hY, distHitFt, isSink) {
-            let resultText = "", resClass = "";
-            if (isSink) { 
-                resultText = "SINK!"; resClass = "text-5xl font-black mb-2 text-green-400 drop-shadow-[0_0_10px_rgba(74,222,128,0.8)]";
-                const W = pgRollCanvas.width, H = pgRollCanvas.height; pgRctx.clearRect(0,0,W,H);
-                pgRctx.beginPath(); pgRctx.arc(hX, hY, HOLE_RADIUS, 0, Math.PI*2); pgRctx.fillStyle='rgba(0,0,0,0.8)'; pgRctx.fill(); pgRctx.strokeStyle='rgba(255,255,255,0.8)'; pgRctx.lineWidth=2; pgRctx.stroke();
-            } else {
-                if (distHitFt < pg.dist - 2) resultText = "Left it Short"; else if (distHitFt > pg.dist + 6) resultText = "Too Hard!"; else if (bX > hX) resultText = "Missed Right"; else resultText = "Missed Left";
-                resClass = "text-3xl font-bold mb-2 text-red-400 drop-shadow-[0_0_10px_rgba(248,113,113,0.8)]";
-            }
-            document.getElementById('pg-roll-result').innerText = resultText; document.getElementById('pg-roll-result').className = resClass; document.getElementById('pg-btn-next').style.display = 'block';
-        }
-
-        function pgHandleNextHole() {
-            if (playingFullHole) {
-                stopCamera();
-                uiLayer.className = '';
-                if (mainGameMode === 'flick3d') { startAppMode('flick3d'); } else { startAppMode('hole2d'); }
-            } else { pgGenerateScenario(); }
         }
     </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        /* Custom scrollbar for table if needed on very small screens */
+        .table-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto">
+        
+        <!-- Header Section -->
+        <header class="bg-gradient-to-r from-golf-900 to-golf-700 rounded-t-2xl p-6 md:p-10 text-white shadow-lg relative overflow-hidden">
+            <div class="absolute -right-10 -top-10 opacity-10">
+                <i class="fa-solid fa-golf-ball-tee text-9xl"></i>
+            </div>
+            <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold mb-2">Boyne Golf Trip Plan</h1>
+                    <p class="text-golf-100 text-lg flex items-center gap-2">
+                        <i class="fa-regular fa-calendar-check"></i> Spring 2027 Group Outing
+                    </p>
+                </div>
+                <div class="mt-4 md:mt-0 bg-white/20 px-4 py-2 rounded-lg backdrop-blur-sm border border-white/30">
+                    <p class="text-sm font-medium">Prepared for: <span class="font-bold">Craig</span></p>
+                    <p class="text-sm">Agent: <span class="font-medium">Melissa (Boyne Reservations)</span></p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="bg-white rounded-b-2xl shadow-xl p-6 md:p-10 border border-slate-100 border-t-0">
+            
+            <!-- Quick Overview -->
+            <h2 class="text-xl font-bold mb-4 text-slate-800 border-b pb-2"><i class="fa-solid fa-clipboard-list text-golf-600 mr-2"></i>Trip Overview</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+                <!-- Dates Card -->
+                <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 flex items-start gap-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="bg-golf-100 text-golf-700 p-3 rounded-lg">
+                        <i class="fa-regular fa-calendar fa-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-500 font-medium uppercase tracking-wider">Dates</p>
+                        <p class="font-bold text-lg">May 23 - 28, 2027</p>
+                        <p class="text-sm text-slate-600">Sunday to Friday</p>
+                    </div>
+                </div>
+
+                <!-- Group Size Card -->
+                <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 flex items-start gap-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="bg-blue-100 text-blue-700 p-3 rounded-lg">
+                        <i class="fa-solid fa-user-group fa-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-500 font-medium uppercase tracking-wider">Group Size</p>
+                        <p class="font-bold text-lg">8 Golfers</p>
+                        <p class="text-sm text-slate-600">Two groups of 4</p>
+                    </div>
+                </div>
+
+                <!-- Locations Card -->
+                <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 flex items-start gap-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="bg-orange-100 text-orange-700 p-3 rounded-lg">
+                        <i class="fa-solid fa-map-location-dot fa-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm text-slate-500 font-medium uppercase tracking-wider">Locations</p>
+                        <p class="font-bold text-lg">Boyne Mountain</p>
+                        <p class="text-sm text-slate-600">or The Highlands</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Packages Comparison -->
+            <h2 class="text-xl font-bold mb-4 text-slate-800 border-b pb-2"><i class="fa-solid fa-ticket text-golf-600 mr-2"></i>Golf Packages</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                
+                <!-- Super 5 Package -->
+                <div class="border-2 border-slate-200 rounded-2xl overflow-hidden flex flex-col">
+                    <div class="bg-slate-100 p-4 border-b border-slate-200">
+                        <h3 class="text-xl font-bold text-slate-800">Super 5 Package</h3>
+                        <p class="text-sm text-slate-600">Standard unlimited golf package.</p>
+                    </div>
+                    <div class="p-6 flex-grow bg-white">
+                        <ul class="space-y-3">
+                            <li class="flex items-start gap-3">
+                                <i class="fa-solid fa-check text-green-500 mt-1"></i>
+                                <span>5 nights of lodging</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i class="fa-solid fa-check text-green-500 mt-1"></i>
+                                <span>Arrival round on Sunday</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i class="fa-solid fa-check text-green-500 mt-1"></i>
+                                <span>Welcome party at The Highlands</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i class="fa-solid fa-check text-green-500 mt-1"></i>
+                                <span>Unlimited golf (Monday - Friday)</span>
+                            </li>
+                            <li class="flex items-start gap-3 text-slate-500">
+                                <i class="fa-solid fa-circle-exclamation text-amber-500 mt-1"></i>
+                                <span><em>Surcharge required for upgraded courses (Arthur Hills, The Heather, Bay Harbor)</em></span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Magnificent 10 Package -->
+                <div class="border-2 border-golf-500 rounded-2xl overflow-hidden shadow-lg flex flex-col relative transform md:-translate-y-2">
+                    <div class="absolute top-0 right-0 bg-golf-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wide">
+                        Premium Upgrade
+                    </div>
+                    <div class="bg-golf-50 p-4 border-b border-golf-200">
+                        <h3 class="text-xl font-bold text-golf-900">Magnificent 10 ("Mag 10")</h3>
+                        <p class="text-sm text-golf-700">Includes upgraded courses and extras.</p>
+                    </div>
+                    <div class="p-6 flex-grow bg-white">
+                        <ul class="space-y-3">
+                            <li class="flex items-start gap-3 font-semibold text-golf-800">
+                                <i class="fa-solid fa-star text-amber-400 mt-1"></i>
+                                <span>All Super 5 base inclusions</span>
+                            </li>
+                            <li class="flex items-start gap-3 font-medium">
+                                <i class="fa-solid fa-check-double text-golf-500 mt-1"></i>
+                                <span>Unlimited rounds on <strong>The Heather</strong> & <strong>Arthur Hills</strong></span>
+                            </li>
+                            <li class="flex items-start gap-3 font-medium">
+                                <i class="fa-solid fa-check-double text-golf-500 mt-1"></i>
+                                <span>2 rounds at <strong>Bay Harbor</strong></span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i class="fa-solid fa-gift text-purple-500 mt-1"></i>
+                                <span>Bucket of balls on Trackman Range</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i class="fa-solid fa-gift text-purple-500 mt-1"></i>
+                                <span>1-hour lesson with Boyne Golf Academy</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i class="fa-solid fa-gift text-purple-500 mt-1"></i>
+                                <span>$100 Shopping Card</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Lodging Options & Pricing -->
+            <h2 class="text-xl font-bold mb-4 text-slate-800 border-b pb-2"><i class="fa-solid fa-bed text-golf-600 mr-2"></i>Lodging Options & Total Package Quotes (Per Golfer)</h2>
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r-lg">
+                <p class="text-sm text-blue-800 font-medium">
+                    <i class="fa-solid fa-circle-info mr-1"></i> The prices below represent the <strong>TOTAL cost per golfer</strong> for the entire trip. This includes all 5 nights of lodging, the respective golf package, and all resort fees and taxes.
+                </p>
+            </div>
+            
+            <div class="space-y-6 mb-10">
+                
+                <!-- Boyne Mountain Option 1 -->
+                <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-sm bg-white hover:shadow-md transition-shadow">
+                    <div class="p-5 border-b border-slate-100 bg-slate-50">
+                        <h3 class="font-bold text-xl text-slate-800">Boyne Mountain - Creekside Condos</h3>
+                        <p class="text-slate-600 mt-1"><i class="fa-solid fa-house text-slate-400 mr-1"></i> 4 Bedrooms, 3 Full Baths, Full Kitchen, Fireplace</p>
+                        <div class="inline-flex items-center gap-1 mt-3 text-xs font-bold bg-blue-100 text-blue-800 px-3 py-1.5 rounded-full">
+                            <i class="fa-solid fa-water"></i> Includes Hot Tub on Deck
+                        </div>
+                    </div>
+                    <div class="p-5 flex flex-col md:flex-row gap-4">
+                        <!-- Super 5 Pricing -->
+                        <div class="flex-1 bg-slate-50 rounded-xl p-4 border border-slate-100 flex flex-col justify-center items-center text-center">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Super 5 Total</span>
+                            <span class="text-2xl font-bold text-slate-800">$1,662.18</span>
+                            <span class="text-xs text-slate-500 mt-1">Per Golfer</span>
+                        </div>
+                        <!-- Mag 10 Pricing -->
+                        <div class="flex-1 bg-golf-50 rounded-xl p-4 border border-golf-200 flex flex-col justify-center items-center text-center relative overflow-hidden">
+                            <div class="absolute top-0 w-full h-1 bg-golf-500"></div>
+                            <span class="text-xs font-bold text-golf-700 uppercase tracking-wider mb-1">Mag 10 Total</span>
+                            <span class="text-3xl font-bold text-golf-900">$2,142.28</span>
+                            <span class="text-xs text-golf-600 mt-1">Per Golfer</span>
+                        </div>
+                        <!-- Upgrade Difference -->
+                        <div class="flex-1 bg-amber-50 rounded-xl p-4 border border-amber-200 flex flex-col justify-center items-center text-center">
+                            <span class="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">Upgrade Cost</span>
+                            <span class="text-xl font-bold text-amber-600">+$480.10</span>
+                            <span class="text-xs text-amber-700/70 mt-1">Difference</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Boyne Mountain Option 2 -->
+                <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-sm bg-white hover:shadow-md transition-shadow">
+                    <div class="p-5 border-b border-slate-100 bg-slate-50">
+                        <h3 class="font-bold text-xl text-slate-800">Boyne Mountain - Creekside Condos</h3>
+                        <p class="text-slate-600 mt-1"><i class="fa-solid fa-house text-slate-400 mr-1"></i> 4 Bedrooms, 3 Full Baths, Full Kitchen, Fireplace</p>
+                        <div class="inline-flex items-center gap-1 mt-3 text-xs font-bold bg-slate-200 text-slate-700 px-3 py-1.5 rounded-full">
+                            <i class="fa-solid fa-ban"></i> No Hot Tub
+                        </div>
+                    </div>
+                    <div class="p-5 flex flex-col md:flex-row gap-4">
+                        <!-- Super 5 Pricing -->
+                        <div class="flex-1 bg-slate-50 rounded-xl p-4 border border-slate-100 flex flex-col justify-center items-center text-center">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Super 5 Total</span>
+                            <span class="text-2xl font-bold text-slate-800">$1,556.00</span>
+                            <span class="text-xs text-slate-500 mt-1">Per Golfer</span>
+                        </div>
+                        <!-- Mag 10 Pricing -->
+                        <div class="flex-1 bg-golf-50 rounded-xl p-4 border border-golf-200 flex flex-col justify-center items-center text-center relative overflow-hidden">
+                            <div class="absolute top-0 w-full h-1 bg-golf-500"></div>
+                            <span class="text-xs font-bold text-golf-700 uppercase tracking-wider mb-1">Mag 10 Total</span>
+                            <span class="text-3xl font-bold text-golf-900">~$2,000.00</span>
+                            <span class="text-xs text-golf-600 mt-1">Per Golfer</span>
+                        </div>
+                        <!-- Upgrade Difference -->
+                        <div class="flex-1 bg-amber-50 rounded-xl p-4 border border-amber-200 flex flex-col justify-center items-center text-center">
+                            <span class="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">Upgrade Cost</span>
+                            <span class="text-xl font-bold text-amber-600">+$444.00</span>
+                            <span class="text-xs text-amber-700/70 mt-1">Difference</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- The Highlands Option -->
+                <div class="border border-orange-200 rounded-2xl overflow-hidden shadow-sm bg-white hover:shadow-md transition-shadow">
+                    <div class="p-5 border-b border-orange-100 bg-orange-50/50">
+                        <h3 class="font-bold text-xl text-slate-800">The Highlands - Alpine Village Condos</h3>
+                        <p class="text-slate-600 mt-1"><i class="fa-solid fa-house text-slate-400 mr-1"></i> 4 Bedrooms. Close to main lodge & The Heather driving range.</p>
+                        <div class="inline-flex items-center gap-1 mt-3 text-xs font-bold bg-orange-100 text-orange-800 px-3 py-1.5 rounded-full">
+                            <i class="fa-solid fa-person-walking"></i> Less traveling between courses
+                        </div>
+                    </div>
+                    <div class="p-5 flex flex-col md:flex-row gap-4">
+                        <!-- Super 5 Pricing -->
+                        <div class="flex-1 bg-slate-50 rounded-xl p-4 border border-slate-100 flex flex-col justify-center items-center text-center">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Super 5 Total</span>
+                            <span class="text-2xl font-bold text-slate-800">$1,515.00</span>
+                            <span class="text-xs text-slate-500 mt-1">Per Golfer</span>
+                        </div>
+                        <!-- Mag 10 Pricing -->
+                        <div class="flex-1 bg-golf-50 rounded-xl p-4 border border-golf-200 flex flex-col justify-center items-center text-center relative overflow-hidden">
+                            <div class="absolute top-0 w-full h-1 bg-golf-500"></div>
+                            <span class="text-xs font-bold text-golf-700 uppercase tracking-wider mb-1">Mag 10 Total</span>
+                            <span class="text-3xl font-bold text-golf-900">$1,995.00</span>
+                            <span class="text-xs text-golf-600 mt-1">Per Golfer</span>
+                        </div>
+                        <!-- Upgrade Difference -->
+                        <div class="flex-1 bg-amber-50 rounded-xl p-4 border border-amber-200 flex flex-col justify-center items-center text-center">
+                            <span class="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">Upgrade Cost</span>
+                            <span class="text-xl font-bold text-amber-600">+$480.00</span>
+                            <span class="text-xs text-amber-700/70 mt-1">Difference</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Next Steps -->
+            <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-6">
+                <h2 class="text-lg font-bold mb-3 text-indigo-900"><i class="fa-solid fa-circle-right text-indigo-500 mr-2"></i>Next Steps</h2>
+                <ul class="list-disc pl-5 space-y-2 text-indigo-800">
+                    <li>Review the pricing and location options (Boyne Mountain vs. The Highlands) with the 8-man group.</li>
+                    <li>Decide whether the <strong>Magnificent 10</strong> upgrades (Bay Harbor, Arthur Hills, Trackman, lesson, $100 gift card) are worth the extra ~$480 per person.</li>
+                    <li>Melissa sent the official quote to <strong>cflanpersonal@gmail.com</strong>.</li>
+                    <li>Reply to Melissa's email or call Boyne back to finalize the booking.</li>
+                </ul>
+            </div>
+
+        </main>
+        
+        <footer class="mt-6 text-center text-slate-400 text-sm">
+            Generated from call transcript • All prices are per golfer and include taxes/fees.
+        </footer>
+
+    </div>
+
 </body>
 </html>
-
-
