@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BattleTags | Evidence Vault</title>
+    <title>BattleTags | Evidence Vault & Review</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -28,26 +28,31 @@
         <div class="font-black text-slate-400 uppercase tracking-widest text-sm">Syncing Database...</div>
     </div>
 
-    <!-- Header -->
-    <header class="bg-emerald-900 text-white p-6 shadow-2xl sticky top-0 z-40">
+    <!-- Header & Navigation -->
+    <header class="bg-emerald-900 text-white p-4 md:p-6 shadow-2xl sticky top-0 z-40">
         <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-emerald-800 rounded-xl flex items-center justify-center text-emerald-400 shadow-inner border border-emerald-700">
-                    <i data-lucide="camera" class="w-5 h-5"></i>
+                    <i data-lucide="database" class="w-5 h-5"></i>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-black tracking-tight uppercase leading-none">Evidence Vault</h1>
-                    <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mt-1">Player Photo Archive</p>
+                    <h1 class="text-2xl font-black tracking-tight uppercase leading-none">Battle Tags</h1>
+                    <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mt-1">Season Archives</p>
                 </div>
             </div>
-            <a href="index.html" class="px-4 py-2 bg-emerald-950 hover:bg-emerald-800 border border-emerald-800 rounded-xl text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-2">
-                <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to App
-            </a>
+            <nav class="flex bg-emerald-950/40 rounded-2xl p-1.5 w-full md:w-auto border border-emerald-800/50 backdrop-blur-sm">
+                <button onclick="switchView('vault')" id="nav-vault" class="flex-1 py-2.5 px-4 rounded-xl font-black text-[10px] md:text-xs uppercase transition-all bg-white text-emerald-900 shadow-sm flex items-center gap-2 justify-center">
+                    <i data-lucide="camera" class="w-4 h-4 hidden md:inline"></i> Evidence Vault
+                </button>
+                <button onclick="switchView('review')" id="nav-review" class="flex-1 py-2.5 px-4 rounded-xl font-black text-[10px] md:text-xs uppercase transition-all text-emerald-100 opacity-60 hover:opacity-100 flex items-center gap-2 justify-center">
+                    <i data-lucide="award" class="w-4 h-4 hidden md:inline"></i> Year in Review
+                </button>
+            </nav>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="flex-1 max-w-5xl mx-auto w-full p-4 md:p-8 space-y-8 mt-4">
+    <!-- Evidence Vault View -->
+    <main id="view-vault" class="flex-1 max-w-5xl mx-auto w-full p-4 md:p-8 space-y-8 mt-2">
         
         <!-- Player Selector Card -->
         <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-200">
@@ -71,7 +76,6 @@
 
         <!-- Photo Grid -->
         <div id="photo-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            <!-- Populated via Javascript -->
             <div class="col-span-full p-16 text-center text-slate-400 font-bold uppercase tracking-widest border-2 border-dashed border-slate-200 rounded-[2.5rem]">
                 Select a player above to load their evidence.
             </div>
@@ -79,8 +83,108 @@
 
     </main>
 
+    <!-- Year in Review View -->
+    <main id="view-review" class="hidden flex-1 max-w-5xl mx-auto w-full p-4 md:p-8 space-y-8 mt-2">
+        <div class="text-center mb-10">
+            <h2 class="text-4xl md:text-5xl font-black text-slate-800 tracking-tight uppercase">Year in Review</h2>
+            <p class="text-sm font-bold text-emerald-600 uppercase tracking-widest mt-2">Statistical Honors & Dishonors</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <!-- Top 3 Players -->
+            <div class="bg-white p-6 rounded-[2rem] shadow-xl border border-slate-200 space-y-4">
+                <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+                    <div class="w-10 h-10 bg-amber-100 text-amber-500 rounded-xl flex items-center justify-center shrink-0"><i data-lucide="trophy" class="w-5 h-5"></i></div>
+                    <h3 class="text-lg font-black text-slate-800 tracking-tight uppercase">Most Wins</h3>
+                </div>
+                <div id="review-top-3" class="space-y-3"></div>
+            </div>
+
+            <!-- Bottom 3 Players -->
+            <div class="bg-white p-6 rounded-[2rem] shadow-xl border border-slate-200 space-y-4">
+                <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+                    <div class="w-10 h-10 bg-rose-100 text-rose-500 rounded-xl flex items-center justify-center shrink-0"><i data-lucide="trending-down" class="w-5 h-5"></i></div>
+                    <h3 class="text-lg font-black text-slate-800 tracking-tight uppercase">Fewest Wins</h3>
+                </div>
+                <div id="review-bottom-3" class="space-y-3"></div>
+            </div>
+
+            <!-- Streaks -->
+            <div class="bg-white p-6 rounded-[2rem] shadow-xl border border-slate-200 space-y-6">
+                <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+                    <div class="w-10 h-10 bg-sky-100 text-sky-500 rounded-xl flex items-center justify-center shrink-0"><i data-lucide="activity" class="w-5 h-5"></i></div>
+                    <h3 class="text-lg font-black text-slate-800 tracking-tight uppercase">The Streaks</h3>
+                </div>
+                <div class="space-y-4">
+                    <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl relative overflow-hidden">
+                        <i data-lucide="flame" class="w-16 h-16 absolute -right-2 -bottom-2 text-emerald-500/10"></i>
+                        <p class="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1 relative z-10">Longest Winning Streak</p>
+                        <p id="review-win-streak" class="text-sm font-bold text-slate-800 relative z-10">-</p>
+                    </div>
+                    <div class="bg-rose-50 border border-rose-100 p-4 rounded-2xl relative overflow-hidden">
+                        <i data-lucide="snowflake" class="w-16 h-16 absolute -right-2 -bottom-2 text-rose-500/10"></i>
+                        <p class="text-[9px] font-black text-rose-600 uppercase tracking-widest mb-1 relative z-10">Longest Losing Streak</p>
+                        <p id="review-loss-streak" class="text-sm font-bold text-slate-800 relative z-10">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Worst Beats -->
+            <div class="bg-white p-6 rounded-[2rem] shadow-xl border border-slate-200 space-y-4 lg:col-span-2">
+                <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+                    <div class="w-10 h-10 bg-slate-900 text-rose-500 rounded-xl flex items-center justify-center shrink-0"><i data-lucide="skull" class="w-5 h-5"></i></div>
+                    <div>
+                        <h3 class="text-lg font-black text-slate-800 tracking-tight uppercase">Worst Beats</h3>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Biggest margin of victory</p>
+                    </div>
+                </div>
+                <div id="review-worst-beats" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
+            </div>
+
+            <!-- Miscellaneous Stats -->
+            <div class="bg-white p-6 rounded-[2rem] shadow-xl border border-slate-200 space-y-4">
+                <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+                    <div class="w-10 h-10 bg-indigo-100 text-indigo-500 rounded-xl flex items-center justify-center shrink-0"><i data-lucide="pie-chart" class="w-5 h-5"></i></div>
+                    <h3 class="text-lg font-black text-slate-800 tracking-tight uppercase">Notables</h3>
+                </div>
+                
+                <div class="flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <div>
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Most Ties</p>
+                        <p id="review-most-ties-name" class="text-sm font-bold text-slate-800">-</p>
+                    </div>
+                    <span id="review-most-ties-count" class="bg-slate-200 text-slate-600 font-black px-2 py-1 rounded-lg text-xs">0</span>
+                </div>
+                
+                <div class="flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <div>
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Iron Man (Matches in 1 Week)</p>
+                        <p id="review-iron-man-name" class="text-sm font-bold text-slate-800">-</p>
+                    </div>
+                    <span id="review-iron-man-count" class="bg-slate-200 text-slate-600 font-black px-2 py-1 rounded-lg text-xs">0</span>
+                </div>
+            </div>
+
+            <!-- The 27 Club -->
+            <div class="bg-white p-6 rounded-[2rem] shadow-xl border border-slate-200 space-y-4 lg:col-span-3">
+                <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+                    <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center shrink-0"><i data-lucide="check-circle" class="w-5 h-5"></i></div>
+                    <div>
+                        <h3 class="text-lg font-black text-slate-800 tracking-tight uppercase">The 27 Club</h3>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Players who completed the entire season</p>
+                    </div>
+                </div>
+                <div id="review-27-club" class="flex flex-wrap gap-3">
+                    <span class="text-slate-400 text-sm font-bold italic">Checking database...</span>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
     <!-- Full Screen Lightbox -->
-    <div id="lightbox" class="fixed inset-0 z-[1000] bg-slate-900/90 hidden flex-col items-center justify-center p-4 md:p-8 opacity-0 transition-opacity duration-300">
+    <div id="lightbox" class="fixed inset-0 z-[1000] bg-slate-900/95 hidden flex-col items-center justify-center p-4 md:p-8 opacity-0 transition-opacity duration-300 backdrop-blur-sm">
         <button onclick="closeLightbox()" class="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors bg-slate-800/80 p-3 rounded-full hover:bg-slate-700 shadow-lg border border-slate-600 active-scale">
             <i data-lucide="x" class="w-6 h-6"></i>
         </button>
@@ -122,13 +226,13 @@
 
         // State
         let allPlayers = [];
+        let allCompletedMatches = [];
         let allMatchesWithPhotos = [];
         let currentPlayerSelected = "";
 
         async function init() {
             lucide.createIcons();
             
-            // Authenticate anonymously for read-only access
             try { await signInAnonymously(auth); } 
             catch (err) { console.error("Auth Failed", err); }
 
@@ -136,26 +240,47 @@
             onSnapshot(qP, (snapshot) => {
                 allPlayers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => a.name.localeCompare(b.name));
                 populateDropdown();
+                if(allCompletedMatches.length > 0) renderYearInReview();
             });
 
             const qM = collection(db, 'artifacts', DATABASE_FOLDER_NAME, 'public', 'data', 'matches');
             onSnapshot(qM, (snapshot) => {
                 const rawMatches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
-                // Filter down to ONLY completed matches that actually have a photo URL
-                allMatchesWithPhotos = rawMatches
-                    .filter(m => m.status === 'completed' && m.photoUrl && m.winner)
-                    .sort((a, b) => new Date(b.date) - new Date(a.date)); // Newest first
+                // We need all completed matches for stats
+                allCompletedMatches = rawMatches.filter(m => m.status === 'completed' && m.winner);
+                
+                // And photos for the vault
+                allMatchesWithPhotos = allCompletedMatches
+                    .filter(m => m.photoUrl)
+                    .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-                // Hide loading screen once data is prepped
                 document.getElementById('screen-loading').style.opacity = '0';
                 setTimeout(() => document.getElementById('screen-loading').classList.add('hidden'), 500);
                 
-                // Re-render if a player is already selected
                 if (currentPlayerSelected) window.selectPlayer(currentPlayerSelected);
+                if (allPlayers.length > 0) renderYearInReview();
             });
         }
 
+        // --- View Switching ---
+        window.switchView = function(view) {
+            document.getElementById('view-vault').classList.toggle('hidden', view !== 'vault');
+            document.getElementById('view-review').classList.toggle('hidden', view !== 'review');
+            
+            const navVault = document.getElementById('nav-vault');
+            const navReview = document.getElementById('nav-review');
+            
+            if (view === 'vault') {
+                navVault.className = "flex-1 py-2.5 px-4 rounded-xl font-black text-[10px] md:text-xs uppercase transition-all bg-white text-emerald-900 shadow-sm flex items-center gap-2 justify-center";
+                navReview.className = "flex-1 py-2.5 px-4 rounded-xl font-black text-[10px] md:text-xs uppercase transition-all text-emerald-100 opacity-60 hover:opacity-100 flex items-center gap-2 justify-center";
+            } else {
+                navReview.className = "flex-1 py-2.5 px-4 rounded-xl font-black text-[10px] md:text-xs uppercase transition-all bg-white text-emerald-900 shadow-sm flex items-center gap-2 justify-center";
+                navVault.className = "flex-1 py-2.5 px-4 rounded-xl font-black text-[10px] md:text-xs uppercase transition-all text-emerald-100 opacity-60 hover:opacity-100 flex items-center gap-2 justify-center";
+            }
+        }
+
+        // --- Evidence Vault Logic ---
         function populateDropdown() {
             const select = document.getElementById('player-selector');
             const currentVal = select.value;
@@ -178,15 +303,10 @@
                 return;
             }
 
-            // Filter for matches where the player was involved (handles wins, losses, and ties)
             const playerPhotos = allMatchesWithPhotos.filter(m => 
-                m.player1 === playerName || 
-                m.player2 === playerName || 
-                m.winner === playerName || 
-                m.loser === playerName
+                m.player1 === playerName || m.player2 === playerName || m.winner === playerName || m.loser === playerName
             );
 
-            // Update Stats UI
             statsBar.classList.remove('hidden');
             document.getElementById('photo-count').innerText = playerPhotos.length;
 
@@ -199,24 +319,17 @@
             grid.innerHTML = playerPhotos.map(m => {
                 const isTie = m.winner === 'Tie';
                 const matchTitle = isTie ? `${m.player1} Tied ${m.player2}` : `${m.winner} def. ${m.loser}`;
-                
-                // Create HTML specifically formatted for the Lightbox Title
                 const lightboxTitle = isTie 
                     ? `${m.player1} <span class="text-slate-400 lowercase mx-1 text-sm font-bold">tied</span> ${m.player2}` 
                     : `${m.winner} <span class="text-emerald-500 lowercase mx-1 text-sm font-bold">def.</span> ${m.loser}`;
                 
-                // Color code the border based on if the selected player won or lost
-                let ringColor = 'hover:ring-slate-300'; // Tie
-                if (!isTie) {
-                    ringColor = m.winner === playerName ? 'hover:ring-emerald-400' : 'hover:ring-rose-400';
-                }
+                let ringColor = 'hover:ring-slate-300';
+                if (!isTie) ringColor = m.winner === playerName ? 'hover:ring-emerald-400' : 'hover:ring-rose-400';
 
                 return `
                 <div onclick="openLightbox('${m.photoUrl}', '${encodeURIComponent(lightboxTitle)}', '${m.score}', '${m.date}')" class="bg-white rounded-3xl p-3 shadow-md border border-slate-100 flex flex-col gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer group active-scale ring-2 ring-transparent ${ringColor}">
                     <div class="block relative aspect-square rounded-2xl overflow-hidden bg-slate-100">
                         <img src="${m.photoUrl}" alt="Match Photo" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy">
-                        
-                        <!-- Overlay zoom icon on hover -->
                         <div class="absolute inset-0 bg-slate-900/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
                             <div class="bg-white/90 p-3 rounded-full text-slate-800 shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">
                                 <i data-lucide="zoom-in" class="w-5 h-5"></i>
@@ -230,7 +343,6 @@
                     </div>
                 </div>
             `}).join('');
-
             lucide.createIcons();
         };
 
@@ -244,8 +356,6 @@
             lb.classList.remove('hidden');
             lb.classList.add('lightbox-fade-in');
             setTimeout(() => lb.classList.remove('opacity-0'), 10);
-            
-            // Prevent body scrolling while lightbox is open
             document.body.style.overflow = 'hidden';
             lucide.createIcons();
         };
@@ -256,11 +366,169 @@
             setTimeout(() => {
                 lb.classList.remove('lightbox-fade-in');
                 lb.classList.add('hidden');
-                document.body.style.overflow = ''; // Restore scrolling
+                document.body.style.overflow = ''; 
             }, 200);
         };
 
-        // Initialize App
+        // --- Year In Review Logic ---
+        function getIsoWeekString(dateStr) {
+            const d = new Date(dateStr);
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+            const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+            return `${d.getUTCFullYear()}-W${weekNo}`;
+        }
+
+        function renderYearInReview() {
+            if(allPlayers.length === 0 || allCompletedMatches.length === 0) return;
+
+            // 1. Basic Stats (Wins, Losses, Ties, Total Played)
+            let stats = {};
+            allPlayers.forEach(p => stats[p.name] = { name: p.name, wins: 0, losses: 0, ties: 0, played: 0 });
+
+            allCompletedMatches.forEach(m => {
+                if(m.winner === 'Tie') {
+                    if(stats[m.player1]) { stats[m.player1].ties++; stats[m.player1].played++; }
+                    if(stats[m.player2]) { stats[m.player2].ties++; stats[m.player2].played++; }
+                } else {
+                    if(stats[m.winner]) { stats[m.winner].wins++; stats[m.winner].played++; }
+                    if(stats[m.loser]) { stats[m.loser].losses++; stats[m.loser].played++; }
+                }
+            });
+
+            // Tops & Bottoms
+            const sortedByWins = Object.values(stats).sort((a,b) => b.wins - a.wins || a.name.localeCompare(b.name));
+            const top3 = sortedByWins.slice(0, 3);
+            const bottom3 = [...sortedByWins].reverse().slice(0, 3);
+            
+            document.getElementById('review-top-3').innerHTML = top3.map((p, i) => `
+                <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded bg-slate-200 flex items-center justify-center font-black text-slate-500 text-[10px]">${i+1}</span>
+                        <span class="font-bold text-slate-800 text-sm truncate">${p.name}</span>
+                    </div>
+                    <span class="font-black text-emerald-600">${p.wins} W</span>
+                </div>
+            `).join('');
+
+            document.getElementById('review-bottom-3').innerHTML = bottom3.map((p, i) => `
+                <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded bg-slate-200 flex items-center justify-center font-black text-slate-500 text-[10px]">${sortedByWins.length - i}</span>
+                        <span class="font-bold text-slate-800 text-sm truncate">${p.name}</span>
+                    </div>
+                    <span class="font-black text-rose-600">${p.wins} W</span>
+                </div>
+            `).join('');
+
+            // Most Ties
+            const mostTies = [...Object.values(stats)].sort((a,b) => b.ties - a.ties)[0];
+            document.getElementById('review-most-ties-name').innerText = mostTies.ties > 0 ? mostTies.name : "None yet";
+            document.getElementById('review-most-ties-count').innerText = mostTies.ties;
+
+            // The 27 Club
+            const club27 = Object.values(stats).filter(s => s.played >= 26); // assuming 26 tags is the limit based on previous context
+            const clubContainer = document.getElementById('review-27-club');
+            if (club27.length === 0) {
+                clubContainer.innerHTML = `<span class="text-slate-400 text-sm font-bold italic">No one has completed the war yet.</span>`;
+            } else {
+                clubContainer.innerHTML = club27.map(p => `
+                    <div class="bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-sm">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
+                        <span class="text-xs font-black text-emerald-800 uppercase tracking-widest">${p.name}</span>
+                    </div>
+                `).join('');
+            }
+
+            // 2. Streaks Calculation
+            let playerStreaks = {};
+            allPlayers.forEach(p => playerStreaks[p.name] = { currW:0, maxW:0, currL:0, maxL:0 });
+            
+            const chronoMatches = [...allCompletedMatches].sort((a,b) => new Date(a.date) - new Date(b.date));
+            
+            chronoMatches.forEach(m => {
+                if(m.winner === 'Tie') {
+                    if(playerStreaks[m.player1]) { playerStreaks[m.player1].currW = 0; playerStreaks[m.player1].currL = 0; }
+                    if(playerStreaks[m.player2]) { playerStreaks[m.player2].currW = 0; playerStreaks[m.player2].currL = 0; }
+                    return;
+                }
+                
+                // Winner logic
+                if (playerStreaks[m.winner]) {
+                    playerStreaks[m.winner].currW++;
+                    playerStreaks[m.winner].currL = 0;
+                    if(playerStreaks[m.winner].currW > playerStreaks[m.winner].maxW) playerStreaks[m.winner].maxW = playerStreaks[m.winner].currW;
+                }
+                
+                // Loser logic
+                if (playerStreaks[m.loser]) {
+                    playerStreaks[m.loser].currL++;
+                    playerStreaks[m.loser].currW = 0;
+                    if(playerStreaks[m.loser].currL > playerStreaks[m.loser].maxL) playerStreaks[m.loser].maxL = playerStreaks[m.loser].currL;
+                }
+            });
+
+            let longestWinStreak = { name: "None", streak: 0 };
+            let longestLossStreak = { name: "None", streak: 0 };
+
+            Object.entries(playerStreaks).forEach(([name, s]) => {
+                if(s.maxW > longestWinStreak.streak) { longestWinStreak.streak = s.maxW; longestWinStreak.name = name; }
+                if(s.maxL > longestLossStreak.streak) { longestLossStreak.streak = s.maxL; longestLossStreak.name = name; }
+            });
+
+            document.getElementById('review-win-streak').innerText = longestWinStreak.streak > 0 ? `${longestWinStreak.name} (${longestWinStreak.streak} in a row)` : "-";
+            document.getElementById('review-loss-streak').innerText = longestLossStreak.streak > 0 ? `${longestLossStreak.name} (${longestLossStreak.streak} in a row)` : "-";
+
+            // 3. Worst Beats
+            let beats = chronoMatches.filter(m => m.winner !== 'Tie').map(m => {
+                let margin = 0;
+                if(m.score && m.score.includes('&')) {
+                    margin = parseInt(m.score.split('&')[0].trim()) || 0;
+                }
+                return { ...m, margin };
+            }).sort((a,b) => b.margin - a.margin).slice(0, 3);
+
+            const beatsContainer = document.getElementById('review-worst-beats');
+            if(beats.length === 0) {
+                beatsContainer.innerHTML = `<p class="col-span-full text-slate-400 text-sm font-bold italic">No decisive matches logged yet.</p>`;
+            } else {
+                beatsContainer.innerHTML = beats.map((m, i) => `
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col justify-center">
+                        <p class="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">#${i+1} Worst Beat</p>
+                        <p class="text-sm font-black text-slate-800 leading-tight">${m.winner} def. ${m.loser}</p>
+                        <div class="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-slate-200 text-slate-700 rounded text-xs font-bold w-max">
+                            Score: ${m.score}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // 4. Iron Man (Matches in a week)
+            let weekCounts = {}; // { "PlayerName_2026-W42": count }
+            chronoMatches.forEach(m => {
+                const weekKey = getIsoWeekString(m.date);
+                ['player1', 'player2'].forEach(pKey => {
+                    const p = m[pKey];
+                    const compKey = `${p}_${weekKey}`;
+                    weekCounts[compKey] = (weekCounts[compKey] || 0) + 1;
+                });
+            });
+
+            let ironMan = { name: "None", count: 0 };
+            Object.entries(weekCounts).forEach(([compKey, count]) => {
+                if(count > ironMan.count) {
+                    ironMan.count = count;
+                    ironMan.name = compKey.split('_')[0]; // Extract player name
+                }
+            });
+
+            document.getElementById('review-iron-man-name').innerText = ironMan.count > 0 ? ironMan.name : "-";
+            document.getElementById('review-iron-man-count').innerText = ironMan.count;
+
+            lucide.createIcons();
+        }
+
         init();
     </script>
 </body>
