@@ -3,323 +3,265 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boyne Golf Trip - 2027 Summary</title>
-    
-    <!-- Loading Tailwind CSS for styling -->
+    <title>BattleTags | Evidence Vault</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Loading Google Fonts (Inter) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Loading FontAwesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- Custom Tailwind Configuration for Theme Colors -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        golf: {
-                            50: '#f0fdf4',
-                            100: '#dcfce7',
-                            500: '#22c55e',
-                            700: '#15803d',
-                            800: '#166534',
-                            900: '#14532d',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-        }
-        /* Custom scrollbar for table if needed on very small screens */
-        .table-container::-webkit-scrollbar {
-            height: 8px;
-        }
-        .table-container::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .active-scale:active { transform: scale(0.98); }
+        
+        /* Smooth fade for the lightbox */
+        .lightbox-fade-in { animation: fadeIn 0.2s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; backdrop-filter: blur(0px); }
+            to { opacity: 1; backdrop-filter: blur(8px); }
         }
     </style>
 </head>
-<body class="text-slate-800 antialiased p-4 md:p-8">
+<body class="bg-slate-50 text-slate-900 font-sans min-h-screen pb-24 flex flex-col custom-scrollbar">
 
-    <div class="max-w-5xl mx-auto">
-        
-        <!-- Header Section -->
-        <header class="bg-gradient-to-r from-golf-900 to-golf-700 rounded-t-2xl p-6 md:p-10 text-white shadow-lg relative overflow-hidden">
-            <div class="absolute -right-10 -top-10 opacity-10">
-                <i class="fa-solid fa-golf-ball-tee text-9xl"></i>
-            </div>
-            <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between">
-                <div>
-                    <h1 class="text-3xl md:text-4xl font-bold mb-2">Boyne Golf Trip Plan</h1>
-                    <p class="text-golf-100 text-lg flex items-center gap-2">
-                        <i class="fa-regular fa-calendar-check"></i> Spring 2027 Group Outing
-                    </p>
-                </div>
-                <div class="mt-4 md:mt-0 bg-white/20 px-4 py-2 rounded-lg backdrop-blur-sm border border-white/30">
-                    <p class="text-sm font-medium">Prepared for: <span class="font-bold">Craig</span></p>
-                    <p class="text-sm">Agent: <span class="font-medium">Melissa (Boyne Reservations)</span></p>
-                </div>
-            </div>
-        </header>
-
-        <!-- Main Content Area -->
-        <main class="bg-white rounded-b-2xl shadow-xl p-6 md:p-10 border border-slate-100 border-t-0">
-            
-            <!-- Quick Overview -->
-            <h2 class="text-xl font-bold mb-4 text-slate-800 border-b pb-2"><i class="fa-solid fa-clipboard-list text-golf-600 mr-2"></i>Trip Overview</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-                <!-- Dates Card -->
-                <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 flex items-start gap-4 shadow-sm hover:shadow-md transition-shadow">
-                    <div class="bg-golf-100 text-golf-700 p-3 rounded-lg">
-                        <i class="fa-regular fa-calendar fa-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-slate-500 font-medium uppercase tracking-wider">Dates</p>
-                        <p class="font-bold text-lg">May 23 - 28, 2027</p>
-                        <p class="text-sm text-slate-600">Sunday to Friday</p>
-                    </div>
-                </div>
-
-                <!-- Group Size Card -->
-                <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 flex items-start gap-4 shadow-sm hover:shadow-md transition-shadow">
-                    <div class="bg-blue-100 text-blue-700 p-3 rounded-lg">
-                        <i class="fa-solid fa-user-group fa-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-slate-500 font-medium uppercase tracking-wider">Group Size</p>
-                        <p class="font-bold text-lg">8 Golfers</p>
-                        <p class="text-sm text-slate-600">Two groups of 4</p>
-                    </div>
-                </div>
-
-                <!-- Locations Card -->
-                <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 flex items-start gap-4 shadow-sm hover:shadow-md transition-shadow">
-                    <div class="bg-orange-100 text-orange-700 p-3 rounded-lg">
-                        <i class="fa-solid fa-map-location-dot fa-xl"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-slate-500 font-medium uppercase tracking-wider">Locations</p>
-                        <p class="font-bold text-lg">Boyne Mountain</p>
-                        <p class="text-sm text-slate-600">or The Highlands</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Packages Comparison -->
-            <h2 class="text-xl font-bold mb-4 text-slate-800 border-b pb-2"><i class="fa-solid fa-ticket text-golf-600 mr-2"></i>Golf Packages</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-                
-                <!-- Super 5 Package -->
-                <div class="border-2 border-slate-200 rounded-2xl overflow-hidden flex flex-col">
-                    <div class="bg-slate-100 p-4 border-b border-slate-200">
-                        <h3 class="text-xl font-bold text-slate-800">Super 5 Package</h3>
-                        <p class="text-sm text-slate-600">Standard unlimited golf package.</p>
-                    </div>
-                    <div class="p-6 flex-grow bg-white">
-                        <ul class="space-y-3">
-                            <li class="flex items-start gap-3">
-                                <i class="fa-solid fa-check text-green-500 mt-1"></i>
-                                <span>5 nights of lodging</span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <i class="fa-solid fa-check text-green-500 mt-1"></i>
-                                <span>Arrival round on Sunday</span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <i class="fa-solid fa-check text-green-500 mt-1"></i>
-                                <span>Welcome party at The Highlands</span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <i class="fa-solid fa-check text-green-500 mt-1"></i>
-                                <span>Unlimited golf (Monday - Friday)</span>
-                            </li>
-                            <li class="flex items-start gap-3 text-slate-500">
-                                <i class="fa-solid fa-circle-exclamation text-amber-500 mt-1"></i>
-                                <span><em>Surcharge required for upgraded courses (Arthur Hills, The Heather, Bay Harbor)</em></span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Magnificent 10 Package -->
-                <div class="border-2 border-golf-500 rounded-2xl overflow-hidden shadow-lg flex flex-col relative transform md:-translate-y-2">
-                    <div class="absolute top-0 right-0 bg-golf-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wide">
-                        Premium Upgrade
-                    </div>
-                    <div class="bg-golf-50 p-4 border-b border-golf-200">
-                        <h3 class="text-xl font-bold text-golf-900">Magnificent 10 ("Mag 10")</h3>
-                        <p class="text-sm text-golf-700">Includes upgraded courses and extras.</p>
-                    </div>
-                    <div class="p-6 flex-grow bg-white">
-                        <ul class="space-y-3">
-                            <li class="flex items-start gap-3 font-semibold text-golf-800">
-                                <i class="fa-solid fa-star text-amber-400 mt-1"></i>
-                                <span>All Super 5 base inclusions</span>
-                            </li>
-                            <li class="flex items-start gap-3 font-medium">
-                                <i class="fa-solid fa-check-double text-golf-500 mt-1"></i>
-                                <span>Unlimited rounds on <strong>The Heather</strong> & <strong>Arthur Hills</strong></span>
-                            </li>
-                            <li class="flex items-start gap-3 font-medium">
-                                <i class="fa-solid fa-check-double text-golf-500 mt-1"></i>
-                                <span>2 rounds at <strong>Bay Harbor</strong></span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <i class="fa-solid fa-gift text-purple-500 mt-1"></i>
-                                <span>Bucket of balls on Trackman Range</span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <i class="fa-solid fa-gift text-purple-500 mt-1"></i>
-                                <span>1-hour lesson with Boyne Golf Academy</span>
-                            </li>
-                            <li class="flex items-start gap-3">
-                                <i class="fa-solid fa-gift text-purple-500 mt-1"></i>
-                                <span>$100 Shopping Card</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Lodging Options & Pricing -->
-            <h2 class="text-xl font-bold mb-4 text-slate-800 border-b pb-2"><i class="fa-solid fa-bed text-golf-600 mr-2"></i>Lodging Options & Total Package Quotes (Per Golfer)</h2>
-            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded-r-lg">
-                <p class="text-sm text-blue-800 font-medium">
-                    <i class="fa-solid fa-circle-info mr-1"></i> The prices below represent the <strong>TOTAL cost per golfer</strong> for the entire trip. This includes all 5 nights of lodging, the respective golf package, and all resort fees and taxes.
-                </p>
-            </div>
-            
-            <div class="space-y-6 mb-10">
-                
-                <!-- Boyne Mountain Option 1 -->
-                <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-sm bg-white hover:shadow-md transition-shadow">
-                    <div class="p-5 border-b border-slate-100 bg-slate-50">
-                        <h3 class="font-bold text-xl text-slate-800">Boyne Mountain - Creekside Condos</h3>
-                        <p class="text-slate-600 mt-1"><i class="fa-solid fa-house text-slate-400 mr-1"></i> 4 Bedrooms, 3 Full Baths, Full Kitchen, Fireplace</p>
-                        <div class="inline-flex items-center gap-1 mt-3 text-xs font-bold bg-blue-100 text-blue-800 px-3 py-1.5 rounded-full">
-                            <i class="fa-solid fa-water"></i> Includes Hot Tub on Deck
-                        </div>
-                    </div>
-                    <div class="p-5 flex flex-col md:flex-row gap-4">
-                        <!-- Super 5 Pricing -->
-                        <div class="flex-1 bg-slate-50 rounded-xl p-4 border border-slate-100 flex flex-col justify-center items-center text-center">
-                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Super 5 Total</span>
-                            <span class="text-2xl font-bold text-slate-800">$1,662.18</span>
-                            <span class="text-xs text-slate-500 mt-1">Per Golfer</span>
-                        </div>
-                        <!-- Mag 10 Pricing -->
-                        <div class="flex-1 bg-golf-50 rounded-xl p-4 border border-golf-200 flex flex-col justify-center items-center text-center relative overflow-hidden">
-                            <div class="absolute top-0 w-full h-1 bg-golf-500"></div>
-                            <span class="text-xs font-bold text-golf-700 uppercase tracking-wider mb-1">Mag 10 Total</span>
-                            <span class="text-3xl font-bold text-golf-900">$2,142.28</span>
-                            <span class="text-xs text-golf-600 mt-1">Per Golfer</span>
-                        </div>
-                        <!-- Upgrade Difference -->
-                        <div class="flex-1 bg-amber-50 rounded-xl p-4 border border-amber-200 flex flex-col justify-center items-center text-center">
-                            <span class="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">Upgrade Cost</span>
-                            <span class="text-xl font-bold text-amber-600">+$480.10</span>
-                            <span class="text-xs text-amber-700/70 mt-1">Difference</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Boyne Mountain Option 2 -->
-                <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-sm bg-white hover:shadow-md transition-shadow">
-                    <div class="p-5 border-b border-slate-100 bg-slate-50">
-                        <h3 class="font-bold text-xl text-slate-800">Boyne Mountain - Creekside Condos</h3>
-                        <p class="text-slate-600 mt-1"><i class="fa-solid fa-house text-slate-400 mr-1"></i> 4 Bedrooms, 3 Full Baths, Full Kitchen, Fireplace</p>
-                        <div class="inline-flex items-center gap-1 mt-3 text-xs font-bold bg-slate-200 text-slate-700 px-3 py-1.5 rounded-full">
-                            <i class="fa-solid fa-ban"></i> No Hot Tub
-                        </div>
-                    </div>
-                    <div class="p-5 flex flex-col md:flex-row gap-4">
-                        <!-- Super 5 Pricing -->
-                        <div class="flex-1 bg-slate-50 rounded-xl p-4 border border-slate-100 flex flex-col justify-center items-center text-center">
-                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Super 5 Total</span>
-                            <span class="text-2xl font-bold text-slate-800">$1,556.00</span>
-                            <span class="text-xs text-slate-500 mt-1">Per Golfer</span>
-                        </div>
-                        <!-- Mag 10 Pricing -->
-                        <div class="flex-1 bg-golf-50 rounded-xl p-4 border border-golf-200 flex flex-col justify-center items-center text-center relative overflow-hidden">
-                            <div class="absolute top-0 w-full h-1 bg-golf-500"></div>
-                            <span class="text-xs font-bold text-golf-700 uppercase tracking-wider mb-1">Mag 10 Total</span>
-                            <span class="text-3xl font-bold text-golf-900">~$2,000.00</span>
-                            <span class="text-xs text-golf-600 mt-1">Per Golfer</span>
-                        </div>
-                        <!-- Upgrade Difference -->
-                        <div class="flex-1 bg-amber-50 rounded-xl p-4 border border-amber-200 flex flex-col justify-center items-center text-center">
-                            <span class="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">Upgrade Cost</span>
-                            <span class="text-xl font-bold text-amber-600">+$444.00</span>
-                            <span class="text-xs text-amber-700/70 mt-1">Difference</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- The Highlands Option -->
-                <div class="border border-orange-200 rounded-2xl overflow-hidden shadow-sm bg-white hover:shadow-md transition-shadow">
-                    <div class="p-5 border-b border-orange-100 bg-orange-50/50">
-                        <h3 class="font-bold text-xl text-slate-800">The Highlands - Alpine Village Condos</h3>
-                        <p class="text-slate-600 mt-1"><i class="fa-solid fa-house text-slate-400 mr-1"></i> 4 Bedrooms. Close to main lodge & The Heather driving range.</p>
-                        <div class="inline-flex items-center gap-1 mt-3 text-xs font-bold bg-orange-100 text-orange-800 px-3 py-1.5 rounded-full">
-                            <i class="fa-solid fa-person-walking"></i> Less traveling between courses
-                        </div>
-                    </div>
-                    <div class="p-5 flex flex-col md:flex-row gap-4">
-                        <!-- Super 5 Pricing -->
-                        <div class="flex-1 bg-slate-50 rounded-xl p-4 border border-slate-100 flex flex-col justify-center items-center text-center">
-                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Super 5 Total</span>
-                            <span class="text-2xl font-bold text-slate-800">$1,515.00</span>
-                            <span class="text-xs text-slate-500 mt-1">Per Golfer</span>
-                        </div>
-                        <!-- Mag 10 Pricing -->
-                        <div class="flex-1 bg-golf-50 rounded-xl p-4 border border-golf-200 flex flex-col justify-center items-center text-center relative overflow-hidden">
-                            <div class="absolute top-0 w-full h-1 bg-golf-500"></div>
-                            <span class="text-xs font-bold text-golf-700 uppercase tracking-wider mb-1">Mag 10 Total</span>
-                            <span class="text-3xl font-bold text-golf-900">$1,995.00</span>
-                            <span class="text-xs text-golf-600 mt-1">Per Golfer</span>
-                        </div>
-                        <!-- Upgrade Difference -->
-                        <div class="flex-1 bg-amber-50 rounded-xl p-4 border border-amber-200 flex flex-col justify-center items-center text-center">
-                            <span class="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">Upgrade Cost</span>
-                            <span class="text-xl font-bold text-amber-600">+$480.00</span>
-                            <span class="text-xs text-amber-700/70 mt-1">Difference</span>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Next Steps -->
-            <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-6">
-                <h2 class="text-lg font-bold mb-3 text-indigo-900"><i class="fa-solid fa-circle-right text-indigo-500 mr-2"></i>Next Steps</h2>
-                <ul class="list-disc pl-5 space-y-2 text-indigo-800">
-                    <li>Review the pricing and location options (Boyne Mountain vs. The Highlands) with the 8-man group.</li>
-                    <li>Decide whether the <strong>Magnificent 10</strong> upgrades (Bay Harbor, Arthur Hills, Trackman, lesson, $100 gift card) are worth the extra ~$480 per person.</li>
-                    <li>Melissa sent the official quote to <strong>cflanpersonal@gmail.com</strong>.</li>
-                    <li>Reply to Melissa's email or call Boyne back to finalize the booking.</li>
-                </ul>
-            </div>
-
-        </main>
-        
-        <footer class="mt-6 text-center text-slate-400 text-sm">
-            Generated from call transcript • All prices are per golfer and include taxes/fees.
-        </footer>
-
+    <!-- Loading Screen -->
+    <div id="screen-loading" class="fixed inset-0 z-[200] bg-slate-50 flex flex-col items-center justify-center transition-opacity duration-500">
+        <i data-lucide="loader-2" class="w-10 h-10 animate-spin text-emerald-500 mb-4"></i>
+        <div class="font-black text-slate-400 uppercase tracking-widest text-sm">Syncing Database...</div>
     </div>
 
+    <!-- Header -->
+    <header class="bg-emerald-900 text-white p-6 shadow-2xl sticky top-0 z-40">
+        <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-emerald-800 rounded-xl flex items-center justify-center text-emerald-400 shadow-inner border border-emerald-700">
+                    <i data-lucide="camera" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black tracking-tight uppercase leading-none">Evidence Vault</h1>
+                    <p class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mt-1">Player Photo Archive</p>
+                </div>
+            </div>
+            <a href="index.html" class="px-4 py-2 bg-emerald-950 hover:bg-emerald-800 border border-emerald-800 rounded-xl text-xs font-black uppercase tracking-widest transition-colors flex items-center gap-2">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to App
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-5xl mx-auto w-full p-4 md:p-8 space-y-8 mt-4">
+        
+        <!-- Player Selector Card -->
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-xl border border-slate-200">
+            <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-3">Select Player to Inspect</label>
+            <div class="relative">
+                <select id="player-selector" onchange="window.selectPlayer(this.value)" class="w-full p-5 bg-slate-50 border-2 border-slate-200 hover:border-emerald-300 focus:border-emerald-500 rounded-[1.5rem] font-black text-slate-800 outline-none appearance-none cursor-pointer text-base md:text-lg transition-colors shadow-inner">
+                    <option value="">Loading Roster...</option>
+                </select>
+                <div class="absolute inset-y-0 right-5 flex items-center pointer-events-none text-emerald-500">
+                    <i data-lucide="search" class="w-5 h-5"></i>
+                </div>
+            </div>
+            
+            <div id="stats-bar" class="hidden mt-6 flex flex-wrap gap-3 items-center border-t border-slate-100 pt-6">
+                <div class="bg-emerald-50 border border-emerald-100 px-4 py-2 rounded-xl flex items-center gap-2">
+                    <i data-lucide="image" class="w-4 h-4 text-emerald-600"></i>
+                    <span class="text-xs font-black text-emerald-800 uppercase tracking-widest"><span id="photo-count">0</span> Photos Found</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Photo Grid -->
+        <div id="photo-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            <!-- Populated via Javascript -->
+            <div class="col-span-full p-16 text-center text-slate-400 font-bold uppercase tracking-widest border-2 border-dashed border-slate-200 rounded-[2.5rem]">
+                Select a player above to load their evidence.
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Full Screen Lightbox -->
+    <div id="lightbox" class="fixed inset-0 z-[1000] bg-slate-900/90 hidden flex-col items-center justify-center p-4 md:p-8 opacity-0 transition-opacity duration-300">
+        <button onclick="closeLightbox()" class="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors bg-slate-800/80 p-3 rounded-full hover:bg-slate-700 shadow-lg border border-slate-600 active-scale">
+            <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+        
+        <img id="lightbox-img" src="" class="max-w-full max-h-[70vh] rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.3)] object-contain border border-slate-700">
+        
+        <div class="mt-6 bg-white p-5 rounded-3xl border border-slate-200 shadow-2xl text-center max-w-sm w-full">
+            <h2 id="lightbox-title" class="text-lg md:text-xl font-black text-slate-800 uppercase tracking-tight leading-tight"></h2>
+            <p id="lightbox-score" class="text-sm font-black text-emerald-600 uppercase tracking-widest mt-1"></p>
+            <div class="flex justify-center items-center gap-1.5 mt-3 text-slate-400 text-[10px] font-bold uppercase tracking-widest bg-slate-50 py-1.5 rounded-lg border border-slate-100">
+                <i data-lucide="calendar" class="w-3 h-3"></i> <span id="lightbox-date"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Scripts & Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, persistentLocalCache, initializeFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // Battle Tags Configuration
+        const DATABASE_FOLDER_NAME = 'friday-harbour-battle-tags';
+        const firebaseConfig = {
+            apiKey: "AIzaSyDf_1RE4hscqVVbHoN7Vvqoylj8elWLUn4",
+            authDomain: "battletags-27390.firebaseapp.com",
+            projectId: "battletags-27390",
+            storageBucket: "battletags-27390.firebasestorage.app",
+            messagingSenderId: "930795580018",
+            appId: "1:930795580018:web:b82b95d64572483f85f0eb"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        
+        let db;
+        try { db = initializeFirestore(app, { localCache: persistentLocalCache() }); } 
+        catch (e) { db = getFirestore(app); }
+
+        // State
+        let allPlayers = [];
+        let allMatchesWithPhotos = [];
+        let currentPlayerSelected = "";
+
+        async function init() {
+            lucide.createIcons();
+            
+            // Authenticate anonymously for read-only access
+            try { await signInAnonymously(auth); } 
+            catch (err) { console.error("Auth Failed", err); }
+
+            const qP = collection(db, 'artifacts', DATABASE_FOLDER_NAME, 'public', 'data', 'players');
+            onSnapshot(qP, (snapshot) => {
+                allPlayers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).sort((a, b) => a.name.localeCompare(b.name));
+                populateDropdown();
+            });
+
+            const qM = collection(db, 'artifacts', DATABASE_FOLDER_NAME, 'public', 'data', 'matches');
+            onSnapshot(qM, (snapshot) => {
+                const rawMatches = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Filter down to ONLY completed matches that actually have a photo URL
+                allMatchesWithPhotos = rawMatches
+                    .filter(m => m.status === 'completed' && m.photoUrl && m.winner)
+                    .sort((a, b) => new Date(b.date) - new Date(a.date)); // Newest first
+
+                // Hide loading screen once data is prepped
+                document.getElementById('screen-loading').style.opacity = '0';
+                setTimeout(() => document.getElementById('screen-loading').classList.add('hidden'), 500);
+                
+                // Re-render if a player is already selected
+                if (currentPlayerSelected) window.selectPlayer(currentPlayerSelected);
+            });
+        }
+
+        function populateDropdown() {
+            const select = document.getElementById('player-selector');
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">Choose a player to view their photos...</option>';
+            allPlayers.forEach(p => {
+                const opt = new Option(p.name, p.name);
+                if (p.name === currentVal) opt.selected = true;
+                select.add(opt);
+            });
+        }
+
+        window.selectPlayer = function(playerName) {
+            currentPlayerSelected = playerName;
+            const grid = document.getElementById('photo-grid');
+            const statsBar = document.getElementById('stats-bar');
+
+            if (!playerName) {
+                statsBar.classList.add('hidden');
+                grid.innerHTML = `<div class="col-span-full p-16 text-center text-slate-400 font-bold uppercase tracking-widest border-2 border-dashed border-slate-200 rounded-[2.5rem]">Select a player above to load their evidence.</div>`;
+                return;
+            }
+
+            // Filter for matches where the player was involved (handles wins, losses, and ties)
+            const playerPhotos = allMatchesWithPhotos.filter(m => 
+                m.player1 === playerName || 
+                m.player2 === playerName || 
+                m.winner === playerName || 
+                m.loser === playerName
+            );
+
+            // Update Stats UI
+            statsBar.classList.remove('hidden');
+            document.getElementById('photo-count').innerText = playerPhotos.length;
+
+            if (playerPhotos.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-20 text-center text-slate-400 font-bold uppercase tracking-widest border-2 border-dashed border-slate-200 rounded-[2.5rem] flex flex-col items-center gap-4"><i data-lucide="camera-off" class="w-10 h-10 opacity-50"></i> No photographic evidence found for ${playerName}.</div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            grid.innerHTML = playerPhotos.map(m => {
+                const isTie = m.winner === 'Tie';
+                const matchTitle = isTie ? `${m.player1} Tied ${m.player2}` : `${m.winner} def. ${m.loser}`;
+                
+                // Create HTML specifically formatted for the Lightbox Title
+                const lightboxTitle = isTie 
+                    ? `${m.player1} <span class="text-slate-400 lowercase mx-1 text-sm font-bold">tied</span> ${m.player2}` 
+                    : `${m.winner} <span class="text-emerald-500 lowercase mx-1 text-sm font-bold">def.</span> ${m.loser}`;
+                
+                // Color code the border based on if the selected player won or lost
+                let ringColor = 'hover:ring-slate-300'; // Tie
+                if (!isTie) {
+                    ringColor = m.winner === playerName ? 'hover:ring-emerald-400' : 'hover:ring-rose-400';
+                }
+
+                return `
+                <div onclick="openLightbox('${m.photoUrl}', '${encodeURIComponent(lightboxTitle)}', '${m.score}', '${m.date}')" class="bg-white rounded-3xl p-3 shadow-md border border-slate-100 flex flex-col gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer group active-scale ring-2 ring-transparent ${ringColor}">
+                    <div class="block relative aspect-square rounded-2xl overflow-hidden bg-slate-100">
+                        <img src="${m.photoUrl}" alt="Match Photo" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy">
+                        
+                        <!-- Overlay zoom icon on hover -->
+                        <div class="absolute inset-0 bg-slate-900/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
+                            <div class="bg-white/90 p-3 rounded-full text-slate-800 shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">
+                                <i data-lucide="zoom-in" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-2 pb-2 text-left">
+                        <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${m.date}</p>
+                        <p class="text-sm font-black text-slate-800 leading-tight uppercase truncate" title="${matchTitle}">${matchTitle}</p>
+                        <p class="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-wider">${m.score}</p>
+                    </div>
+                </div>
+            `}).join('');
+
+            lucide.createIcons();
+        };
+
+        window.openLightbox = function(url, titleHtmlEnc, score, date) {
+            document.getElementById('lightbox-img').src = url;
+            document.getElementById('lightbox-title').innerHTML = decodeURIComponent(titleHtmlEnc);
+            document.getElementById('lightbox-score').innerText = `Score: ${score}`;
+            document.getElementById('lightbox-date').innerText = date;
+            
+            const lb = document.getElementById('lightbox');
+            lb.classList.remove('hidden');
+            lb.classList.add('lightbox-fade-in');
+            setTimeout(() => lb.classList.remove('opacity-0'), 10);
+            
+            // Prevent body scrolling while lightbox is open
+            document.body.style.overflow = 'hidden';
+            lucide.createIcons();
+        };
+
+        window.closeLightbox = function() {
+            const lb = document.getElementById('lightbox');
+            lb.classList.add('opacity-0');
+            setTimeout(() => {
+                lb.classList.remove('lightbox-fade-in');
+                lb.classList.add('hidden');
+                document.body.style.overflow = ''; // Restore scrolling
+            }, 200);
+        };
+
+        // Initialize App
+        init();
+    </script>
 </body>
 </html>
